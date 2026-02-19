@@ -9,13 +9,13 @@ const defaults = {
   "workout-templates": true,
   "workout-sessions": true,
   "assigned-workouts": true,
-  scheduling: false,
+  scheduling: true,
   nutrition: false,
   progress: true,
   calendar: true,
   "health-sync": false,
   "ai-insights": false,
-  notifications: false,
+  notifications: true,
   admin: true,
 };
 
