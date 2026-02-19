@@ -4,6 +4,7 @@ const defaults = {
   exercises: true,
   workouts: true,
   goals: true,
+  "custom-fields": true,
   equipment: false,
   scheduling: false,
   nutrition: false,
@@ -11,7 +12,7 @@ const defaults = {
   "health-sync": false,
   "ai-insights": false,
   notifications: false,
-  admin: false,
+  admin: true,
 };
 
 class FeatureFlags {
