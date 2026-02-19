@@ -1,10 +1,12 @@
-const { getDb } = require("../config/database");
+const { getDb } = require("../../config/database");
 
 function getProfile(req, res, next) {
   try {
     const db = getDb();
     const user = db
-      .prepare("SELECT id, email, first_name, last_name, created_at FROM users WHERE id = ?")
+      .prepare(
+        "SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = ?"
+      )
       .get(req.userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -32,15 +34,32 @@ function updateProfile(req, res, next) {
     if (existing) {
       const fields = [];
       const values = [];
-      if (heightCm !== undefined) { fields.push("height_cm = ?"); values.push(heightCm); }
-      if (weightKg !== undefined) { fields.push("weight_kg = ?"); values.push(weightKg); }
-      if (dateOfBirth !== undefined) { fields.push("date_of_birth = ?"); values.push(dateOfBirth); }
-      if (gender !== undefined) { fields.push("gender = ?"); values.push(gender); }
-      if (fitnessLevel !== undefined) { fields.push("fitness_level = ?"); values.push(fitnessLevel); }
+      if (heightCm !== undefined) {
+        fields.push("height_cm = ?");
+        values.push(heightCm);
+      }
+      if (weightKg !== undefined) {
+        fields.push("weight_kg = ?");
+        values.push(weightKg);
+      }
+      if (dateOfBirth !== undefined) {
+        fields.push("date_of_birth = ?");
+        values.push(dateOfBirth);
+      }
+      if (gender !== undefined) {
+        fields.push("gender = ?");
+        values.push(gender);
+      }
+      if (fitnessLevel !== undefined) {
+        fields.push("fitness_level = ?");
+        values.push(fitnessLevel);
+      }
       fields.push("updated_at = datetime('now')");
       values.push(req.userId);
 
-      db.prepare(`UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`).run(...values);
+      db.prepare(
+        `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`
+      ).run(...values);
     } else {
       db.prepare(
         "INSERT INTO user_profiles (user_id, height_cm, weight_kg, date_of_birth, gender, fitness_level) VALUES (?, ?, ?, ?, ?, ?)"

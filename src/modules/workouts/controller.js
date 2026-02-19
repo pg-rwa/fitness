@@ -1,4 +1,5 @@
-const { getDb } = require("../config/database");
+const { getDb } = require("../../config/database");
+const { eventBus } = require("../../shared/services/event-bus");
 
 function list(req, res, next) {
   try {
@@ -42,7 +43,9 @@ function create(req, res, next) {
       .prepare("INSERT INTO workouts (user_id, name, notes) VALUES (?, ?, ?)")
       .run(req.userId, req.body.name, req.body.notes || null);
 
-    const workout = db.prepare("SELECT * FROM workouts WHERE id = ?").get(result.lastInsertRowid);
+    const workout = db
+      .prepare("SELECT * FROM workouts WHERE id = ?")
+      .get(result.lastInsertRowid);
     res.status(201).json(workout);
   } catch (err) {
     next(err);
@@ -62,7 +65,9 @@ function addExercise(req, res, next) {
     }
 
     const last = db
-      .prepare("SELECT MAX(sort_order) as max_order FROM workout_exercises WHERE workout_id = ?")
+      .prepare(
+        "SELECT MAX(sort_order) as max_order FROM workout_exercises WHERE workout_id = ?"
+      )
       .get(workoutId);
     const sortOrder = (last?.max_order ?? -1) + 1;
 
@@ -80,7 +85,14 @@ function addExercise(req, res, next) {
 
     for (let i = 0; i < req.body.sets.length; i++) {
       const s = req.body.sets[i];
-      insertSet.run(weId, i + 1, s.reps || null, s.weightKg || null, s.durationSec || null, s.distanceM || null);
+      insertSet.run(
+        weId,
+        i + 1,
+        s.reps || null,
+        s.weightKg || null,
+        s.durationSec || null,
+        s.distanceM || null
+      );
     }
 
     const workoutExercise = db
@@ -90,7 +102,9 @@ function addExercise(req, res, next) {
       .prepare("SELECT * FROM exercises WHERE id = ?")
       .get(req.body.exerciseId);
     const sets = db
-      .prepare("SELECT * FROM workout_exercise_sets WHERE workout_exercise_id = ? ORDER BY set_number")
+      .prepare(
+        "SELECT * FROM workout_exercise_sets WHERE workout_exercise_id = ? ORDER BY set_number"
+      )
       .all(weId);
 
     res.status(201).json({ ...workoutExercise, exercise, sets });
@@ -111,8 +125,13 @@ function complete(req, res, next) {
       return res.status(404).json({ error: "Workout not found" });
     }
 
-    db.prepare("UPDATE workouts SET ended_at = datetime('now') WHERE id = ?").run(workoutId);
+    db.prepare("UPDATE workouts SET ended_at = datetime('now') WHERE id = ?").run(
+      workoutId
+    );
     const updated = db.prepare("SELECT * FROM workouts WHERE id = ?").get(workoutId);
+
+    eventBus.emit("workout.completed", { workout: updated, userId: req.userId });
+
     res.json(updated);
   } catch (err) {
     next(err);
@@ -121,11 +140,15 @@ function complete(req, res, next) {
 
 function getWorkoutExercises(db, workoutId) {
   const wes = db
-    .prepare("SELECT * FROM workout_exercises WHERE workout_id = ? ORDER BY sort_order")
+    .prepare(
+      "SELECT * FROM workout_exercises WHERE workout_id = ? ORDER BY sort_order"
+    )
     .all(workoutId);
 
   for (const we of wes) {
-    we.exercise = db.prepare("SELECT * FROM exercises WHERE id = ?").get(we.exercise_id);
+    we.exercise = db
+      .prepare("SELECT * FROM exercises WHERE id = ?")
+      .get(we.exercise_id);
     we.sets = db
       .prepare(
         "SELECT * FROM workout_exercise_sets WHERE workout_exercise_id = ? ORDER BY set_number"

@@ -1,14 +1,14 @@
 const { Router } = require("express");
 const { body } = require("express-validator");
-const { authenticate } = require("../middleware/auth");
-const { validate } = require("../middleware/validate");
-const goalController = require("../controllers/goals");
+const { authenticate } = require("../../shared/middleware/authenticate");
+const { validate } = require("../../shared/middleware/validate");
+const controller = require("./controller");
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get("/", goalController.list);
+router.get("/", controller.list);
 
 router.post(
   "/",
@@ -18,7 +18,7 @@ router.post(
     body("targetDate").optional().isISO8601(),
     validate,
   ],
-  goalController.create
+  controller.create
 );
 
 router.put(
@@ -30,9 +30,9 @@ router.put(
     body("status").optional().isIn(["active", "completed", "abandoned"]),
     validate,
   ],
-  goalController.update
+  controller.update
 );
 
-router.delete("/:id", goalController.remove);
+router.delete("/:id", controller.remove);
 
 module.exports = router;

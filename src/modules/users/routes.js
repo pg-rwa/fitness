@@ -1,14 +1,14 @@
 const { Router } = require("express");
 const { body } = require("express-validator");
-const { authenticate } = require("../middleware/auth");
-const { validate } = require("../middleware/validate");
-const userController = require("../controllers/users");
+const { authenticate } = require("../../shared/middleware/authenticate");
+const { validate } = require("../../shared/middleware/validate");
+const controller = require("./controller");
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get("/me", userController.getProfile);
+router.get("/me", controller.getProfile);
 
 router.put(
   "/me/profile",
@@ -20,7 +20,7 @@ router.put(
     body("fitnessLevel").optional().isIn(["beginner", "intermediate", "advanced"]),
     validate,
   ],
-  userController.updateProfile
+  controller.updateProfile
 );
 
 module.exports = router;

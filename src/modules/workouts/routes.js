@@ -1,20 +1,20 @@
 const { Router } = require("express");
 const { body } = require("express-validator");
-const { authenticate } = require("../middleware/auth");
-const { validate } = require("../middleware/validate");
-const workoutController = require("../controllers/workouts");
+const { authenticate } = require("../../shared/middleware/authenticate");
+const { validate } = require("../../shared/middleware/validate");
+const controller = require("./controller");
 
 const router = Router();
 
 router.use(authenticate);
 
-router.get("/", workoutController.list);
-router.get("/:id", workoutController.getById);
+router.get("/", controller.list);
+router.get("/:id", controller.getById);
 
 router.post(
   "/",
   [body("name").trim().notEmpty(), body("notes").optional().isString(), validate],
-  workoutController.create
+  controller.create
 );
 
 router.post(
@@ -28,9 +28,9 @@ router.post(
     body("sets.*.distanceM").optional().isFloat({ min: 0 }),
     validate,
   ],
-  workoutController.addExercise
+  controller.addExercise
 );
 
-router.put("/:id/complete", workoutController.complete);
+router.put("/:id/complete", controller.complete);
 
 module.exports = router;

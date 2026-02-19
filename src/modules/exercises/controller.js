@@ -1,4 +1,4 @@
-const { getDb } = require("../config/database");
+const { getDb } = require("../../config/database");
 
 function list(req, res, next) {
   try {

@@ -1,4 +1,4 @@
-const { getDb } = require("../config/database");
+const { getDb } = require("../../config/database");
 
 function list(req, res, next) {
   try {
@@ -16,10 +16,19 @@ function create(req, res, next) {
   try {
     const db = getDb();
     const result = db
-      .prepare("INSERT INTO goals (user_id, title, description, target_date) VALUES (?, ?, ?, ?)")
-      .run(req.userId, req.body.title, req.body.description || null, req.body.targetDate || null);
+      .prepare(
+        "INSERT INTO goals (user_id, title, description, target_date) VALUES (?, ?, ?, ?)"
+      )
+      .run(
+        req.userId,
+        req.body.title,
+        req.body.description || null,
+        req.body.targetDate || null
+      );
 
-    const goal = db.prepare("SELECT * FROM goals WHERE id = ?").get(result.lastInsertRowid);
+    const goal = db
+      .prepare("SELECT * FROM goals WHERE id = ?")
+      .get(result.lastInsertRowid);
     res.status(201).json(goal);
   } catch (err) {
     next(err);
@@ -40,10 +49,22 @@ function update(req, res, next) {
 
     const fields = [];
     const values = [];
-    if (req.body.title !== undefined) { fields.push("title = ?"); values.push(req.body.title); }
-    if (req.body.description !== undefined) { fields.push("description = ?"); values.push(req.body.description); }
-    if (req.body.targetDate !== undefined) { fields.push("target_date = ?"); values.push(req.body.targetDate); }
-    if (req.body.status !== undefined) { fields.push("status = ?"); values.push(req.body.status); }
+    if (req.body.title !== undefined) {
+      fields.push("title = ?");
+      values.push(req.body.title);
+    }
+    if (req.body.description !== undefined) {
+      fields.push("description = ?");
+      values.push(req.body.description);
+    }
+    if (req.body.targetDate !== undefined) {
+      fields.push("target_date = ?");
+      values.push(req.body.targetDate);
+    }
+    if (req.body.status !== undefined) {
+      fields.push("status = ?");
+      values.push(req.body.status);
+    }
     fields.push("updated_at = datetime('now')");
     values.push(goalId);
 

@@ -1,0 +1,111 @@
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+const { getDb } = require("../../config/database");
+
+class LocalStorageAdapter {
+  constructor(uploadDir) {
+    this.uploadDir = uploadDir || path.join(__dirname, "../../../uploads");
+    if (!fs.existsSync(this.uploadDir)) {
+      fs.mkdirSync(this.uploadDir, { recursive: true });
+    }
+  }
+
+  async save(buffer, filename) {
+    const ext = path.extname(filename);
+    const uniqueName = `${crypto.randomBytes(16).toString("hex")}${ext}`;
+    const filePath = path.join(this.uploadDir, uniqueName);
+    fs.writeFileSync(filePath, buffer);
+    return `/uploads/${uniqueName}`;
+  }
+
+  async remove(url) {
+    const filename = path.basename(url);
+    const filePath = path.join(this.uploadDir, filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+}
+
+class S3StorageAdapter {
+  constructor(config) {
+    this.bucket = config.bucket;
+    this.region = config.region;
+    this.prefix = config.prefix || "uploads";
+  }
+
+  async save(buffer, filename) {
+    // Placeholder - would use AWS SDK in production
+    const ext = path.extname(filename);
+    const key = `${this.prefix}/${crypto.randomBytes(16).toString("hex")}${ext}`;
+    return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
+  }
+
+  async remove(url) {
+    // Placeholder - would use AWS SDK in production
+  }
+}
+
+class FileUploadService {
+  constructor(adapter) {
+    this.adapter = adapter || new LocalStorageAdapter();
+  }
+
+  async upload({ userId, buffer, originalName, mimeType, entityType, entityId }) {
+    const url = await this.adapter.save(buffer, originalName);
+    const sizeBytes = buffer.length;
+
+    const db = getDb();
+    const result = db
+      .prepare(
+        `INSERT INTO file_uploads (user_id, entity_type, entity_id, url, original_name, mime_type, size_bytes)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(userId, entityType || null, entityId || null, url, originalName, mimeType, sizeBytes);
+
+    return db.prepare("SELECT * FROM file_uploads WHERE id = ?").get(result.lastInsertRowid);
+  }
+
+  async remove(id, userId) {
+    const db = getDb();
+    const file = db
+      .prepare("SELECT * FROM file_uploads WHERE id = ? AND user_id = ?")
+      .get(id, userId);
+
+    if (!file) return null;
+
+    await this.adapter.remove(file.url);
+    db.prepare("DELETE FROM file_uploads WHERE id = ?").run(id);
+    return file;
+  }
+
+  getByEntity(entityType, entityId) {
+    const db = getDb();
+    return db
+      .prepare("SELECT * FROM file_uploads WHERE entity_type = ? AND entity_id = ? ORDER BY created_at DESC")
+      .all(entityType, entityId);
+  }
+
+  getByUser(userId) {
+    const db = getDb();
+    return db
+      .prepare("SELECT * FROM file_uploads WHERE user_id = ? ORDER BY created_at DESC")
+      .all(userId);
+  }
+}
+
+function createFileUploadService() {
+  const storageType = process.env.STORAGE_TYPE || "local";
+  if (storageType === "s3") {
+    const adapter = new S3StorageAdapter({
+      bucket: process.env.S3_BUCKET,
+      region: process.env.S3_REGION || "us-east-1",
+      prefix: process.env.S3_PREFIX || "uploads",
+    });
+    return new FileUploadService(adapter);
+  }
+  return new FileUploadService(new LocalStorageAdapter());
+}
+
+module.exports = { FileUploadService, LocalStorageAdapter, S3StorageAdapter, createFileUploadService };

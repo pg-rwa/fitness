@@ -1,16 +1,18 @@
 require("dotenv").config();
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const { initDb } = require("./config/database");
-
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
-const exerciseRoutes = require("./routes/exercises");
-const workoutRoutes = require("./routes/workouts");
-const goalRoutes = require("./routes/goals");
+const { FeatureFlags } = require("./config/features");
+const { ModuleRegistry } = require("./shared/services/module-registry");
+const { eventBus } = require("./shared/services/event-bus");
+const { errorHandler } = require("./shared/middleware/error-handler");
 
 initDb();
+
+const features = new FeatureFlags();
+const registry = new ModuleRegistry();
 
 const app = express();
 
@@ -19,20 +21,11 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", modules: registry.list() });
 });
 
-app.use("/api/auth", authRoutes);
-app.use("/api/users", userRoutes);
-app.use("/api/exercises", exerciseRoutes);
-app.use("/api/workouts", workoutRoutes);
-app.use("/api/goals", goalRoutes);
+registry.loadAll(path.join(__dirname, "modules"), app, { features, eventBus });
 
-app.use((err, _req, res, _next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || "Internal server error",
-  });
-});
+app.use(errorHandler);
 
 module.exports = app;
