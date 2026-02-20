@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "../../lib/api";
 import StatCard from "../../components/StatCard";
 
@@ -61,15 +62,15 @@ export default function DashboardPage() {
         <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
           <h2 className="text-white font-semibold mb-4">Quick Actions</h2>
           <div className="space-y-2">
-            <a href="/dashboard/users" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
+            <Link href="/dashboard/users" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
               Manage Users →
-            </a>
-            <a href="/dashboard/foods" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
+            </Link>
+            <Link href="/dashboard/foods" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
               Manage Food Database →
-            </a>
-            <a href="/dashboard/features" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
+            </Link>
+            <Link href="/dashboard/features" className="block px-4 py-3 bg-gray-900 rounded-lg hover:bg-gray-700 transition-colors text-gray-300 text-sm">
               Feature Flags →
-            </a>
+            </Link>
           </div>
         </div>
       </div>

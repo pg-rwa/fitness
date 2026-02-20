@@ -49,7 +49,7 @@ export default function Sidebar() {
       </nav>
 
       <button
-        onClick={() => { localStorage.removeItem("admin_token"); window.location.href = "/login"; }}
+        onClick={() => { localStorage.removeItem("admin_token"); window.location.href = "/admin/login"; }}
         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-800 mt-4"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
