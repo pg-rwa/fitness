@@ -1,42 +1,85 @@
 const { createNotification } = require("./service");
 const { getDb } = require("../../config/database");
+const { wsManager } = require("../../shared/services/websocket");
+const {
+  sessionApprovedEmail,
+  sessionDeclinedEmail,
+  sessionRequestEmail,
+} = require("../../shared/services/email");
+
+function getUserEmail(userId) {
+  try {
+    const db = getDb();
+    const user = db.prepare("SELECT email, first_name || ' ' || last_name AS name FROM users WHERE id = ?").get(userId);
+    return user;
+  } catch {
+    return null;
+  }
+}
+
+function notifyAndPush(payload) {
+  const notification = createNotification(payload);
+  // Push real-time via WebSocket
+  wsManager.send(payload.userId, {
+    type: "notification",
+    data: notification,
+  });
+  return notification;
+}
 
 function setupListeners(eventBus) {
   eventBus.on("session.requested", ({ session }) => {
-    // Notify trainer when client requests a session
     if (session.requested_by === "client") {
-      createNotification({
+      notifyAndPush({
         userId: session.trainer_id,
         type: "session_request",
         title: "New Session Request",
         body: `A client has requested a session: ${session.title}`,
         data: { sessionId: session.id },
       });
+
+      // Send email to trainer
+      const trainer = getUserEmail(session.trainer_id);
+      const client = getUserEmail(session.client_id);
+      if (trainer && trainer.email) {
+        sessionRequestEmail(trainer.email, session, client ? client.name : "A client");
+      }
     }
   });
 
   eventBus.on("session.approved", ({ session }) => {
-    createNotification({
+    notifyAndPush({
       userId: session.client_id,
       type: "session_approved",
       title: "Session Approved",
       body: `Your session "${session.title}" has been approved`,
       data: { sessionId: session.id },
     });
+
+    // Send email to client
+    const client = getUserEmail(session.client_id);
+    if (client && client.email) {
+      sessionApprovedEmail(client.email, session);
+    }
   });
 
   eventBus.on("session.declined", ({ session }) => {
-    createNotification({
+    notifyAndPush({
       userId: session.client_id,
       type: "session_declined",
       title: "Session Declined",
       body: `Your session "${session.title}" was declined${session.decline_reason ? ": " + session.decline_reason : ""}`,
       data: { sessionId: session.id },
     });
+
+    const client = getUserEmail(session.client_id);
+    if (client && client.email) {
+      sessionDeclinedEmail(client.email, session);
+    }
   });
 
   eventBus.on("workout.assigned", ({ assignment, clientId }) => {
-    createNotification({
+    notifyAndPush({
       userId: clientId,
       type: "workout_assigned",
       title: "New Workout Assigned",
@@ -47,8 +90,7 @@ function setupListeners(eventBus) {
 
   eventBus.on("workout.completed", ({ session, personalRecords }) => {
     if (personalRecords && personalRecords.length > 0) {
-      // Notify the user about their PR
-      createNotification({
+      notifyAndPush({
         userId: session.user_id,
         type: "personal_record",
         title: "New Personal Record!",
@@ -56,11 +98,10 @@ function setupListeners(eventBus) {
         data: { sessionId: session.id, records: personalRecords },
       });
 
-      // Notify trainer if user has one
       const db = getDb();
       const user = db.prepare("SELECT trainer_id FROM users WHERE id = ?").get(session.user_id);
       if (user && user.trainer_id) {
-        createNotification({
+        notifyAndPush({
           userId: user.trainer_id,
           type: "client_pr",
           title: "Client Set a PR!",
@@ -69,6 +110,13 @@ function setupListeners(eventBus) {
         });
       }
     }
+  });
+
+  eventBus.on("insight.generated", ({ insights, userId }) => {
+    wsManager.send(userId, {
+      type: "insights",
+      data: insights,
+    });
   });
 }
 

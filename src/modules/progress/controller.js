@@ -224,7 +224,45 @@ function deletePhoto(req, res, next) {
   }
 }
 
+async function uploadPhotoFile(req, res, next) {
+  try {
+    const { ValidationError } = require("../../shared/utils/errors");
+    if (!req.file) {
+      throw new ValidationError("No file uploaded");
+    }
+
+    const { createFileUploadService } = require("../../shared/services/file-upload");
+    const uploadService = createFileUploadService();
+
+    const fileRecord = await uploadService.upload({
+      userId: req.userId,
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      entityType: "progress_photo",
+    });
+
+    const db = getDb();
+    const category = req.body.category || "front";
+    const notes = req.body.notes || null;
+    const takenAt = req.body.takenAt || new Date().toISOString();
+
+    const result = db
+      .prepare(
+        `INSERT INTO progress_photos (user_id, photo_url, category, notes, taken_at)
+         VALUES (?, ?, ?, ?, ?)`
+      )
+      .run(req.userId, fileRecord.url, category, notes, takenAt);
+
+    const photo = db.prepare("SELECT * FROM progress_photos WHERE id = ?").get(result.lastInsertRowid);
+    await eventBus.emit("photo.uploaded", { photo, userId: req.userId });
+    res.status(201).json(photo);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   recordMeasurement, listMeasurements, latestMeasurement, measurementTrends,
-  uploadPhoto, listPhotos, comparePhotos, deletePhoto,
+  uploadPhoto, listPhotos, comparePhotos, deletePhoto, uploadPhotoFile,
 };

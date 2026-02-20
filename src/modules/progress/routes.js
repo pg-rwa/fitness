@@ -4,6 +4,8 @@ const controller = require("./controller");
 const { validate } = require("../../shared/middleware/validate");
 const { authenticate } = require("../../shared/middleware/authenticate");
 const { authorize } = require("../../shared/middleware/authorize");
+const { uploadImage } = require("../../shared/middleware/upload");
+const { uploadLimiter } = require("../../shared/middleware/rate-limit");
 
 const router = Router();
 router.use(authenticate);
@@ -51,6 +53,14 @@ router.post(
     validate,
   ],
   controller.uploadPhoto
+);
+
+// File-based photo upload (multipart/form-data)
+router.post(
+  "/photos/upload",
+  uploadLimiter,
+  uploadImage.single("photo"),
+  controller.uploadPhotoFile
 );
 
 router.get("/photos", controller.listPhotos);

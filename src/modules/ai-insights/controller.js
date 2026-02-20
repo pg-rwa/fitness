@@ -43,72 +43,84 @@ function markRead(req, res, next) {
   }
 }
 
-/**
- * Generate insights for a user based on their recent data.
- * In production, this would call the Claude API. For now, it uses rule-based generation.
- */
-async function generateInsights(req, res, next) {
-  try {
-    const db = getDb();
-    const userId = req.params.clientId ? parseInt(req.params.clientId, 10) : req.userId;
+// ─── Data collection helper ────────────────────────────────────
 
-    // Only trainers/admins can trigger insight generation for clients
-    if (req.params.clientId && req.userRole !== "admin" && req.userRole !== "trainer") {
-      throw new ForbiddenError();
-    }
+function gatherUserData(db, userId) {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const insights = [];
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const workoutCount = db
+    .prepare("SELECT COUNT(*) as count FROM workout_sessions WHERE user_id = ? AND started_at >= ?")
+    .get(userId, thirtyDaysAgo);
 
-    // Workout frequency insight
-    const workoutCount = db
-      .prepare("SELECT COUNT(*) as count FROM workout_sessions WHERE user_id = ? AND started_at >= ?")
-      .get(userId, thirtyDaysAgo);
+  const prCount = db
+    .prepare("SELECT COUNT(*) as count FROM personal_records WHERE user_id = ? AND achieved_at >= ?")
+    .get(userId, thirtyDaysAgo);
 
-    if (workoutCount.count >= 12) {
-      insights.push({
-        type: "habit",
-        title: "Consistent Training!",
-        body: `You've completed ${workoutCount.count} workouts in the last 30 days. Great consistency!`,
-        data: { workoutCount: workoutCount.count },
-      });
-    } else if (workoutCount.count > 0 && workoutCount.count < 8) {
-      insights.push({
-        type: "warning",
-        title: "Training Frequency",
-        body: `You've only completed ${workoutCount.count} workouts in the last 30 days. Try to aim for 3-4 sessions per week.`,
-        data: { workoutCount: workoutCount.count },
-      });
-    }
+  const measurements = db
+    .prepare(
+      `SELECT weight_kg, body_fat_pct, recorded_at FROM body_measurements
+       WHERE user_id = ? AND recorded_at >= ? ORDER BY recorded_at ASC`
+    )
+    .all(userId, thirtyDaysAgo);
 
-    // Personal records insight
-    const prCount = db
-      .prepare("SELECT COUNT(*) as count FROM personal_records WHERE user_id = ? AND achieved_at >= ?")
-      .get(userId, thirtyDaysAgo);
+  const nutritionSummary = db
+    .prepare(
+      `SELECT AVG(daily_protein) as avg_protein, AVG(daily_calories) as avg_calories FROM (
+         SELECT SUM(mli.protein_g) as daily_protein, SUM(mli.calories) as daily_calories
+         FROM meal_logs ml
+         JOIN meal_log_items mli ON ml.id = mli.meal_log_id
+         WHERE ml.user_id = ? AND ml.logged_at >= ?
+         GROUP BY date(ml.logged_at)
+       )`
+    )
+    .get(userId, thirtyDaysAgo);
 
-    if (prCount.count > 0) {
-      insights.push({
-        type: "milestone",
-        title: "Personal Records",
-        body: `You've set ${prCount.count} personal record(s) in the last 30 days. Keep pushing!`,
-        data: { prCount: prCount.count },
-      });
-    }
+  const goals = db
+    .prepare("SELECT * FROM goals WHERE user_id = ? AND status = 'active'")
+    .all(userId);
 
-    // Weight trend insight
-    const measurements = db
-      .prepare(
-        `SELECT weight_kg, recorded_at FROM body_measurements
-         WHERE user_id = ? AND weight_kg IS NOT NULL AND recorded_at >= ?
-         ORDER BY recorded_at ASC`
-      )
-      .all(userId, thirtyDaysAgo);
+  const recentPRs = db
+    .prepare("SELECT * FROM personal_records WHERE user_id = ? AND achieved_at >= ? ORDER BY achieved_at DESC LIMIT 5")
+    .all(userId, thirtyDaysAgo);
 
-    if (measurements.length >= 2) {
-      const first = measurements[0].weight_kg;
-      const last = measurements[measurements.length - 1].weight_kg;
+  return { workoutCount: workoutCount.count, prCount: prCount.count, measurements, nutritionSummary, goals, recentPRs, thirtyDaysAgo };
+}
+
+// ─── Rule-based fallback ────────────────────────────────────────
+
+function generateRuleBasedInsights(data) {
+  const insights = [];
+
+  if (data.workoutCount >= 12) {
+    insights.push({
+      type: "habit",
+      title: "Consistent Training!",
+      body: `You've completed ${data.workoutCount} workouts in the last 30 days. Great consistency!`,
+      data: { workoutCount: data.workoutCount },
+    });
+  } else if (data.workoutCount > 0 && data.workoutCount < 8) {
+    insights.push({
+      type: "warning",
+      title: "Training Frequency",
+      body: `You've only completed ${data.workoutCount} workouts in the last 30 days. Try to aim for 3-4 sessions per week.`,
+      data: { workoutCount: data.workoutCount },
+    });
+  }
+
+  if (data.prCount > 0) {
+    insights.push({
+      type: "milestone",
+      title: "Personal Records",
+      body: `You've set ${data.prCount} personal record(s) in the last 30 days. Keep pushing!`,
+      data: { prCount: data.prCount },
+    });
+  }
+
+  if (data.measurements.length >= 2) {
+    const first = data.measurements[0].weight_kg;
+    const last = data.measurements[data.measurements.length - 1].weight_kg;
+    if (first && last) {
       const diff = Math.round((last - first) * 10) / 10;
-
       if (Math.abs(diff) >= 0.5) {
         insights.push({
           type: "trend",
@@ -118,28 +130,95 @@ async function generateInsights(req, res, next) {
         });
       }
     }
+  }
 
-    // Nutrition insight
-    const nutritionSummary = db
-      .prepare(
-        `SELECT AVG(daily_protein) as avg_protein FROM (
-           SELECT SUM(mli.protein_g) as daily_protein
-           FROM meal_logs ml
-           JOIN meal_log_items mli ON ml.id = mli.meal_log_id
-           WHERE ml.user_id = ? AND ml.logged_at >= ?
-           GROUP BY date(ml.logged_at)
-         )`
-      )
-      .get(userId, thirtyDaysAgo);
+  if (data.nutritionSummary && data.nutritionSummary.avg_protein) {
+    const avgProtein = Math.round(data.nutritionSummary.avg_protein);
+    insights.push({
+      type: "tip",
+      title: "Protein Intake",
+      body: `Your average daily protein intake is ${avgProtein}g. ${avgProtein < 120 ? "Consider increasing protein for better recovery." : "Great protein intake!"}`,
+      data: { avgProteinG: avgProtein },
+    });
+  }
 
-    if (nutritionSummary && nutritionSummary.avg_protein) {
-      const avgProtein = Math.round(nutritionSummary.avg_protein);
-      insights.push({
-        type: "tip",
-        title: "Protein Intake",
-        body: `Your average daily protein intake is ${avgProtein}g. ${avgProtein < 120 ? "Consider increasing protein for better recovery." : "Great protein intake!"}`,
-        data: { avgProteinG: avgProtein },
-      });
+  return insights;
+}
+
+// ─── Claude AI insights ─────────────────────────────────────────
+
+async function generateClaudeInsights(data) {
+  const Anthropic = require("@anthropic-ai/sdk");
+  const client = new Anthropic();
+
+  const summary = {
+    workoutsLast30Days: data.workoutCount,
+    personalRecords: data.prCount,
+    recentPRs: data.recentPRs.map((pr) => ({ exercise: pr.exercise_name, value: pr.value, metric: pr.metric })),
+    weightMeasurements: data.measurements
+      .filter((m) => m.weight_kg)
+      .map((m) => ({ weight: m.weight_kg, date: m.recorded_at })),
+    bodyFatMeasurements: data.measurements
+      .filter((m) => m.body_fat_pct)
+      .map((m) => ({ bodyFat: m.body_fat_pct, date: m.recorded_at })),
+    avgDailyProtein: data.nutritionSummary?.avg_protein ? Math.round(data.nutritionSummary.avg_protein) : null,
+    avgDailyCalories: data.nutritionSummary?.avg_calories ? Math.round(data.nutritionSummary.avg_calories) : null,
+    activeGoals: data.goals.map((g) => ({ title: g.title, target: g.target_value, current: g.current_value, type: g.type })),
+  };
+
+  const message = await client.messages.create({
+    model: "claude-sonnet-4-5-20250929",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: `You are a fitness coach AI. Analyze this user's fitness data from the last 30 days and generate actionable insights.
+
+Data: ${JSON.stringify(summary)}
+
+Return a JSON array of insights. Each insight must have:
+- "type": one of "habit", "warning", "milestone", "trend", "tip", "recommendation"
+- "title": short title (max 50 chars)
+- "body": detailed insight (1-2 sentences, motivational and specific)
+- "data": relevant data points as an object
+
+Generate 2-5 insights based on what the data shows. Focus on actionable advice, trends, and encouragement. If data is sparse, give general tips.
+
+Return ONLY valid JSON, no markdown or extra text.`,
+      },
+    ],
+  });
+
+  const text = message.content[0].text.trim();
+  // Parse JSON, stripping any markdown code fences
+  const cleaned = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+  return JSON.parse(cleaned);
+}
+
+// ─── Generate insights endpoint ─────────────────────────────────
+
+async function generateInsights(req, res, next) {
+  try {
+    const db = getDb();
+    const userId = req.params.clientId ? parseInt(req.params.clientId, 10) : req.userId;
+
+    if (req.params.clientId && req.userRole !== "admin" && req.userRole !== "trainer") {
+      throw new ForbiddenError();
+    }
+
+    const data = gatherUserData(db, userId);
+    let insights;
+
+    // Use Claude API if configured, otherwise fall back to rule-based
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        insights = await generateClaudeInsights(data);
+      } catch (err) {
+        console.error("[ai-insights] Claude API error, falling back to rules:", err.message);
+        insights = generateRuleBasedInsights(data);
+      }
+    } else {
+      insights = generateRuleBasedInsights(data);
     }
 
     // Store insights

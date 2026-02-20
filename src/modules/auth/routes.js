@@ -4,11 +4,13 @@ const controller = require("./controller");
 const { validate } = require("../../shared/middleware/validate");
 const { authenticate } = require("../../shared/middleware/authenticate");
 const { authorize } = require("../../shared/middleware/authorize");
+const { authLimiter } = require("../../shared/middleware/rate-limit");
 
 const router = Router();
 
 router.post(
   "/register",
+  authLimiter,
   [
     body("email").isEmail().normalizeEmail(),
     body("password")
@@ -27,6 +29,7 @@ router.post(
 
 router.post(
   "/login",
+  authLimiter,
   [body("email").isEmail().normalizeEmail(), body("password").notEmpty(), validate],
   controller.login
 );
