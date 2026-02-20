@@ -1,0 +1,22 @@
+# ─── FitTracker Production Crontab ──────────────────────────────
+# Install: crontab deploy/monitoring/crontab.example
+# Edit env vars below before installing.
+
+DOMAIN=fittracker.app
+ALERT_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+ALERT_EMAIL=ops@fittracker.app
+
+# Health check every minute
+* * * * * cd /opt/fittracker && bash deploy/monitoring/health-check.sh >> /var/log/fittracker/health.log 2>&1
+
+# Disk space check every hour
+0 * * * * cd /opt/fittracker && bash deploy/monitoring/disk-check.sh >> /var/log/fittracker/disk.log 2>&1
+
+# SSL renewal twice daily
+0 */12 * * * cd /opt/fittracker && bash deploy/ssl-renew.sh >> /var/log/fittracker/ssl.log 2>&1
+
+# Database backup daily at 3 AM
+0 3 * * * cd /opt/fittracker && bash deploy/backup.sh >> /var/log/fittracker/backup.log 2>&1
+
+# Docker log cleanup weekly
+0 0 * * 0 docker system prune -f >> /var/log/fittracker/cleanup.log 2>&1
