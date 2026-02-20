@@ -31,8 +31,11 @@ app.get("/api/health", (_req, res) => {
   const { wsManager } = require("./shared/services/websocket");
   res.json({
     status: "ok",
+    version: require("../package.json").version,
+    uptime: Math.floor(process.uptime()),
     modules: registry.list(),
     wsClients: wsManager.getOnlineCount(),
+    memory: Math.round(process.memoryUsage().rss / 1024 / 1024),
   });
 });
 
