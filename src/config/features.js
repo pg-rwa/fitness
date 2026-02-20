@@ -10,7 +10,7 @@ const defaults = {
   "workout-sessions": true,
   "assigned-workouts": true,
   scheduling: true,
-  nutrition: false,
+  nutrition: true,
   progress: true,
   calendar: true,
   "health-sync": false,
