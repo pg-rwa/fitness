@@ -9,6 +9,7 @@
 set -euo pipefail
 
 APP_DIR="/opt/fittracker"
+HTTP_PORT="${HTTP_PORT:-8080}"
 
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
@@ -44,10 +45,10 @@ fi
 # ─── 3. Firewall ────────────────────────────────────────────────
 if command -v ufw &> /dev/null; then
   echo "==> Configuring firewall..."
-  ufw allow 22/tcp  > /dev/null 2>&1
-  ufw allow 80/tcp  > /dev/null 2>&1
-  ufw --force enable > /dev/null 2>&1
-  echo "==> Firewall: SSH (22) and HTTP (80) open"
+  ufw allow 22/tcp          > /dev/null 2>&1
+  ufw allow ${HTTP_PORT}/tcp > /dev/null 2>&1
+  ufw --force enable        > /dev/null 2>&1
+  echo "==> Firewall: SSH (22) and HTTP (${HTTP_PORT}) open"
 fi
 
 # ─── 4. Clone or update repo ────────────────────────────────────
@@ -77,18 +78,22 @@ fi
 cd "${APP_DIR}"
 
 # ─── 5. Generate .env if missing ────────────────────────────────
+DROPLET_IP=$(curl -sf http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || hostname -I | awk '{print $1}')
+
 if [ ! -f .env ]; then
   echo "==> Generating .env with random JWT secret..."
   JWT_SECRET=$(openssl rand -base64 48)
-  DROPLET_IP=$(curl -sf http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || hostname -I | awk '{print $1}')
 
   cat > .env <<EOF
 # ─── FitTracker Production Config ────────────────
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=15m
 
+# Port (default 8080 to avoid conflicts with other apps)
+HTTP_PORT=${HTTP_PORT}
+
 # Set this to your droplet's public IP
-PUBLIC_API_URL=http://${DROPLET_IP}/api
+PUBLIC_API_URL=http://${DROPLET_IP}:${HTTP_PORT}/api
 
 # Storage (local filesystem by default)
 STORAGE_TYPE=local
@@ -109,7 +114,7 @@ RATE_LIMIT_MAX=100
 EOF
   chmod 600 .env
   echo "==> .env created (JWT_SECRET auto-generated)"
-  echo "    PUBLIC_API_URL=http://${DROPLET_IP}/api"
+  echo "    PUBLIC_API_URL=http://${DROPLET_IP}:${HTTP_PORT}/api"
 else
   echo "==> .env already exists, keeping it"
 fi
@@ -144,17 +149,14 @@ if [ $RETRIES -le 0 ]; then
   exit 1
 fi
 
-# ─── 9. Get the IP ──────────────────────────────────────────────
-DROPLET_IP=$(curl -sf http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || hostname -I | awk '{print $1}')
-
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
 echo "  ║         Deploy Complete!                 ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo ""
-echo "  API Health:  http://${DROPLET_IP}/api/health"
-echo "  Admin Panel: http://${DROPLET_IP}/admin/"
-echo "  WebSocket:   ws://${DROPLET_IP}/ws"
+echo "  API Health:  http://${DROPLET_IP}:${HTTP_PORT}/api/health"
+echo "  Admin Panel: http://${DROPLET_IP}:${HTTP_PORT}/admin/"
+echo "  WebSocket:   ws://${DROPLET_IP}:${HTTP_PORT}/ws"
 echo ""
 echo "  Useful commands:"
 echo "    docker compose -f docker-compose.prod.yml logs -f       # View logs"
