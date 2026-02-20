@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "FitTracker",
+    "slug": "fittracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "scheme": "fittracker",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E1E2E"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fittracker.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E1E2E"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.fittracker.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": ["expo-router", "expo-secure-store"]
+  }
+}
