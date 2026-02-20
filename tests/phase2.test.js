@@ -122,13 +122,14 @@ describe("Equipment API", () => {
 
 describe("Enhanced Exercises API", () => {
   let customExerciseId;
+  const uniqueName = `Custom Cable Fly ${Date.now()}`;
 
   it("should allow trainer to create custom exercise", async () => {
     const res = await request(app)
       .post("/api/exercises")
       .set(trainerAuth())
       .send({
-        name: "Custom Cable Fly",
+        name: uniqueName,
         category: "strength",
         muscleGroup: "chest",
         secondaryMuscles: ["shoulders", "triceps"],
@@ -144,7 +145,7 @@ describe("Enhanced Exercises API", () => {
     const res = await request(app)
       .post("/api/exercises")
       .set(clientAuth())
-      .send({ name: "Unauthorized", category: "strength", muscleGroup: "chest" });
+      .send({ name: `Unauthorized ${Date.now()}`, category: "strength", muscleGroup: "chest" });
     expect(res.status).toBe(403);
   });
 
