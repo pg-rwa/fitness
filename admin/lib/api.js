@@ -30,7 +30,7 @@ export async function api(path, options = {}) {
 
   if (res.status === 401 && !noAuth) {
     clearToken();
-    window.location.href = "/login";
+    window.location.href = "/admin/login";
     throw new Error("Unauthorized");
   }
 
