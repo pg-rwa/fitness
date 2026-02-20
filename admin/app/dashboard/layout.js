@@ -14,7 +14,7 @@ export default function DashboardLayout({ children }) {
       router.replace("/login");
       return;
     }
-    api("/auth/me")
+    api("/users/me")
       .then((user) => {
         if (user.role !== "admin") {
           router.replace("/login");
