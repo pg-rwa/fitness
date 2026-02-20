@@ -13,8 +13,8 @@ const defaults = {
   nutrition: true,
   progress: true,
   calendar: true,
-  "health-sync": false,
-  "ai-insights": false,
+  "health-sync": true,
+  "ai-insights": true,
   notifications: true,
   admin: true,
 };
