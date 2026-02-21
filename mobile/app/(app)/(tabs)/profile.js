@@ -116,7 +116,7 @@ export default function ProfileScreen() {
         {/* Settings */}
         <SectionHeader title="Settings" />
         <Card>
-          <TouchableOpacity className="flex-row items-center py-2">
+          <TouchableOpacity className="flex-row items-center py-2" onPress={() => router.push("/(app)/notifications")}>
             <Ionicons name="notifications-outline" size={22} color="#6B7280" />
             <Text className="text-white ml-3 flex-1">Notifications</Text>
             <Ionicons name="chevron-forward" size={18} color="#6B7280" />

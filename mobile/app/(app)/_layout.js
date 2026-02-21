@@ -14,6 +14,9 @@ export default function AppLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="workout" />
       <Stack.Screen name="trainer" />
+      <Stack.Screen name="calendar" />
+      <Stack.Screen name="insights" />
+      <Stack.Screen name="notifications" />
     </Stack>
   );
 }

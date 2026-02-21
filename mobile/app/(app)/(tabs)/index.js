@@ -49,7 +49,7 @@ export default function HomeScreen() {
                 Hi, {user?.first_name || "there"}
               </Text>
             </View>
-            <TouchableOpacity className="relative">
+            <TouchableOpacity className="relative" onPress={() => router.push("/(app)/notifications")}>
               <Ionicons name="notifications-outline" size={26} color="white" />
               {notifications.unreadCount > 0 && (
                 <View className="absolute -top-1 -right-1 bg-primary rounded-full w-5 h-5 items-center justify-center">
@@ -91,6 +91,24 @@ export default function HomeScreen() {
             )}
           </View>
 
+          {/* Secondary actions */}
+          <View className="flex-row mb-2 gap-2">
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/calendar")}
+              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+            >
+              <Ionicons name="calendar" size={20} color="#3B82F6" />
+              <Text className="text-white font-medium text-sm ml-2">Calendar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/insights")}
+              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+            >
+              <Ionicons name="flash" size={20} color="#A855F7" />
+              <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Assigned Workouts */}
           {!isTrainer && assignments.length > 0 && (
             <>
@@ -117,7 +135,7 @@ export default function HomeScreen() {
           {/* AI Insights */}
           {insights.length > 0 && (
             <>
-              <SectionHeader title="Insights" />
+              <SectionHeader title="Insights" action="View All" onAction={() => router.push("/(app)/insights")} />
               {insights.map((insight) => {
                 const iconMap = { trend: "trending-up", habit: "flame", tip: "bulb", milestone: "trophy", warning: "warning" };
                 const colorMap = { trend: "#3B82F6", habit: "#10B981", tip: "#F59E0B", milestone: "#E8614D", warning: "#EF4444" };
@@ -141,7 +159,7 @@ export default function HomeScreen() {
           {/* Recent Notifications */}
           {notifications.data?.length > 0 && (
             <>
-              <SectionHeader title="Recent Activity" />
+              <SectionHeader title="Recent Activity" action="View All" onAction={() => router.push("/(app)/notifications")} />
               {notifications.data.slice(0, 3).map((n) => (
                 <Card key={n.id}>
                   <View className="flex-row items-center">
