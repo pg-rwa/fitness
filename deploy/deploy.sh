@@ -73,7 +73,8 @@ docker image prune -f
 
 echo ""
 echo "=== Deployment Complete ==="
-echo "  API:   https://${DOMAIN}/api/health"
-echo "  Admin: https://${DOMAIN}/admin/"
-echo "  WS:    wss://${DOMAIN}/ws"
+echo "  App:      https://${DOMAIN}/"
+echo "  API:      https://${DOMAIN}/api/health"
+echo "  Admin:    https://${DOMAIN}/admin/"
+echo "  WS:       wss://${DOMAIN}/ws"
 echo ""
