@@ -60,15 +60,37 @@ function SessionView({ session, onBack, onRefresh }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [showAddEx, setShowAddEx] = useState(false);
   const [setForm, setSetForm] = useState({});
+  const [exLoading, setExLoading] = useState(true);
+  const [exError, setExError] = useState(null);
+  const [exSearch, setExSearch] = useState("");
 
   useEffect(() => {
-    api("/exercises?limit=100").then((d) => setExerciseList(Array.isArray(d) ? d : (d.data || []))).catch(() => {});
+    setExLoading(true);
+    setExError(null);
+    api("/exercises?limit=200")
+      .then((d) => {
+        const list = Array.isArray(d) ? d : (d.data || []);
+        setExerciseList(list);
+        if (list.length === 0) setExError("No exercises found. Ask your trainer to seed the exercise database.");
+      })
+      .catch((err) => {
+        console.error("Failed to load exercises:", err);
+        setExError("Failed to load exercises. Please try again.");
+      })
+      .finally(() => setExLoading(false));
     if (session.id) {
       api(`/workout-sessions/${session.id}`).then((d) => {
         setExercises(d.exercises || []);
       }).catch(() => {});
     }
   }, [session.id]);
+
+  const filteredExercises = exSearch
+    ? exerciseList.filter((ex) =>
+        ex.name.toLowerCase().includes(exSearch.toLowerCase()) ||
+        (ex.muscle_group || "").toLowerCase().includes(exSearch.toLowerCase())
+      )
+    : exerciseList;
 
   const addExercise = async (exerciseId) => {
     try {
@@ -204,16 +226,32 @@ function SessionView({ session, onBack, onRefresh }) {
           </button>
 
           {showAddEx && (
-            <div className="mt-3 bg-gray-900 border border-gray-800 rounded-xl p-4 max-h-60 overflow-y-auto">
-              {exerciseList.map((ex) => (
-                <button
-                  key={ex.id}
-                  onClick={() => addExercise(ex.id)}
-                  className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded text-sm text-gray-300"
-                >
-                  {ex.name} <span className="text-gray-600 text-xs ml-1">{ex.muscle_group}</span>
-                </button>
-              ))}
+            <div className="mt-3 bg-gray-900 border border-gray-800 rounded-xl p-4">
+              <input
+                type="text"
+                placeholder="Search exercises..."
+                value={exSearch}
+                onChange={(e) => setExSearch(e.target.value)}
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm mb-3 focus:border-brand-500 focus:outline-none"
+                autoFocus
+              />
+              <div className="max-h-48 overflow-y-auto">
+                {exLoading && <p className="text-gray-500 text-sm py-2 text-center">Loading exercises...</p>}
+                {exError && <p className="text-red-400 text-sm py-2 text-center">{exError}</p>}
+                {!exLoading && !exError && filteredExercises.length === 0 && (
+                  <p className="text-gray-500 text-sm py-2 text-center">No exercises match your search.</p>
+                )}
+                {filteredExercises.map((ex) => (
+                  <button
+                    key={ex.id}
+                    onClick={() => addExercise(ex.id)}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded text-sm text-gray-300"
+                  >
+                    {ex.name} <span className="text-gray-600 text-xs ml-1">{ex.muscle_group}</span>
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => { setShowAddEx(false); setExSearch(""); }} className="w-full mt-2 text-gray-500 text-xs hover:text-gray-300">Cancel</button>
             </div>
           )}
         </>
