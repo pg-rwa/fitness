@@ -6,6 +6,7 @@ let trainerToken;
 let trainerUserId;
 let clientToken;
 let clientUserId;
+let exerciseIds = [];
 
 beforeAll(async () => {
   // Register trainer
@@ -32,6 +33,12 @@ beforeAll(async () => {
   // Link client to trainer
   const db = getDb();
   db.prepare("UPDATE users SET trainer_id = ? WHERE id = ?").run(trainerUserId, clientUserId);
+
+  // Fetch real exercise IDs from DB
+  const exRes = await request(app).get("/api/exercises").set({ Authorization: `Bearer ${trainerToken}` });
+  if (exRes.body.length > 0) {
+    exerciseIds = exRes.body.slice(0, 5).map((e) => e.id);
+  }
 });
 
 afterAll(() => {
@@ -207,7 +214,7 @@ describe("Workout Templates API", () => {
       .post(`/api/workout-templates/${templateId}/exercises`)
       .set(trainerAuth())
       .send({
-        exerciseId: 1,
+        exerciseId: exerciseIds[0],
         targetSets: 4,
         targetReps: 10,
         targetWeightKg: 60,
@@ -224,7 +231,7 @@ describe("Workout Templates API", () => {
       .post(`/api/workout-templates/${templateId}/exercises`)
       .set(trainerAuth())
       .send({
-        exerciseId: 2,
+        exerciseId: exerciseIds[1],
         targetSets: 3,
         targetReps: 12,
         supersetGroup: 1,
@@ -311,12 +318,12 @@ describe("Workout Sessions API", () => {
     await request(app)
       .post(`/api/workout-templates/${templateIdForSession}/exercises`)
       .set(trainerAuth())
-      .send({ exerciseId: 1, targetSets: 3, targetReps: 10, targetWeightKg: 50 });
+      .send({ exerciseId: exerciseIds[0], targetSets: 3, targetReps: 10, targetWeightKg: 50 });
 
     await request(app)
       .post(`/api/workout-templates/${templateIdForSession}/exercises`)
       .set(trainerAuth())
-      .send({ exerciseId: 2, targetSets: 3, targetReps: 12 });
+      .send({ exerciseId: exerciseIds[1], targetSets: 3, targetReps: 12 });
   });
 
   it("should start a session from template", async () => {
@@ -348,9 +355,9 @@ describe("Workout Sessions API", () => {
     const res = await request(app)
       .post(`/api/workout-sessions/${sessionId}/exercises`)
       .set(clientAuth())
-      .send({ exerciseId: 3 });
+      .send({ exerciseId: exerciseIds[2] });
     expect(res.status).toBe(201);
-    expect(res.body.exercise_id).toBe(3);
+    expect(res.body.exercise_id).toBe(exerciseIds[2]);
   });
 
   it("should log a set", async () => {
@@ -408,7 +415,7 @@ describe("Workout Sessions API", () => {
     const res = await request(app)
       .post(`/api/workout-sessions/${sessionId}/exercises`)
       .set(clientAuth())
-      .send({ exerciseId: 4 });
+      .send({ exerciseId: exerciseIds[3] });
     expect(res.status).toBe(403);
   });
 

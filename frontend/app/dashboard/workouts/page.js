@@ -62,7 +62,7 @@ function SessionView({ session, onBack, onRefresh }) {
   const [setForm, setSetForm] = useState({});
 
   useEffect(() => {
-    api("/exercises?limit=100").then((d) => setExerciseList(d.data || [])).catch(() => {});
+    api("/exercises?limit=100").then((d) => setExerciseList(Array.isArray(d) ? d : (d.data || []))).catch(() => {});
     if (session.id) {
       api(`/workout-sessions/${session.id}`).then((d) => {
         setExercises(d.exercises || []);

@@ -4,6 +4,7 @@ const { closeDb } = require("../src/config/database");
 
 let authToken;
 let userId;
+let exerciseIds = [];
 
 beforeAll(async () => {
   const res = await request(app).post("/api/auth/register").send({
@@ -14,6 +15,12 @@ beforeAll(async () => {
   });
   authToken = res.body.token;
   userId = res.body.user.id;
+
+  // Fetch real exercise IDs from DB
+  const exRes = await request(app).get("/api/exercises").set({ Authorization: `Bearer ${authToken}` });
+  if (exRes.body.length > 0) {
+    exerciseIds = exRes.body.slice(0, 5).map((e) => e.id);
+  }
 });
 
 afterAll(() => {
@@ -41,9 +48,10 @@ describe("Exercises API", () => {
   });
 
   it("should get exercise by id", async () => {
-    const res = await request(app).get("/api/exercises/1").set(auth());
+    const exId = exerciseIds[0];
+    const res = await request(app).get(`/api/exercises/${exId}`).set(auth());
     expect(res.status).toBe(200);
-    expect(res.body.id).toBe(1);
+    expect(res.body.id).toBe(exId);
     expect(res.body.name).toBeDefined();
   });
 
@@ -78,7 +86,7 @@ describe("Workouts API", () => {
       .post(`/api/workouts/${workoutId}/exercises`)
       .set(auth())
       .send({
-        exerciseId: 1,
+        exerciseId: exerciseIds[0],
         sets: [
           { reps: 10, weightKg: 60 },
           { reps: 8, weightKg: 65 },
