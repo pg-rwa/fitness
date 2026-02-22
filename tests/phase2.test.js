@@ -335,8 +335,8 @@ describe("Workout Sessions API", () => {
     expect(res.body.name).toBe("Session Test Template");
     expect(res.body.mood_before).toBe(7);
     expect(res.body.exercises.length).toBe(2);
-    // Sets should be pre-populated from template
-    expect(res.body.exercises[0].sets.length).toBe(3);
+    // Exercises are copied from template but sets are not pre-populated (user logs actual sets)
+    expect(res.body.exercises[0].sets.length).toBe(0);
     sessionId = res.body.id;
     sessionExerciseId = res.body.exercises[0].id;
   });

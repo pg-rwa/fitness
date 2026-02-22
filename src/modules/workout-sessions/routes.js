@@ -10,6 +10,7 @@ router.use(authenticate);
 
 router.get("/", controller.list);
 router.get("/client/:clientId", authorize("admin", "trainer"), controller.list);
+router.get("/exercise-history/:exerciseId", controller.exerciseHistory);
 router.get("/:id", controller.getById);
 
 router.post(
@@ -62,6 +63,16 @@ router.put(
     validate,
   ],
   controller.updateSet
+);
+
+router.put(
+  "/:id/exercises/:seId/replace",
+  [
+    body("newExerciseId").isInt(),
+    body("updateTemplate").optional().isBoolean(),
+    validate,
+  ],
+  controller.replaceExercise
 );
 
 router.put(

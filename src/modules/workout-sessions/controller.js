@@ -106,22 +106,12 @@ async function create(req, res, next) {
 
     const sessionId = result.lastInsertRowid;
 
-    // Copy template exercises into session
+    // Copy template exercises into session (no pre-populated sets — user logs actual sets)
     for (const ex of exercises) {
-      const seResult = db
-        .prepare(
-          `INSERT INTO session_exercises (session_id, exercise_id, sort_order, machine_settings)
-           VALUES (?, ?, ?, ?)`
-        )
-        .run(sessionId, ex.exercise_id, ex.sort_order, ex.machine_settings);
-
-      // Pre-populate sets from template targets
-      for (let i = 1; i <= (ex.target_sets || 3); i++) {
-        db.prepare(
-          `INSERT INTO exercise_sets (session_exercise_id, set_number, reps, weight_kg)
-           VALUES (?, ?, ?, ?)`
-        ).run(seResult.lastInsertRowid, i, ex.target_reps || null, ex.target_weight_kg || null);
-      }
+      db.prepare(
+        `INSERT INTO session_exercises (session_id, exercise_id, sort_order, machine_settings)
+         VALUES (?, ?, ?, ?)`
+      ).run(sessionId, ex.exercise_id, ex.sort_order, ex.machine_settings);
     }
 
     const session = getSessionFull(db, sessionId);
@@ -264,13 +254,13 @@ async function complete(req, res, next) {
 
     const { moodAfter, notes } = req.body || {};
 
-    // Calculate total volume
+    // Calculate total volume (all sets with weight and reps)
     const volumeResult = db
       .prepare(
         `SELECT COALESCE(SUM(es.weight_kg * es.reps), 0) as total_volume
          FROM exercise_sets es
          JOIN session_exercises se ON es.session_exercise_id = se.id
-         WHERE se.session_id = ? AND es.completed = 1`
+         WHERE se.session_id = ? AND es.weight_kg > 0 AND es.reps > 0`
       )
       .get(sessionId);
 
@@ -313,7 +303,7 @@ function checkPersonalRecords(db, sessionId, userId) {
               MAX(es.weight_kg * es.reps) as max_volume_set
        FROM session_exercises se
        JOIN exercise_sets es ON es.session_exercise_id = se.id
-       WHERE se.session_id = ? AND es.completed = 1 AND es.weight_kg > 0
+       WHERE se.session_id = ? AND es.weight_kg > 0 AND es.reps > 0
        GROUP BY se.exercise_id`
     )
     .all(sessionId);
@@ -373,4 +363,82 @@ function checkPersonalRecords(db, sessionId, userId) {
   return prs;
 }
 
-module.exports = { list, getById, create, addExercise, logSet, updateSet, complete };
+function exerciseHistory(req, res, next) {
+  try {
+    const db = getDb();
+    const exerciseId = parseInt(req.params.exerciseId, 10);
+
+    // Get last 10 sessions where this exercise was performed by the user
+    const rows = db
+      .prepare(
+        `SELECT ws.id as session_id, ws.name as session_name, ws.started_at,
+                se.id as session_exercise_id
+         FROM workout_sessions ws
+         JOIN session_exercises se ON se.session_id = ws.id
+         WHERE ws.user_id = ? AND se.exercise_id = ? AND ws.ended_at IS NOT NULL
+         ORDER BY ws.started_at DESC
+         LIMIT 10`
+      )
+      .all(req.userId, exerciseId);
+
+    const history = rows.map((row) => {
+      const sets = db
+        .prepare("SELECT * FROM exercise_sets WHERE session_exercise_id = ? ORDER BY set_number")
+        .all(row.session_exercise_id);
+      return {
+        session_id: row.session_id,
+        session_name: row.session_name,
+        date: row.started_at,
+        sets,
+      };
+    });
+
+    res.json(history);
+  } catch (err) {
+    next(err);
+  }
+}
+
+function replaceExercise(req, res, next) {
+  try {
+    const db = getDb();
+    const sessionId = parseInt(req.params.id, 10);
+    const seId = parseInt(req.params.seId, 10);
+    const { newExerciseId, updateTemplate } = req.body;
+
+    const session = db.prepare("SELECT * FROM workout_sessions WHERE id = ? AND user_id = ?").get(sessionId, req.userId);
+    if (!session) throw new NotFoundError("Workout session");
+    if (session.ended_at) throw new ForbiddenError("Session already completed");
+
+    const se = db.prepare("SELECT * FROM session_exercises WHERE id = ? AND session_id = ?").get(seId, sessionId);
+    if (!se) throw new NotFoundError("Session exercise");
+
+    const newExercise = db.prepare("SELECT id FROM exercises WHERE id = ?").get(newExerciseId);
+    if (!newExercise) throw new NotFoundError("Exercise");
+
+    const oldExerciseId = se.exercise_id;
+
+    // Replace exercise in session
+    db.prepare("UPDATE session_exercises SET exercise_id = ? WHERE id = ?").run(newExerciseId, seId);
+
+    // Delete any pre-populated sets for this exercise (user will log fresh)
+    db.prepare("DELETE FROM exercise_sets WHERE session_exercise_id = ?").run(seId);
+
+    // Also update the template if requested and session was started from a template
+    if (updateTemplate && session.template_id) {
+      const template = db.prepare("SELECT * FROM workout_templates WHERE id = ?").get(session.template_id);
+      if (template && template.created_by === req.userId) {
+        db.prepare(
+          "UPDATE template_exercises SET exercise_id = ? WHERE template_id = ? AND exercise_id = ?"
+        ).run(newExerciseId, session.template_id, oldExerciseId);
+      }
+    }
+
+    const updated = getSessionFull(db, sessionId);
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, create, addExercise, logSet, updateSet, complete, exerciseHistory, replaceExercise };

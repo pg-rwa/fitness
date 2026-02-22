@@ -3,7 +3,6 @@ const { body } = require("express-validator");
 const controller = require("./controller");
 const { validate } = require("../../shared/middleware/validate");
 const { authenticate } = require("../../shared/middleware/authenticate");
-const { authorize } = require("../../shared/middleware/authorize");
 
 const router = Router();
 router.use(authenticate);
@@ -13,7 +12,6 @@ router.get("/:id", controller.getById);
 
 router.post(
   "/",
-  authorize("admin", "trainer"),
   [
     body("name").trim().notEmpty(),
     body("description").optional().isString(),
@@ -28,7 +26,6 @@ router.post(
 
 router.put(
   "/:id",
-  authorize("admin", "trainer"),
   [
     body("name").optional().trim().notEmpty(),
     body("difficulty").optional().isIn(["beginner", "intermediate", "advanced"]),
@@ -38,11 +35,10 @@ router.put(
   controller.update
 );
 
-router.delete("/:id", authorize("admin", "trainer"), controller.remove);
+router.delete("/:id", controller.remove);
 
 router.post(
   "/:id/exercises",
-  authorize("admin", "trainer"),
   [
     body("exerciseId").isInt(),
     body("sortOrder").optional().isInt(),
@@ -60,7 +56,6 @@ router.post(
 
 router.put(
   "/:id/exercises/:teId",
-  authorize("admin", "trainer"),
   [
     body("sortOrder").optional().isInt(),
     body("targetSets").optional().isInt({ min: 1 }),
@@ -71,7 +66,7 @@ router.put(
   controller.updateExercise
 );
 
-router.delete("/:id/exercises/:teId", authorize("admin", "trainer"), controller.removeExercise);
+router.delete("/:id/exercises/:teId", controller.removeExercise);
 
 router.post("/:id/duplicate", controller.duplicate);
 
