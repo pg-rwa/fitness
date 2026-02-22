@@ -94,10 +94,12 @@ function ClientDashboard() {
       api("/workout-sessions?limit=3").catch(() => ({ data: [] })),
       api(`/nutrition/meals?date=${todayStr}`).catch(() => ({ data: [] })),
       api("/progress/measurements/latest").catch(() => null),
-    ]).then(([sessions, meals, meas]) => {
+      api("/workout-templates?limit=1").catch(() => ({ pagination: { total: 0 } })),
+    ]).then(([sessions, meals, meas, templates]) => {
       setToday({
         sessions: sessions.data || [],
         meals: (meals.data || meals.meals || []).length,
+        templates: templates.pagination?.total || 0,
       });
       setMeasurements(meas);
     });
@@ -110,6 +112,11 @@ function ClientDashboard() {
         <StatCard label="Workouts" value={today.sessions.length} sub="recent" color="brand" />
         <StatCard label="Meals Today" value={today.meals} color="green" />
         <StatCard label="Weight" value={measurements?.weight_kg ? `${measurements.weight_kg}kg` : "--"} color="blue" />
+        <Link href="/dashboard/templates" className="bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-purple-500/50 transition">
+          <p className="text-gray-500 text-xs font-medium mb-1">Templates</p>
+          <p className="text-2xl font-bold text-purple-400">{today.templates || 0}</p>
+          <p className="text-gray-600 text-xs mt-1">my workouts</p>
+        </Link>
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
