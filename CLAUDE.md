@@ -91,9 +91,21 @@ docker compose -f docker-compose.prod.yml up --build  # prod: + nginx + SSL
 
 ## Deployment (DigitalOcean)
 
-Scripts in `deploy/`: deploy.sh, dev-deploy.sh, setup.sh, quickstart.sh, backup.sh, rollback.sh, ssl-renew.sh.
-Nginx config in `deploy/nginx/`. Ports: 8080 (HTTP), 8443 (HTTPS).
+- **Droplet IP:** 64.227.187.54
+- **HTTP Port:** 3080 (confirmed working — do NOT change)
+- **Access:** DO Console only — never touch local terminal for deployment
+- **App URL:** http://64.227.187.54:3080/
+- **API:** http://64.227.187.54:3080/api/health
+- **Admin:** http://64.227.187.54:3080/admin/
+
+Scripts in `deploy/`: deploy.sh, dev-deploy.sh, setup.sh, quickstart.sh, backup.sh, rollback.sh, ssl-renew.sh, remote-deploy.sh.
+Nginx config in `deploy/nginx/`.
 Routes: `/api/*` -> API, `/admin/*` -> Admin, `/` -> Frontend.
+
+### Deployment Rules
+1. **DO Console only** — all droplet commands are run via DigitalOcean web console, not local SSH/terminal
+2. **Port 3080 only** — the fitness app runs on port 3080. Do not use or modify any other ports on the droplet
+3. **docker-compose.prod.yml** uses `HTTP_PORT` env var → set `HTTP_PORT=3080` in `.env`
 
 ## Git
 
