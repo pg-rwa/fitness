@@ -365,7 +365,7 @@ export default function WorkoutsPage() {
   const [tab, setTab] = useState("templates");
 
   const load = useCallback(() => {
-    api("/workout-templates?limit=50").then((d) => setTemplates(d.data || [])).catch(() => {});
+    api("/workout-templates?limit=50&ownOnly=true").then((d) => setTemplates(d.data || [])).catch(() => {});
     api("/workout-sessions?page=1&limit=20").then((d) => setSessions(d.data || [])).catch(() => {});
   }, []);
 

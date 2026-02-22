@@ -27,7 +27,7 @@ function TrainerDashboard() {
   useEffect(() => {
     Promise.all([
       api("/workout-sessions?limit=5").catch(() => ({ data: [] })),
-      api("/workout-templates?limit=1").catch(() => ({ pagination: { total: 0 } })),
+      api("/workout-templates?limit=1&ownOnly=true").catch(() => ({ pagination: { total: 0 } })),
       api("/scheduling/sessions?limit=5").catch(() => ({ data: [] })),
     ]).then(([sessions, templates, scheduled]) => {
       setRecentSessions(sessions.data || []);
@@ -94,7 +94,7 @@ function ClientDashboard() {
       api("/workout-sessions?limit=3").catch(() => ({ data: [] })),
       api(`/nutrition/meals?date=${todayStr}`).catch(() => ({ data: [] })),
       api("/progress/measurements/latest").catch(() => null),
-      api("/workout-templates?limit=1").catch(() => ({ pagination: { total: 0 } })),
+      api("/workout-templates?limit=1&ownOnly=true").catch(() => ({ pagination: { total: 0 } })),
     ]).then(([sessions, meals, meas, templates]) => {
       setToday({
         sessions: sessions.data || [],

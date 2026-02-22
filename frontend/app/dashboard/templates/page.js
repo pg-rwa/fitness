@@ -256,7 +256,7 @@ export default function TemplatesPage() {
   const [newName, setNewName] = useState("");
 
   const load = useCallback(() => {
-    api("/workout-templates?limit=100").then((d) => setTemplates(d.data || [])).catch(() => {});
+    api("/workout-templates?limit=100&ownOnly=true").then((d) => setTemplates(d.data || [])).catch(() => {});
   }, []);
 
   useEffect(() => { load(); }, [load]);

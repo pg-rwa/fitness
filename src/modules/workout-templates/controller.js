@@ -28,7 +28,7 @@ function getTemplateWithExercises(db, id) {
 function list(req, res, next) {
   try {
     const db = getDb();
-    const { category, difficulty, search } = req.query;
+    const { category, difficulty, search, ownOnly } = req.query;
     const { page, limit, offset, sql: pagSql } = paginate(req.query);
 
     let sql = "SELECT * FROM workout_templates";
@@ -36,9 +36,14 @@ function list(req, res, next) {
     const conditions = [];
     const params = [];
 
-    // Show own templates + public ones
-    conditions.push("(created_by = ? OR is_public = 1)");
-    params.push(req.userId);
+    // ownOnly=true returns only the user's created templates (no public/shared ones)
+    if (ownOnly === "true") {
+      conditions.push("created_by = ?");
+      params.push(req.userId);
+    } else {
+      conditions.push("(created_by = ? OR is_public = 1)");
+      params.push(req.userId);
+    }
 
     if (category) {
       conditions.push("category = ?");
