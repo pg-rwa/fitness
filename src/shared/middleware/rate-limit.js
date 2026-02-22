@@ -17,11 +17,14 @@ const apiLimiter = isTest
       keyGenerator: (req) => req.userId || req.ip,
     });
 
+const authWindowMs = parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS || "900000", 10); // 15 min
+const authMax = parseInt(process.env.AUTH_RATE_LIMIT_MAX || "50", 10);
+
 const authLimiter = isTest
   ? passThrough
   : rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 20,
+      windowMs: authWindowMs,
+      max: authMax,
       standardHeaders: true,
       legacyHeaders: false,
       message: { error: "Too many login attempts, please try again later", code: "AUTH_RATE_LIMIT" },
