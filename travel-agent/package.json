@@ -1,0 +1,23 @@
+{
+  "name": "staypicker-travel-agent",
+  "version": "1.0.0",
+  "description": "AI-powered travel property finder with advanced filtering",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/data/seed.js",
+    "setup": "npm install && npm run seed"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "better-sqlite3": "^11.7.0",
+    "cors": "^2.8.5",
+    "express": "^5.0.1",
+    "helmet": "^8.0.0",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
