@@ -103,6 +103,8 @@ services:
       dockerfile: Dockerfile
       args:
         CACHEBUST: "${CACHEBUST:-1}"
+    ports:
+      - "3082:3002"
     expose:
       - "3002"
     environment:
