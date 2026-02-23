@@ -101,6 +101,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        CACHEBUST: "${CACHEBUST:-1}"
     expose:
       - "3002"
     environment:
