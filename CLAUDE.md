@@ -133,6 +133,17 @@ Routes: `/api/*` -> API, `/admin/*` -> Admin, `/` -> Frontend.
 17. Production deployment: Docker, Nginx, SSL, monitoring, logging, metrics
 18. Rate limiting, file uploads, email service, CORS, Helmet
 
+## Recent Fixes (Session 2026-02-23)
+
+- **Auto-seed on startup** (`src/app.js`): Exercises (103) and food items (192) are now auto-seeded when tables are empty on app startup. Previously `node prisma/seed.js` had to be run manually, which Docker didn't do — caused empty exercise dropdowns on fresh deploys.
+- **Exercise modal error visibility** (`frontend/.../templates/page.js`, `frontend/.../workouts/page.js`): ExerciseSearchModal now shows actual API error messages in red instead of silently swallowing with `.catch(() => {})`.
+
+## Known Issues / Notes
+
+- The exercises API controller (`src/modules/exercises/controller.js`) imports `paginate`/`paginatedResponse` but doesn't use them — returns a plain array. The `limit` query param is ignored. Works fine since frontend handles both array and `{data:[]}` formats, but inconsistent with other modules.
+- Frontend `next.config.js` has a rewrite rule that proxies `/api/*` to `http://localhost:3000` — only relevant when accessing the frontend directly (not through nginx). In production via nginx on port 3080, API routing works correctly through nginx's `/api/` location block.
+- Docker volume `db-data` persists the SQLite database between container rebuilds.
+
 ## What's Left (from PLAN.md)
 
 - Progress photos with comparison
