@@ -7,11 +7,12 @@ function ExerciseSearchModal({ onSelect, onClose }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     api("/exercises?limit=200")
       .then((d) => setExerciseList(Array.isArray(d) ? d : d.data || []))
-      .catch(() => {})
+      .catch((e) => setError(e.message || "Failed to load exercises"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -42,7 +43,10 @@ function ExerciseSearchModal({ onSelect, onClose }) {
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {loading && <p className="text-gray-500 text-sm py-4 text-center">Loading...</p>}
-          {!loading && filtered.length === 0 && (
+          {!loading && error && (
+            <p className="text-red-400 text-sm py-4 text-center">{error}</p>
+          )}
+          {!loading && !error && filtered.length === 0 && (
             <p className="text-gray-500 text-sm py-4 text-center">No exercises found.</p>
           )}
           {filtered.map((ex) => (
