@@ -89,6 +89,7 @@ export default function Nav() {
           <div className="px-3 mb-2">
             <p className="text-white text-sm font-medium truncate">{user?.first_name} {user?.last_name}</p>
             <p className="text-gray-500 text-xs truncate">{user?.email}</p>
+            <p className="text-gray-700 text-[9px] mt-1">v2.1</p>
           </div>
           <button
             onClick={logout}

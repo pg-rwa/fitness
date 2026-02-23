@@ -4,7 +4,9 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+# Cache-bust: pass --build-arg CACHEBUST=$(date +%s) to force rebuild
+ARG CACHEBUST=1
+RUN echo "Build cache bust: $CACHEBUST" && npm run build
 
 FROM node:20-alpine
 WORKDIR /app
