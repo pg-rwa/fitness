@@ -14,6 +14,49 @@ const { metrics } = require("./shared/services/metrics");
 
 initDb();
 
+// Auto-seed reference data (exercises, foods) if tables are empty
+(function autoSeed() {
+  const db = require("./config/database").getDb();
+  const exerciseCount = db.prepare("SELECT COUNT(*) as c FROM exercises").get().c;
+  if (exerciseCount === 0) {
+    console.log("Auto-seeding exercises...");
+    const allExercises = [
+      ...require("../prisma/data/exercises-chest"),
+      ...require("../prisma/data/exercises-back"),
+      ...require("../prisma/data/exercises-shoulders"),
+      ...require("../prisma/data/exercises-legs"),
+      ...require("../prisma/data/exercises-arms"),
+      ...require("../prisma/data/exercises-core-cardio"),
+    ];
+    const ins = db.prepare(
+      `INSERT OR REPLACE INTO exercises (name, description, category, muscle_group, secondary_muscles, equipment, instructions, video_url, photo_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    db.transaction(() => {
+      for (const ex of allExercises) {
+        ins.run(ex.name, ex.description, ex.category, ex.muscle_group, ex.secondary_muscles || "[]", ex.equipment, ex.instructions, ex.video_url || null, ex.photo_url || null);
+      }
+    })();
+    console.log(`  -> Auto-seeded ${allExercises.length} exercises.`);
+  }
+
+  const foodCount = db.prepare("SELECT COUNT(*) as c FROM food_items").get().c;
+  if (foodCount === 0) {
+    console.log("Auto-seeding food items...");
+    const foods = require("../prisma/data/food-items");
+    const ins = db.prepare(
+      `INSERT OR IGNORE INTO food_items (name, brand, serving_size, serving_unit, calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, is_verified)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    db.transaction(() => {
+      for (const f of foods) {
+        ins.run(f.name, f.brand, f.serving_size, f.serving_unit, f.calories, f.protein_g, f.carbs_g, f.fat_g, f.fiber_g, f.sugar_g, f.sodium_mg, f.is_verified);
+      }
+    })();
+    console.log(`  -> Auto-seeded ${foods.length} food items.`);
+  }
+})();
+
 const features = new FeatureFlags();
 const registry = new ModuleRegistry();
 
