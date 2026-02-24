@@ -142,8 +142,13 @@ export default function NutritionPage() {
   const [showLog, setShowLog] = useState(false);
 
   const load = () => {
-    api(`/nutrition/meals?date=${date}`).then((d) => setMeals(d.data || d.meals || [])).catch(() => {});
-    api(`/nutrition/summary?date=${date}`).then((d) => setSummary(d)).catch(() => setSummary({}));
+    api(`/nutrition/meals?date=${date}`).then((d) => setMeals(Array.isArray(d) ? d : d.data || d.meals || [])).catch(() => {});
+    api(`/nutrition/summary?date=${date}`).then((d) => setSummary({
+      totalCalories: d.total_calories || d.totalCalories || 0,
+      totalProtein: d.total_protein_g || d.totalProtein || 0,
+      totalCarbs: d.total_carbs_g || d.totalCarbs || 0,
+      totalFat: d.total_fat_g || d.totalFat || 0,
+    })).catch(() => setSummary({}));
   };
 
   useEffect(() => { load(); }, [date]);
