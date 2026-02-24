@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
+import VideoModal from "../../../components/VideoModal";
 
 function ExerciseSearchModal({ onSelect, onClose }) {
   const [exerciseList, setExerciseList] = useState([]);
@@ -73,6 +74,7 @@ function TemplateEditor({ template, onBack, onRefresh }) {
   const [name, setName] = useState(template.name);
   const [description, setDescription] = useState(template.description || "");
   const [showAddEx, setShowAddEx] = useState(false);
+  const [videoExercise, setVideoExercise] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const loadDetail = useCallback(() => {
@@ -213,6 +215,15 @@ function TemplateEditor({ template, onBack, onRefresh }) {
                 {ex.target_sets}x{ex.target_reps}
               </span>
               <button
+                onClick={() => setVideoExercise({ name: ex.exercise_name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
+                className="text-gray-600 hover:text-brand-400 transition"
+                title="Watch demo"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </button>
+              <button
                 onClick={() => removeExercise(ex.id)}
                 className="text-gray-600 hover:text-red-400 transition"
               >
@@ -248,6 +259,10 @@ function TemplateEditor({ template, onBack, onRefresh }) {
           onSelect={addExercise}
           onClose={() => setShowAddEx(false)}
         />
+      )}
+
+      {videoExercise && (
+        <VideoModal exercise={videoExercise} onClose={() => setVideoExercise(null)} />
       )}
     </div>
   );

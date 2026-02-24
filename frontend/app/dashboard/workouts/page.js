@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../components/AuthProvider";
 import { api } from "../../../lib/api";
+import VideoModal from "../../../components/VideoModal";
 
 function ExerciseSearchModal({ onSelect, onClose }) {
   const [exerciseList, setExerciseList] = useState([]);
@@ -121,6 +122,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
   const [setForm, setSetForm] = useState({});
   const [showAddEx, setShowAddEx] = useState(false);
   const [replacingExId, setReplacingExId] = useState(null);
+  const [videoExercise, setVideoExercise] = useState(null);
   const [elapsed, setElapsed] = useState(0);
   const [stopping, setStopping] = useState(false);
 
@@ -239,13 +241,24 @@ function ActiveWorkout({ session: initialSession, onDone }) {
         {exercises.map((ex) => (
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
             <div className="flex items-start justify-between mb-1">
-              <div>
-                <h3 className="text-white font-semibold text-sm">
-                  {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
-                </h3>
-                {ex.muscle_group && (
-                  <span className="text-gray-500 text-xs">{ex.muscle_group}</span>
-                )}
+              <div className="flex items-center gap-2">
+                <div>
+                  <h3 className="text-white font-semibold text-sm">
+                    {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
+                  </h3>
+                  {ex.muscle_group && (
+                    <span className="text-gray-500 text-xs">{ex.muscle_group}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setVideoExercise({ name: ex.exercise_name || ex.name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
+                  className="text-gray-600 hover:text-brand-400 transition p-1"
+                  title="Watch demo"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </button>
               </div>
               {isActive && (
                 <button
@@ -356,6 +369,10 @@ function ActiveWorkout({ session: initialSession, onDone }) {
           onSelect={replaceExercise}
           onClose={() => setReplacingExId(null)}
         />
+      )}
+
+      {videoExercise && (
+        <VideoModal exercise={videoExercise} onClose={() => setVideoExercise(null)} />
       )}
     </div>
   );
