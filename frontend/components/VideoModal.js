@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useCallback } from "react";
 
 function extractYouTubeId(url) {
   if (!url) return null;
@@ -14,24 +15,65 @@ function extractYouTubeId(url) {
   return null;
 }
 
-function getSearchEmbedUrl(exerciseName) {
-  const q = encodeURIComponent(exerciseName + " exercise proper form");
-  return `https://www.youtube-nocookie.com/embed?listType=search&list=${q}`;
-}
-
 function getYouTubeSearchUrl(exerciseName) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(exerciseName + " exercise proper form")}`;
 }
 
 export default function VideoModal({ exercise, onClose }) {
+  const playerRef = useRef(null);
+  const containerRef = useRef(null);
+
+  const youtubeId = exercise ? extractYouTubeId(exercise.video_url) : null;
+  const searchQuery = exercise ? exercise.name + " exercise proper form" : "";
+
+  const initPlayer = useCallback(() => {
+    if (!containerRef.current || !window.YT?.Player) return;
+    if (playerRef.current) {
+      playerRef.current.destroy();
+      playerRef.current = null;
+    }
+    playerRef.current = new window.YT.Player(containerRef.current, {
+      height: "100%",
+      width: "100%",
+      playerVars: { rel: 0, modestbranding: 1, origin: window.location.origin },
+      events: {
+        onReady: (event) => {
+          if (youtubeId) {
+            event.target.cueVideoById(youtubeId);
+          } else {
+            event.target.cuePlaylist({ listType: "search", list: searchQuery });
+          }
+        },
+      },
+    });
+  }, [youtubeId, searchQuery]);
+
+  useEffect(() => {
+    if (!exercise) return;
+
+    // Load YouTube IFrame API if not already loaded
+    if (window.YT?.Player) {
+      initPlayer();
+    } else {
+      const existingScript = document.getElementById("yt-iframe-api");
+      if (!existingScript) {
+        const tag = document.createElement("script");
+        tag.id = "yt-iframe-api";
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.head.appendChild(tag);
+      }
+      window.onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.destroy();
+        playerRef.current = null;
+      }
+    };
+  }, [exercise, initPlayer]);
+
   if (!exercise) return null;
-
-  const youtubeId = extractYouTubeId(exercise.video_url);
-
-  // Priority: 1) specific video ID from video_url, 2) search-based embed from exercise name
-  const embedSrc = youtubeId
-    ? `https://www.youtube-nocookie.com/embed/${youtubeId}?rel=0`
-    : getSearchEmbedUrl(exercise.name);
 
   const fallbackUrl = getYouTubeSearchUrl(exercise.name);
 
@@ -59,36 +101,28 @@ export default function VideoModal({ exercise, onClose }) {
           </button>
         </div>
 
-        {/* Embedded video */}
+        {/* YouTube Player */}
         <div className="bg-black">
           <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-            <iframe
-              className="absolute inset-0 w-full h-full"
-              src={embedSrc}
-              title={`${exercise.name} demo`}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
+            <div ref={containerRef} className="absolute inset-0" />
           </div>
         </div>
 
         {/* Fallback link + instructions */}
         <div className="p-4 border-t border-gray-800">
-          {!youtubeId && (
-            <a
-              href={fallbackUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-400 hover:text-brand-300 text-xs inline-flex items-center gap-1 mb-3"
-            >
-              Video not loading? Search on YouTube
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          )}
+          <a
+            href={fallbackUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brand-400 hover:text-brand-300 text-xs inline-flex items-center gap-1 mb-3"
+          >
+            Open on YouTube
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
           {exercise.instructions && (
-            <div className={!youtubeId ? "" : ""}>
+            <div>
               <h4 className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-2">Instructions</h4>
               <div className="text-gray-300 text-sm whitespace-pre-line leading-relaxed max-h-40 overflow-y-auto">
                 {exercise.instructions}
