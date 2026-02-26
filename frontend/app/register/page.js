@@ -23,6 +23,7 @@ function RegisterForm() {
     email: "",
     password: "",
     confirmPassword: "",
+    role: "client",
     inviteToken,
   });
   const [error, setError] = useState("");
@@ -61,6 +62,7 @@ function RegisterForm() {
             password: form.password,
             firstName: form.firstName,
             lastName: form.lastName,
+            role: form.role,
           },
           noAuth: true,
         });
@@ -121,16 +123,46 @@ function RegisterForm() {
           </div>
 
           {!inviteToken && (
-            <div>
-              <label className="block text-gray-400 text-xs font-medium mb-1.5">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={update("email")}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-                required
-              />
-            </div>
+            <>
+              <div>
+                <label className="block text-gray-400 text-xs font-medium mb-1.5">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={update("email")}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-400 text-xs font-medium mb-1.5">I am a</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, role: "client" }))}
+                    className={`py-2.5 rounded-lg text-sm font-medium border transition ${
+                      form.role === "client"
+                        ? "bg-brand-500/20 border-brand-500 text-brand-400"
+                        : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-600"
+                    }`}
+                  >
+                    Client
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, role: "trainer" }))}
+                    className={`py-2.5 rounded-lg text-sm font-medium border transition ${
+                      form.role === "trainer"
+                        ? "bg-brand-500/20 border-brand-500 text-brand-400"
+                        : "bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-600"
+                    }`}
+                  >
+                    Trainer
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           <div>
