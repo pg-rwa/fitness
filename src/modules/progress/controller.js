@@ -262,7 +262,32 @@ async function uploadPhotoFile(req, res, next) {
   }
 }
 
+// ─── Personal Records ────────────────────────────────────────
+
+function listPersonalRecords(req, res, next) {
+  try {
+    const db = getDb();
+    const targetUserId = req.params.clientId ? parseInt(req.params.clientId, 10) : req.userId;
+    checkClientAccess(db, targetUserId, req);
+
+    const records = db
+      .prepare(
+        `SELECT pr.*, e.name as exercise_name, e.muscle_group, e.category as exercise_category
+         FROM personal_records pr
+         JOIN exercises e ON e.id = pr.exercise_id
+         WHERE pr.user_id = ?
+         ORDER BY pr.created_at DESC
+         LIMIT 50`
+      )
+      .all(targetUserId);
+    res.json(records);
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   recordMeasurement, listMeasurements, latestMeasurement, measurementTrends,
   uploadPhoto, listPhotos, comparePhotos, deletePhoto, uploadPhotoFile,
+  listPersonalRecords,
 };

@@ -3,9 +3,13 @@ const { body } = require("express-validator");
 const controller = require("./controller");
 const { validate } = require("../../shared/middleware/validate");
 const { authenticate } = require("../../shared/middleware/authenticate");
+const { authorize } = require("../../shared/middleware/authorize");
 
 const router = Router();
 router.use(authenticate);
+
+// Trainer views client's templates (must be before /:id)
+router.get("/client/:clientId", authorize("admin", "trainer"), controller.listClientTemplates);
 
 router.get("/", controller.list);
 router.get("/:id", controller.getById);

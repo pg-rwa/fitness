@@ -112,6 +112,40 @@ function setupListeners(eventBus) {
     }
   });
 
+  // ─── Trainer Request Events ──────────────────────────────────
+
+  eventBus.on("trainer.request.sent", ({ request, trainerId, trainerName, clientId }) => {
+    notifyAndPush({
+      userId: clientId,
+      type: "trainer_request",
+      title: "Trainer Request",
+      body: `${trainerName} wants to add you as a client`,
+      data: { requestId: request.id, trainerId },
+    });
+  });
+
+  eventBus.on("trainer.request.approved", ({ request, trainerId, clientId }) => {
+    const client = getUserEmail(clientId);
+    notifyAndPush({
+      userId: trainerId,
+      type: "trainer_request_approved",
+      title: "Request Approved",
+      body: `${client ? client.name : "A client"} accepted your trainer request`,
+      data: { requestId: request.id, clientId },
+    });
+  });
+
+  eventBus.on("trainer.request.declined", ({ request, trainerId, clientId }) => {
+    const client = getUserEmail(clientId);
+    notifyAndPush({
+      userId: trainerId,
+      type: "trainer_request_declined",
+      title: "Request Declined",
+      body: `${client ? client.name : "A client"} declined your trainer request`,
+      data: { requestId: request.id, clientId },
+    });
+  });
+
   eventBus.on("insight.generated", ({ insights, userId }) => {
     wsManager.send(userId, {
       type: "insights",

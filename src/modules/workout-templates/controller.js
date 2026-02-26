@@ -340,4 +340,36 @@ function duplicate(req, res, next) {
   }
 }
 
-module.exports = { list, getById, create, update, remove, addExercise, updateExercise, removeExercise, duplicate };
+function listClientTemplates(req, res, next) {
+  try {
+    const db = getDb();
+    const clientId = parseInt(req.params.clientId, 10);
+
+    // Verify trainer-client relationship
+    if (req.userRole !== "admin") {
+      const client = db.prepare("SELECT trainer_id FROM users WHERE id = ?").get(clientId);
+      if (!client || client.trainer_id !== req.userId) {
+        throw new ForbiddenError();
+      }
+    }
+
+    // Get templates created by client + templates assigned to client by this trainer
+    const templates = db
+      .prepare(
+        `SELECT DISTINCT wt.* FROM workout_templates wt
+         WHERE wt.created_by = ?
+         UNION
+         SELECT DISTINCT wt.* FROM workout_templates wt
+         JOIN assigned_workouts aw ON aw.template_id = wt.id
+         WHERE aw.client_id = ? AND aw.is_active = 1
+         ORDER BY name`
+      )
+      .all(clientId, clientId);
+
+    res.json(templates);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, create, update, remove, addExercise, updateExercise, removeExercise, duplicate, listClientTemplates };

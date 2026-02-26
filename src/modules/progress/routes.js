@@ -70,4 +70,9 @@ router.delete("/photos/:id", controller.deletePhoto);
 // Trainer views client photos
 router.get("/photos/client/:clientId", authorize("admin", "trainer"), controller.listPhotos);
 
+// ─── Personal Records ────────────────────────────────────────
+
+router.get("/records", controller.listPersonalRecords);
+router.get("/records/client/:clientId", authorize("admin", "trainer"), controller.listPersonalRecords);
+
 module.exports = router;

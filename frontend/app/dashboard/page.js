@@ -87,6 +87,11 @@ function TrainerDashboard() {
 function ClientDashboard() {
   const [today, setToday] = useState({ sessions: [], meals: 0 });
   const [measurements, setMeasurements] = useState(null);
+  const [trainerRequests, setTrainerRequests] = useState([]);
+
+  const loadRequests = () => {
+    api("/users/client-requests").then((d) => setTrainerRequests(Array.isArray(d) ? d : [])).catch(() => {});
+  };
 
   useEffect(() => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -103,7 +108,18 @@ function ClientDashboard() {
       });
       setMeasurements(meas);
     });
+    loadRequests();
   }, []);
+
+  const respondToRequest = async (id, action) => {
+    try {
+      await api(`/users/trainer-requests/${id}/respond`, {
+        method: "PUT",
+        body: { action },
+      });
+      loadRequests();
+    } catch {}
+  };
 
   return (
     <div>
@@ -118,6 +134,40 @@ function ClientDashboard() {
           <p className="text-gray-600 text-xs mt-1">my workouts</p>
         </Link>
       </div>
+
+      {/* Trainer Request Approval */}
+      {trainerRequests.length > 0 && (
+        <div className="mb-4">
+          <div className="space-y-2">
+            {trainerRequests.map((req) => (
+              <div key={req.id} className="bg-gray-900 border border-brand-500/30 rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white text-sm font-medium">Trainer Request</p>
+                    <p className="text-gray-400 text-xs mt-0.5">
+                      <span className="text-brand-400">{req.trainer_name}</span> ({req.trainer_email}) wants to add you as a client
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => respondToRequest(req.id, "approve")}
+                      className="px-3 py-1.5 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => respondToRequest(req.id, "decline")}
+                      className="px-3 py-1.5 bg-gray-700 text-gray-300 rounded-lg text-xs font-medium hover:bg-gray-600"
+                    >
+                      Decline
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
