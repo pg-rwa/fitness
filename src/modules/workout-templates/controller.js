@@ -36,10 +36,10 @@ function list(req, res, next) {
     const conditions = [];
     const params = [];
 
-    // ownOnly=true returns only the user's created templates (no public/shared ones)
+    // ownOnly=true returns the user's own + assigned templates (no public/shared ones)
     if (ownOnly === "true") {
-      conditions.push("created_by = ?");
-      params.push(req.userId);
+      conditions.push("(created_by = ? OR id IN (SELECT template_id FROM assigned_workouts WHERE client_id = ? AND is_active = 1))");
+      params.push(req.userId, req.userId);
     } else {
       // Show own templates, public ones, and templates assigned to this user
       conditions.push("(created_by = ? OR is_public = 1 OR id IN (SELECT template_id FROM assigned_workouts WHERE client_id = ? AND is_active = 1))");
