@@ -344,15 +344,15 @@ function ActiveWorkout({ session: initialSession, onDone }) {
         </button>
       )}
 
-      {/* Stop Workout button (sticky at bottom) */}
+      {/* Stop Workout button (sticky at bottom, above mobile nav) */}
       {isActive && (
-        <div className="fixed bottom-0 left-0 right-0 md:left-56 p-4 bg-gradient-to-t from-gray-950 via-gray-950/95 to-transparent">
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-56 p-4 bg-gradient-to-t from-gray-950 via-gray-950/95 to-transparent z-50">
           <button
             onClick={stopWorkout}
             disabled={stopping}
             className="w-full py-3 bg-red-500 text-white rounded-xl text-sm font-bold hover:bg-red-600 disabled:opacity-50 transition"
           >
-            {stopping ? "Saving..." : "Stop Workout"}
+            {stopping ? "Saving..." : "End Workout"}
           </button>
         </div>
       )}
