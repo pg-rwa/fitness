@@ -251,7 +251,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
                   )}
                 </div>
                 <button
-                  onClick={() => setVideoExercise({ name: ex.exercise_name || ex.name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
+                  onClick={() => setVideoExercise({ id: ex.exercise_id || ex.id, name: ex.exercise_name || ex.name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
                   className="text-gray-600 hover:text-brand-400 transition p-1"
                   title="Watch demo"
                 >

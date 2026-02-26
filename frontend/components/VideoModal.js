@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 function extractYouTubeId(url) {
   if (!url) return null;
@@ -20,58 +21,35 @@ function getYouTubeSearchUrl(exerciseName) {
 }
 
 export default function VideoModal({ exercise, onClose }) {
-  const playerRef = useRef(null);
-  const containerRef = useRef(null);
-
-  const youtubeId = exercise ? extractYouTubeId(exercise.video_url) : null;
-  const searchQuery = exercise ? exercise.name + " exercise proper form" : "";
-
-  const initPlayer = useCallback(() => {
-    if (!containerRef.current || !window.YT?.Player) return;
-    if (playerRef.current) {
-      playerRef.current.destroy();
-      playerRef.current = null;
-    }
-    playerRef.current = new window.YT.Player(containerRef.current, {
-      height: "100%",
-      width: "100%",
-      playerVars: { rel: 0, modestbranding: 1, origin: window.location.origin },
-      events: {
-        onReady: (event) => {
-          if (youtubeId) {
-            event.target.cueVideoById(youtubeId);
-          } else {
-            event.target.cuePlaylist({ listType: "search", list: searchQuery });
-          }
-        },
-      },
-    });
-  }, [youtubeId, searchQuery]);
+  const [videoId, setVideoId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!exercise) return;
 
-    // Load YouTube IFrame API if not already loaded
-    if (window.YT?.Player) {
-      initPlayer();
-    } else {
-      const existingScript = document.getElementById("yt-iframe-api");
-      if (!existingScript) {
-        const tag = document.createElement("script");
-        tag.id = "yt-iframe-api";
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-      }
-      window.onYouTubeIframeAPIReady = initPlayer;
+    // Check if video_url already has a direct YouTube ID
+    const existingId = extractYouTubeId(exercise.video_url);
+    if (existingId) {
+      setVideoId(existingId);
+      setLoading(false);
+      return;
     }
 
-    return () => {
-      if (playerRef.current) {
-        playerRef.current.destroy();
-        playerRef.current = null;
-      }
-    };
-  }, [exercise, initPlayer]);
+    // Fetch video ID from backend (server-side YouTube search)
+    if (exercise.id) {
+      api(`/exercises/${exercise.id}/video`)
+        .then((d) => {
+          if (d.videoId) setVideoId(d.videoId);
+          else setError("No video found");
+        })
+        .catch(() => setError("Could not load video"))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+      setError("No video available");
+    }
+  }, [exercise]);
 
   if (!exercise) return null;
 
@@ -101,26 +79,62 @@ export default function VideoModal({ exercise, onClose }) {
           </button>
         </div>
 
-        {/* YouTube Player */}
+        {/* Video area */}
         <div className="bg-black">
-          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-            <div ref={containerRef} className="absolute inset-0" />
-          </div>
+          {loading && (
+            <div className="flex items-center justify-center py-16">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-600 border-t-brand-500" />
+            </div>
+          )}
+          {!loading && videoId && (
+            <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube-nocookie.com/embed/${videoId}?rel=0`}
+                title={`${exercise.name} demo`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
+          {!loading && !videoId && (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="w-14 h-14 rounded-full bg-red-600/20 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-red-500 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">{error || "Video not available"}</p>
+              <a
+                href={fallbackUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition inline-flex items-center gap-2"
+              >
+                Watch on YouTube
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Fallback link + instructions */}
         <div className="p-4 border-t border-gray-800">
-          <a
-            href={fallbackUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-brand-400 hover:text-brand-300 text-xs inline-flex items-center gap-1 mb-3"
-          >
-            Open on YouTube
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
+          {videoId && (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-400 hover:text-brand-300 text-xs inline-flex items-center gap-1 mb-3"
+            >
+              Open on YouTube
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          )}
           {exercise.instructions && (
             <div>
               <h4 className="text-gray-400 text-xs font-medium uppercase tracking-wide mb-2">Instructions</h4>

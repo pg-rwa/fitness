@@ -158,4 +158,43 @@ function remove(req, res, next) {
   }
 }
 
-module.exports = { list, getById, create, update, remove };
+async function getVideoId(req, res, next) {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+    const exercise = db.prepare("SELECT * FROM exercises WHERE id = ?").get(id);
+    if (!exercise) throw new NotFoundError("Exercise");
+
+    // If already has a real YouTube video ID cached, return it
+    if (exercise.video_url && /youtube\.com\/watch\?v=/.test(exercise.video_url)) {
+      const m = exercise.video_url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+      if (m) return res.json({ videoId: m[1] });
+    }
+
+    // Search YouTube server-side and extract first video ID
+    const query = encodeURIComponent(exercise.name + " exercise proper form");
+    const url = `https://www.youtube.com/results?search_query=${query}`;
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36" },
+    });
+    const html = await resp.text();
+
+    // Extract first video ID from YouTube search results HTML
+    const vidMatch = html.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
+    if (!vidMatch) {
+      return res.json({ videoId: null });
+    }
+
+    const videoId = vidMatch[1];
+
+    // Cache it in the database
+    db.prepare("UPDATE exercises SET video_url = ? WHERE id = ?")
+      .run(`https://www.youtube.com/watch?v=${videoId}`, id);
+
+    res.json({ videoId });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, create, update, remove, getVideoId };

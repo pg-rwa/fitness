@@ -215,7 +215,7 @@ function TemplateEditor({ template, onBack, onRefresh }) {
                 {ex.target_sets}x{ex.target_reps}
               </span>
               <button
-                onClick={() => setVideoExercise({ name: ex.exercise_name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
+                onClick={() => setVideoExercise({ id: ex.exercise_id, name: ex.exercise_name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
                 className="text-gray-600 hover:text-brand-400 transition"
                 title="Watch demo"
               >

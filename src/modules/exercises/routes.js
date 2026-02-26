@@ -11,6 +11,7 @@ router.use(authenticate);
 
 router.get("/", controller.list);
 router.get("/:id", controller.getById);
+router.get("/:id/video", controller.getVideoId);
 
 router.post(
   "/",
