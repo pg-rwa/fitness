@@ -75,8 +75,11 @@ app.use(requestLogger);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// Rate limiting on all API routes
-app.use("/api", apiLimiter);
+// Rate limiting on API routes (skip auth — it has its own limiter)
+app.use("/api", (req, res, next) => {
+  if (req.path.startsWith("/auth/")) return next();
+  return apiLimiter(req, res, next);
+});
 
 app.get("/api/health", (_req, res) => {
   const { wsManager } = require("./shared/services/websocket");
