@@ -7,7 +7,7 @@ function getProfile(req, res, next) {
     const db = getDb();
     const user = db
       .prepare(
-        "SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = ?"
+        "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
       )
       .get(req.userId);
     if (!user) {

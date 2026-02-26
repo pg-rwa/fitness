@@ -109,34 +109,37 @@ function listSessions(req, res, next) {
     let sql, countSql;
     const params = [];
 
+    const selectCols = `ss.*, u_trainer.first_name || ' ' || u_trainer.last_name as trainer_name, u_client.first_name || ' ' || u_client.last_name as client_name`;
+    const joins = ` JOIN users u_trainer ON ss.trainer_id = u_trainer.id JOIN users u_client ON ss.client_id = u_client.id`;
+
     if (req.userRole === "trainer" || req.userRole === "admin") {
-      sql = "SELECT * FROM scheduled_sessions WHERE trainer_id = ?";
-      countSql = "SELECT COUNT(*) as total FROM scheduled_sessions WHERE trainer_id = ?";
+      sql = `SELECT ${selectCols} FROM scheduled_sessions ss${joins} WHERE ss.trainer_id = ?`;
+      countSql = "SELECT COUNT(*) as total FROM scheduled_sessions ss WHERE ss.trainer_id = ?";
       params.push(req.userId);
     } else {
-      sql = "SELECT * FROM scheduled_sessions WHERE client_id = ?";
-      countSql = "SELECT COUNT(*) as total FROM scheduled_sessions WHERE client_id = ?";
+      sql = `SELECT ${selectCols} FROM scheduled_sessions ss${joins} WHERE ss.client_id = ?`;
+      countSql = "SELECT COUNT(*) as total FROM scheduled_sessions ss WHERE ss.client_id = ?";
       params.push(req.userId);
     }
 
     if (status) {
-      sql += " AND status = ?";
-      countSql += " AND status = ?";
+      sql += " AND ss.status = ?";
+      countSql += " AND ss.status = ?";
       params.push(status);
     }
     if (start) {
-      sql += " AND scheduled_start >= ?";
-      countSql += " AND scheduled_start >= ?";
+      sql += " AND ss.scheduled_start >= ?";
+      countSql += " AND ss.scheduled_start >= ?";
       params.push(start);
     }
     if (end) {
-      sql += " AND scheduled_end <= ?";
-      countSql += " AND scheduled_end <= ?";
+      sql += " AND ss.scheduled_end <= ?";
+      countSql += " AND ss.scheduled_end <= ?";
       params.push(end);
     }
 
     const { total } = db.prepare(countSql).get(...params);
-    sql += " ORDER BY scheduled_start ASC" + pagSql;
+    sql += " ORDER BY ss.scheduled_start ASC" + pagSql;
     const data = db.prepare(sql).all(...params);
 
     res.json(paginatedResponse(data, { page, limit, total }));
@@ -170,12 +173,74 @@ async function declineSession(req, res, next) {
 
     const session = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ? AND trainer_id = ?").get(id, req.userId);
     if (!session) throw new NotFoundError("Scheduled session");
-    if (session.status !== "requested") throw new ValidationError("Can only decline requested sessions");
+    if (!["requested", "proposed"].includes(session.status)) throw new ValidationError("Can only decline requested or proposed sessions");
 
     const { reason } = req.body || {};
     db.prepare("UPDATE scheduled_sessions SET status = 'declined', decline_reason = ?, updated_at = datetime('now') WHERE id = ?").run(reason || null, id);
     const updated = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ?").get(id);
     await eventBus.emit("session.declined", { session: updated });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function proposeSession(req, res, next) {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+
+    const session = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ? AND trainer_id = ?").get(id, req.userId);
+    if (!session) throw new NotFoundError("Scheduled session");
+    if (session.status !== "requested") throw new ValidationError("Can only propose changes to requested sessions");
+
+    const { scheduledStart, scheduledEnd, reason } = req.body;
+
+    if (!isSlotAvailable(db, req.userId, scheduledStart, scheduledEnd, id)) {
+      throw new ValidationError("Proposed time conflicts with another session");
+    }
+
+    db.prepare(
+      `UPDATE scheduled_sessions SET scheduled_start = ?, scheduled_end = ?, status = 'proposed', decline_reason = ?, updated_at = datetime('now') WHERE id = ?`
+    ).run(scheduledStart, scheduledEnd, reason || "Trainer proposed a new time", id);
+
+    const updated = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ?").get(id);
+    await eventBus.emit("session.proposed", { session: updated });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function acceptProposal(req, res, next) {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+
+    const session = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ? AND client_id = ?").get(id, req.userId);
+    if (!session) throw new NotFoundError("Scheduled session");
+    if (session.status !== "proposed") throw new ValidationError("Can only accept proposed sessions");
+
+    db.prepare("UPDATE scheduled_sessions SET status = 'approved', updated_at = datetime('now') WHERE id = ?").run(id);
+    const updated = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ?").get(id);
+    await eventBus.emit("session.approved", { session: updated });
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function declineProposal(req, res, next) {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+
+    const session = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ? AND client_id = ?").get(id, req.userId);
+    if (!session) throw new NotFoundError("Scheduled session");
+    if (session.status !== "proposed") throw new ValidationError("Can only decline proposed sessions");
+
+    db.prepare("UPDATE scheduled_sessions SET status = 'declined', updated_at = datetime('now') WHERE id = ?").run(id);
+    const updated = db.prepare("SELECT * FROM scheduled_sessions WHERE id = ?").get(id);
     res.json(updated);
   } catch (err) {
     next(err);
@@ -255,5 +320,6 @@ function getAvailableSlots(req, res, next) {
 module.exports = {
   getAvailability, setAvailability,
   createSession, listSessions, approveSession, declineSession, cancelSession, completeSession,
+  proposeSession, acceptProposal, declineProposal,
   getAvailableSlots,
 };

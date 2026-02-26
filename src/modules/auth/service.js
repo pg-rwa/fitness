@@ -53,7 +53,7 @@ async function register({ email, password, firstName, lastName, role }) {
 
   const user = db
     .prepare(
-      "SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = ?"
+      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
     )
     .get(result.lastInsertRowid);
 
@@ -90,6 +90,7 @@ async function login({ email, password }) {
       first_name: user.first_name,
       last_name: user.last_name,
       role: user.role,
+      trainer_id: user.trainer_id || null,
     },
     token: tokens.accessToken,
     refreshToken: tokens.refreshToken,
@@ -117,7 +118,7 @@ async function refresh({ refreshToken }) {
 
   const user = db
     .prepare(
-      "SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = ?"
+      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
     )
     .get(stored.user_id);
 
@@ -211,7 +212,7 @@ async function acceptInvitation({ token, password, firstName, lastName }) {
 
   const user = db
     .prepare(
-      "SELECT id, email, first_name, last_name, role, created_at FROM users WHERE id = ?"
+      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
     )
     .get(result.lastInsertRowid);
 

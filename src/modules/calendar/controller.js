@@ -68,6 +68,32 @@ function getEvents(req, res, next) {
       });
     }
 
+    // Scheduled sessions (appointments with trainer/client)
+    const isTrainer = req.userRole === "trainer" || req.userRole === "admin";
+    const scheduledCol = isTrainer ? "ss.trainer_id" : "ss.client_id";
+    const otherCol = isTrainer ? "ss.client_id" : "ss.trainer_id";
+    const scheduled = db
+      .prepare(
+        `SELECT ss.id, ss.title, ss.scheduled_start as datetime, ss.status,
+                u.first_name || ' ' || u.last_name as other_name
+         FROM scheduled_sessions ss
+         JOIN users u ON u.id = ${otherCol}
+         WHERE ${scheduledCol} = ? AND ss.status NOT IN ('cancelled', 'declined')
+           AND ss.scheduled_start >= ? AND ss.scheduled_start <= ?
+         ORDER BY ss.scheduled_start`
+      )
+      .all(userId, start, end);
+
+    for (const s of scheduled) {
+      events.push({
+        type: "scheduled_session",
+        title: `${s.title} (${s.other_name})`,
+        datetime: s.datetime,
+        status: s.status,
+        entity_id: s.id,
+      });
+    }
+
     // Assigned workouts (recurring by day_of_week)
     const assignments = db
       .prepare(

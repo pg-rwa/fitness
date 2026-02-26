@@ -51,6 +51,19 @@ router.put(
   [body("reason").optional().isString(), validate],
   controller.declineSession
 );
+router.put(
+  "/sessions/:id/propose",
+  authorize("admin", "trainer"),
+  [
+    body("scheduledStart").isISO8601(),
+    body("scheduledEnd").isISO8601(),
+    body("reason").optional().isString(),
+    validate,
+  ],
+  controller.proposeSession
+);
+router.put("/sessions/:id/accept-proposal", controller.acceptProposal);
+router.put("/sessions/:id/decline-proposal", controller.declineProposal);
 router.put("/sessions/:id/cancel", controller.cancelSession);
 router.put("/sessions/:id/complete", authorize("admin", "trainer"), controller.completeSession);
 
