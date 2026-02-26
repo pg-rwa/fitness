@@ -70,6 +70,12 @@ router.put(
   controller.updateExercise
 );
 
+router.put(
+  "/:id/exercises/:teId/replace",
+  [body("newExerciseId").isInt(), validate],
+  controller.replaceExercise
+);
+
 router.delete("/:id/exercises/:teId", controller.removeExercise);
 
 router.post("/:id/duplicate", controller.duplicate);

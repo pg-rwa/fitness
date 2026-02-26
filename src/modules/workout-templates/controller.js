@@ -383,4 +383,32 @@ function listClientTemplates(req, res, next) {
   }
 }
 
-module.exports = { list, getById, create, update, remove, addExercise, updateExercise, removeExercise, duplicate, listClientTemplates };
+function replaceExercise(req, res, next) {
+  try {
+    const db = getDb();
+    const templateId = parseInt(req.params.id, 10);
+    const teId = parseInt(req.params.teId, 10);
+    const { newExerciseId } = req.body;
+
+    const template = db.prepare("SELECT * FROM workout_templates WHERE id = ?").get(templateId);
+    if (!template) throw new NotFoundError("Workout template");
+    if (template.created_by !== req.userId && req.userRole !== "admin") {
+      throw new ForbiddenError();
+    }
+
+    const te = db.prepare("SELECT * FROM template_exercises WHERE id = ? AND template_id = ?").get(teId, templateId);
+    if (!te) throw new NotFoundError("Template exercise");
+
+    const newExercise = db.prepare("SELECT id FROM exercises WHERE id = ?").get(newExerciseId);
+    if (!newExercise) throw new NotFoundError("Exercise");
+
+    db.prepare("UPDATE template_exercises SET exercise_id = ? WHERE id = ?").run(newExerciseId, teId);
+
+    const updated = getTemplateWithExercises(db, templateId);
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, create, update, remove, addExercise, updateExercise, removeExercise, replaceExercise, duplicate, listClientTemplates };

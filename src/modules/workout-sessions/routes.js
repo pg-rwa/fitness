@@ -75,6 +75,8 @@ router.put(
   controller.replaceExercise
 );
 
+router.delete("/:id", controller.remove);
+
 router.put(
   "/:id/complete",
   [

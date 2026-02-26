@@ -171,13 +171,16 @@ function WorkoutsTab({ clientId }) {
   const [sessions, setSessions] = useState([]);
   const [selectedSession, setSelectedSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(null);
 
-  useEffect(() => {
+  const loadSessions = () => {
     api(`/workout-sessions/client/${clientId}?limit=30`)
       .then((d) => setSessions(d.data || []))
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [clientId]);
+  };
+
+  useEffect(() => { loadSessions(); }, [clientId]);
 
   const viewSession = async (id) => {
     try {
@@ -186,15 +189,39 @@ function WorkoutsTab({ clientId }) {
     } catch {}
   };
 
+  const deleteSession = async (id, e) => {
+    e.stopPropagation();
+    if (deleting === id) {
+      // Second click = confirm
+      try {
+        await api(`/workout-sessions/${id}`, { method: "DELETE" });
+        setSessions(sessions.filter((s) => s.id !== id));
+        if (selectedSession?.id === id) setSelectedSession(null);
+      } catch {}
+      setDeleting(null);
+    } else {
+      setDeleting(id);
+      setTimeout(() => setDeleting((prev) => (prev === id ? null : prev)), 3000);
+    }
+  };
+
   if (loading) return <p className="text-gray-500 text-sm">Loading workouts...</p>;
 
   if (selectedSession) {
     return (
       <div>
-        <button onClick={() => setSelectedSession(null)} className="text-brand-400 text-sm mb-3 flex items-center gap-1">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          Back to list
-        </button>
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => setSelectedSession(null)} className="text-brand-400 text-sm flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            Back to list
+          </button>
+          <button
+            onClick={(e) => deleteSession(selectedSession.id, e)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium ${deleting === selectedSession.id ? "bg-red-600 text-white" : "bg-gray-800 text-red-400 border border-gray-700 hover:border-red-500/50"}`}
+          >
+            {deleting === selectedSession.id ? "Confirm Delete" : "Delete Workout"}
+          </button>
+        </div>
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -240,24 +267,37 @@ function WorkoutsTab({ clientId }) {
       ) : (
         <div className="space-y-2">
           {sessions.map((s) => (
-            <button
+            <div
               key={s.id}
               onClick={() => viewSession(s.id)}
-              className="w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-brand-500/50 transition"
+              className="w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-brand-500/50 transition cursor-pointer"
             >
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-white text-sm font-medium">{s.name || "Workout"}</p>
                   <p className="text-gray-500 text-xs">{new Date(s.started_at || s.created_at).toLocaleString()}</p>
                 </div>
-                <div className="text-right">
-                  {s.total_volume > 0 && <p className="text-brand-400 text-sm">{Math.round(s.total_volume).toLocaleString()} kg</p>}
-                  <span className={`text-xs ${s.ended_at ? "text-green-400" : "text-yellow-400"}`}>
-                    {s.ended_at ? "Completed" : "In progress"}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    {s.total_volume > 0 && <p className="text-brand-400 text-sm">{Math.round(s.total_volume).toLocaleString()} kg</p>}
+                    <span className={`text-xs ${s.ended_at ? "text-green-400" : "text-yellow-400"}`}>
+                      {s.ended_at ? "Completed" : "In progress"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => deleteSession(s.id, e)}
+                    className={`p-1.5 rounded-lg text-xs ${deleting === s.id ? "bg-red-600 text-white" : "text-gray-600 hover:text-red-400 hover:bg-gray-800"}`}
+                    title={deleting === s.id ? "Click again to confirm" : "Delete workout"}
+                  >
+                    {deleting === s.id ? (
+                      <span className="text-xs px-1">Confirm?</span>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    )}
+                  </button>
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}
@@ -343,9 +383,16 @@ function TemplatesTab({ clientId }) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  // Assign existing template
   const [myTemplates, setMyTemplates] = useState([]);
   const [assignResult, setAssignResult] = useState(null);
+  // Edit / Delete state
+  const [editingTemplate, setEditingTemplate] = useState(null); // full template obj with exercises
+  const [editForm, setEditForm] = useState({ name: "", description: "", category: "", difficulty: "" });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  // Exercise replace state
+  const [replacingExId, setReplacingExId] = useState(null);
 
   const loadTemplates = () => {
     api(`/workout-templates/client/${clientId}`)
@@ -354,9 +401,7 @@ function TemplatesTab({ clientId }) {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    loadTemplates();
-  }, [clientId]);
+  useEffect(() => { loadTemplates(); }, [clientId]);
 
   const loadMyTemplates = () => {
     api("/workout-templates?ownOnly=true&limit=100")
@@ -364,22 +409,13 @@ function TemplatesTab({ clientId }) {
       .catch(() => {});
   };
 
+  // ─── Create helpers ───
   const addExercise = (ex) => {
     if (!selectedExercises.find((e) => e.exerciseId === ex.id)) {
-      setSelectedExercises([...selectedExercises, {
-        exerciseId: ex.id,
-        name: ex.name,
-        targetSets: 3,
-        targetReps: 10,
-        restSeconds: 60,
-      }]);
+      setSelectedExercises([...selectedExercises, { exerciseId: ex.id, name: ex.name, targetSets: 3, targetReps: 10, restSeconds: 60 }]);
     }
   };
-
-  const removeExercise = (idx) => {
-    setSelectedExercises(selectedExercises.filter((_, i) => i !== idx));
-  };
-
+  const removeExercise = (idx) => setSelectedExercises(selectedExercises.filter((_, i) => i !== idx));
   const updateExercise = (idx, field, value) => {
     const updated = [...selectedExercises];
     updated[idx] = { ...updated[idx], [field]: parseInt(value) || 0 };
@@ -388,39 +424,189 @@ function TemplatesTab({ clientId }) {
 
   const createTemplate = async () => {
     if (!formData.name.trim()) return;
-    setCreating(true);
-    setError(null);
+    setCreating(true); setError(null);
     try {
-      await api(`/users/clients/${clientId}/templates`, {
-        method: "POST",
-        body: { ...formData, exercises: selectedExercises },
-      });
+      await api(`/users/clients/${clientId}/templates`, { method: "POST", body: { ...formData, exercises: selectedExercises } });
       setShowCreate(false);
       setFormData({ name: "", description: "", category: "", difficulty: "intermediate" });
       setSelectedExercises([]);
       loadTemplates();
-    } catch (err) {
-      setError(err.message || "Failed to create template");
-    }
+    } catch (err) { setError(err.message || "Failed to create template"); }
     setCreating(false);
   };
 
   const assignTemplate = async (templateId) => {
     setAssignResult(null);
     try {
-      await api(`/assigned-workouts/client/${clientId}`, {
-        method: "POST",
-        body: { templateId },
-      });
+      await api(`/assigned-workouts/client/${clientId}`, { method: "POST", body: { templateId } });
       setAssignResult({ success: true });
       loadTemplates();
-    } catch (err) {
-      setAssignResult({ error: err.message || "Failed to assign" });
+    } catch (err) { setAssignResult({ error: err.message || "Failed to assign" }); }
+  };
+
+  // ─── Edit helpers ───
+  const startEdit = async (t) => {
+    setShowCreate(false); setShowAssign(false); setEditError(null);
+    try {
+      const full = await api(`/workout-templates/${t.id}`);
+      setEditingTemplate(full);
+      setEditForm({ name: full.name || "", description: full.description || "", category: full.category || "", difficulty: full.difficulty || "intermediate" });
+    } catch (err) { setEditError(err.message || "Failed to load template"); }
+  };
+
+  const saveEdit = async () => {
+    if (!editingTemplate) return;
+    setEditSaving(true); setEditError(null);
+    try {
+      await api(`/workout-templates/${editingTemplate.id}`, { method: "PUT", body: editForm });
+      setEditingTemplate(null);
+      loadTemplates();
+    } catch (err) { setEditError(err.message || "Failed to save"); }
+    setEditSaving(false);
+  };
+
+  const deleteTemplate = async (id) => {
+    if (deletingId === id) {
+      try {
+        await api(`/workout-templates/${id}`, { method: "DELETE" });
+        setEditingTemplate(null);
+        loadTemplates();
+      } catch {}
+      setDeletingId(null);
+    } else {
+      setDeletingId(id);
+      setTimeout(() => setDeletingId((prev) => (prev === id ? null : prev)), 3000);
     }
+  };
+
+  // ─── Exercise replace/remove on existing template ───
+  const replaceTemplateExercise = async (teId, newExercise) => {
+    if (!editingTemplate) return;
+    try {
+      const updated = await api(`/workout-templates/${editingTemplate.id}/exercises/${teId}/replace`, {
+        method: "PUT", body: { newExerciseId: newExercise.id },
+      });
+      setEditingTemplate(updated);
+      setReplacingExId(null);
+    } catch {}
+  };
+
+  const removeTemplateExercise = async (teId) => {
+    if (!editingTemplate) return;
+    try {
+      await api(`/workout-templates/${editingTemplate.id}/exercises/${teId}`, { method: "DELETE" });
+      setEditingTemplate({ ...editingTemplate, exercises: editingTemplate.exercises.filter((e) => e.id !== teId) });
+    } catch {}
+  };
+
+  const addTemplateExercise = async (ex) => {
+    if (!editingTemplate) return;
+    try {
+      const added = await api(`/workout-templates/${editingTemplate.id}/exercises`, {
+        method: "POST", body: { exerciseId: ex.id, targetSets: 3, targetReps: 10 },
+      });
+      setEditingTemplate({ ...editingTemplate, exercises: [...editingTemplate.exercises, { ...added, exercise_name: ex.name, muscle_group: ex.muscle_group }] });
+    } catch {}
   };
 
   if (loading) return <p className="text-gray-500 text-sm">Loading templates...</p>;
 
+  // ─── Editing view ───
+  if (editingTemplate) {
+    return (
+      <div>
+        <button onClick={() => setEditingTemplate(null)} className="text-brand-400 text-sm mb-3 flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Back to templates
+        </button>
+
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-white font-semibold text-sm">Edit Template</h4>
+            <button
+              onClick={() => deleteTemplate(editingTemplate.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${deletingId === editingTemplate.id ? "bg-red-600 text-white" : "bg-gray-800 text-red-400 border border-gray-700 hover:border-red-500/50"}`}
+            >
+              {deletingId === editingTemplate.id ? "Confirm Delete" : "Delete Template"}
+            </button>
+          </div>
+          {editError && <p className="text-red-400 text-sm mb-2">{editError}</p>}
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} placeholder="Template name *"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none" />
+            <input value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} placeholder="Description"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none" />
+            <select value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none">
+              <option value="">Category</option>
+              <option value="strength">Strength</option>
+              <option value="hypertrophy">Hypertrophy</option>
+              <option value="endurance">Endurance</option>
+              <option value="flexibility">Flexibility</option>
+              <option value="cardio">Cardio</option>
+            </select>
+            <select value={editForm.difficulty} onChange={(e) => setEditForm({ ...editForm, difficulty: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
+          </div>
+
+          <button onClick={saveEdit} disabled={!editForm.name.trim() || editSaving}
+            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50 mb-4">
+            {editSaving ? "Saving..." : "Save Changes"}
+          </button>
+
+          {/* Exercises in template */}
+          <h5 className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Exercises</h5>
+          <div className="space-y-2 mb-3">
+            {(editingTemplate.exercises || []).map((ex) => (
+              <div key={ex.id} className="bg-gray-800 rounded-lg p-2.5">
+                {replacingExId === ex.id ? (
+                  <div>
+                    <p className="text-gray-400 text-xs mb-1.5">Replace <span className="text-white">{ex.exercise_name}</span> with:</p>
+                    <ExerciseDropdown
+                      onSelect={(newEx) => replaceTemplateExercise(ex.id, newEx)}
+                      selectedIds={editingTemplate.exercises.map((e) => e.exercise_id)}
+                    />
+                    <button onClick={() => setReplacingExId(null)} className="text-gray-500 text-xs hover:text-white">Cancel</button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-white text-sm">{ex.exercise_name}</span>
+                      <span className="text-gray-500 text-xs ml-2">{ex.target_sets}x{ex.target_reps}</span>
+                      {ex.muscle_group && <span className="text-gray-600 text-xs ml-2">{ex.muscle_group}</span>}
+                    </div>
+                    <div className="flex gap-1">
+                      <button onClick={() => setReplacingExId(ex.id)}
+                        className="px-2 py-1 text-xs text-gray-400 hover:text-brand-400 bg-gray-700 rounded" title="Replace exercise">
+                        <svg className="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                      </button>
+                      <button onClick={() => removeTemplateExercise(ex.id)}
+                        className="px-2 py-1 text-xs text-gray-400 hover:text-red-400 bg-gray-700 rounded" title="Remove exercise">
+                        X
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Add exercise to existing template */}
+          <ExerciseDropdown
+            onSelect={addTemplateExercise}
+            selectedIds={(editingTemplate.exercises || []).map((e) => e.exercise_id)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Main list view ───
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
@@ -462,12 +648,8 @@ function TemplatesTab({ clientId }) {
                     {alreadyAssigned ? (
                       <span className="text-green-400 text-xs px-2 py-1 bg-green-400/10 rounded-full">Assigned</span>
                     ) : (
-                      <button
-                        onClick={() => assignTemplate(t.id)}
-                        className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600"
-                      >
-                        Assign
-                      </button>
+                      <button onClick={() => assignTemplate(t.id)}
+                        className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600">Assign</button>
                     )}
                   </div>
                 );
@@ -484,23 +666,12 @@ function TemplatesTab({ clientId }) {
           {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
 
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Template name *"
-              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-            />
-            <input
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Description"
-              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-            />
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-            >
+            <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Template name *"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none" />
+            <input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Description"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none" />
+            <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none">
               <option value="">Category</option>
               <option value="strength">Strength</option>
               <option value="hypertrophy">Hypertrophy</option>
@@ -508,56 +679,35 @@ function TemplatesTab({ clientId }) {
               <option value="flexibility">Flexibility</option>
               <option value="cardio">Cardio</option>
             </select>
-            <select
-              value={formData.difficulty}
-              onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-            >
+            <select value={formData.difficulty} onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none">
               <option value="beginner">Beginner</option>
               <option value="intermediate">Intermediate</option>
               <option value="advanced">Advanced</option>
             </select>
           </div>
 
-          {/* Exercise Dropdown */}
-          <ExerciseDropdown
-            onSelect={addExercise}
-            selectedIds={selectedExercises.map((e) => e.exerciseId)}
-          />
+          <ExerciseDropdown onSelect={addExercise} selectedIds={selectedExercises.map((e) => e.exerciseId)} />
 
-          {/* Selected Exercises */}
           {selectedExercises.length > 0 && (
             <div className="space-y-2 mb-3">
               {selectedExercises.map((ex, idx) => (
                 <div key={idx} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
                   <span className="text-gray-400 text-xs w-5">{idx + 1}.</span>
                   <span className="text-white text-sm flex-1">{ex.name}</span>
-                  <input
-                    type="number"
-                    value={ex.targetSets}
-                    onChange={(e) => updateExercise(idx, "targetSets", e.target.value)}
-                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center"
-                    title="Sets"
-                  />
+                  <input type="number" value={ex.targetSets} onChange={(e) => updateExercise(idx, "targetSets", e.target.value)}
+                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center" title="Sets" />
                   <span className="text-gray-600 text-xs">x</span>
-                  <input
-                    type="number"
-                    value={ex.targetReps}
-                    onChange={(e) => updateExercise(idx, "targetReps", e.target.value)}
-                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center"
-                    title="Reps"
-                  />
+                  <input type="number" value={ex.targetReps} onChange={(e) => updateExercise(idx, "targetReps", e.target.value)}
+                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center" title="Reps" />
                   <button onClick={() => removeExercise(idx)} className="text-gray-500 hover:text-red-400 text-xs px-1">X</button>
                 </div>
               ))}
             </div>
           )}
 
-          <button
-            onClick={createTemplate}
-            disabled={!formData.name.trim() || creating}
-            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50"
-          >
+          <button onClick={createTemplate} disabled={!formData.name.trim() || creating}
+            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50">
             {creating ? "Creating..." : "Create & Assign to Client"}
           </button>
         </div>
@@ -571,13 +721,26 @@ function TemplatesTab({ clientId }) {
           {templates.map((t) => (
             <div key={t.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <p className="text-white text-sm font-medium">{t.name}</p>
                   {t.description && <p className="text-gray-500 text-xs mt-0.5">{t.description}</p>}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 ml-3">
                   {t.category && <span className="text-xs px-2 py-0.5 rounded-full bg-gray-800 text-gray-400">{t.category}</span>}
                   {t.difficulty && <span className="text-xs px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400">{t.difficulty}</span>}
+                  <button onClick={() => startEdit(t)}
+                    className="p-1.5 text-gray-500 hover:text-brand-400 hover:bg-gray-800 rounded-lg" title="Edit template">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>
+                  <button onClick={() => deleteTemplate(t.id)}
+                    className={`p-1.5 rounded-lg ${deletingId === t.id ? "bg-red-600 text-white" : "text-gray-500 hover:text-red-400 hover:bg-gray-800"}`}
+                    title={deletingId === t.id ? "Click again to confirm" : "Delete template"}>
+                    {deletingId === t.id ? (
+                      <span className="text-xs px-1">Confirm?</span>
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

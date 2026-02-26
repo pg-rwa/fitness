@@ -441,4 +441,38 @@ function replaceExercise(req, res, next) {
   }
 }
 
-module.exports = { list, getById, create, addExercise, logSet, updateSet, complete, exerciseHistory, replaceExercise };
+function remove(req, res, next) {
+  try {
+    const db = getDb();
+    const id = parseInt(req.params.id, 10);
+
+    const session = db.prepare("SELECT * FROM workout_sessions WHERE id = ?").get(id);
+    if (!session) throw new NotFoundError("Workout session");
+
+    // Owner, their trainer, or admin can delete
+    if (session.user_id !== req.userId && req.userRole !== "admin") {
+      if (req.userRole === "trainer") {
+        const client = db.prepare("SELECT trainer_id FROM users WHERE id = ?").get(session.user_id);
+        if (!client || client.trainer_id !== req.userId) throw new ForbiddenError();
+      } else {
+        throw new ForbiddenError();
+      }
+    }
+
+    db.transaction(() => {
+      // Delete sets -> session_exercises -> session
+      const seIds = db.prepare("SELECT id FROM session_exercises WHERE session_id = ?").all(id).map(r => r.id);
+      if (seIds.length > 0) {
+        db.prepare(`DELETE FROM exercise_sets WHERE session_exercise_id IN (${seIds.map(() => '?').join(',')})`).run(...seIds);
+      }
+      db.prepare("DELETE FROM session_exercises WHERE session_id = ?").run(id);
+      db.prepare("DELETE FROM workout_sessions WHERE id = ?").run(id);
+    })();
+
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = { list, getById, create, addExercise, logSet, updateSet, complete, exerciseHistory, replaceExercise, remove };
