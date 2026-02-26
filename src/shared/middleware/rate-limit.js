@@ -4,7 +4,7 @@ const isTest = process.env.NODE_ENV === "test";
 const passThrough = (_req, _res, next) => next();
 
 const windowMs = parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000", 10); // 15 min
-const max = parseInt(process.env.RATE_LIMIT_MAX || "100", 10);
+const max = parseInt(process.env.RATE_LIMIT_MAX || "500", 10);
 
 const apiLimiter = isTest
   ? passThrough
@@ -18,7 +18,7 @@ const apiLimiter = isTest
     });
 
 const authWindowMs = parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS || "900000", 10); // 15 min
-const authMax = parseInt(process.env.AUTH_RATE_LIMIT_MAX || "50", 10);
+const authMax = parseInt(process.env.AUTH_RATE_LIMIT_MAX || "100", 10);
 
 const authLimiter = isTest
   ? passThrough

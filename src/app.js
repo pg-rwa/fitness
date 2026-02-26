@@ -62,6 +62,9 @@ const registry = new ModuleRegistry();
 
 const app = express();
 
+// Trust proxy (nginx in Docker) so rate limiter uses real client IP
+app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
