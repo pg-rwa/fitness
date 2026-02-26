@@ -265,19 +265,87 @@ function WorkoutsTab({ clientId }) {
   );
 }
 
+// ─── Exercise Dropdown (shared) ─────────────────────────────
+
+function ExerciseDropdown({ onSelect, selectedIds = [] }) {
+  const [allExercises, setAllExercises] = useState([]);
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!loaded) {
+      api("/exercises?limit=200")
+        .then((d) => setAllExercises(Array.isArray(d) ? d : d.data || []))
+        .catch(() => {})
+        .finally(() => setLoaded(true));
+    }
+  }, [loaded]);
+
+  const filtered = allExercises.filter((ex) => {
+    if (selectedIds.includes(ex.id)) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      ex.name.toLowerCase().includes(q) ||
+      (ex.muscle_group || "").toLowerCase().includes(q) ||
+      (ex.equipment || "").toLowerCase().includes(q) ||
+      (ex.category || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="relative mb-3">
+      <label className="block text-gray-400 text-xs font-medium mb-1.5">Add Exercise</label>
+      <input
+        value={search}
+        onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Type to search exercises..."
+        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+      />
+      {open && (
+        <div className="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg max-h-52 overflow-y-auto shadow-xl">
+          {!loaded ? (
+            <p className="px-3 py-2 text-gray-500 text-sm">Loading exercises...</p>
+          ) : filtered.length === 0 ? (
+            <p className="px-3 py-2 text-gray-500 text-sm">No exercises found</p>
+          ) : (
+            filtered.map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => { onSelect(ex); setSearch(""); setOpen(false); }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex justify-between items-center"
+              >
+                <div>
+                  <span className="text-white">{ex.name}</span>
+                  <span className="text-gray-500 text-xs ml-2">{ex.muscle_group}</span>
+                </div>
+                {ex.equipment && <span className="text-gray-600 text-xs">{ex.equipment}</span>}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
+    </div>
+  );
+}
+
 // ─── Templates Tab ──────────────────────────────────────────
 
 function TemplatesTab({ clientId }) {
   const [templates, setTemplates] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
   const [formData, setFormData] = useState({ name: "", description: "", category: "", difficulty: "intermediate" });
-  const [exercises, setExercises] = useState([]);
-  const [exerciseSearch, setExerciseSearch] = useState("");
-  const [exerciseResults, setExerciseResults] = useState([]);
   const [selectedExercises, setSelectedExercises] = useState([]);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Assign existing template
+  const [myTemplates, setMyTemplates] = useState([]);
+  const [assignResult, setAssignResult] = useState(null);
 
   const loadTemplates = () => {
     api(`/workout-templates/client/${clientId}`)
@@ -290,12 +358,10 @@ function TemplatesTab({ clientId }) {
     loadTemplates();
   }, [clientId]);
 
-  const searchExercises = async () => {
-    if (exerciseSearch.length < 2) return;
-    try {
-      const d = await api(`/exercises?search=${encodeURIComponent(exerciseSearch)}`);
-      setExerciseResults(Array.isArray(d) ? d : d.data || []);
-    } catch {}
+  const loadMyTemplates = () => {
+    api("/workout-templates?ownOnly=true&limit=100")
+      .then((d) => setMyTemplates(d.data || []))
+      .catch(() => {});
   };
 
   const addExercise = (ex) => {
@@ -308,8 +374,6 @@ function TemplatesTab({ clientId }) {
         restSeconds: 60,
       }]);
     }
-    setExerciseResults([]);
-    setExerciseSearch("");
   };
 
   const removeExercise = (idx) => {
@@ -329,10 +393,7 @@ function TemplatesTab({ clientId }) {
     try {
       await api(`/users/clients/${clientId}/templates`, {
         method: "POST",
-        body: {
-          ...formData,
-          exercises: selectedExercises,
-        },
+        body: { ...formData, exercises: selectedExercises },
       });
       setShowCreate(false);
       setFormData({ name: "", description: "", category: "", difficulty: "intermediate" });
@@ -344,19 +405,77 @@ function TemplatesTab({ clientId }) {
     setCreating(false);
   };
 
+  const assignTemplate = async (templateId) => {
+    setAssignResult(null);
+    try {
+      await api(`/assigned-workouts/client/${clientId}`, {
+        method: "POST",
+        body: { templateId },
+      });
+      setAssignResult({ success: true });
+      loadTemplates();
+    } catch (err) {
+      setAssignResult({ error: err.message || "Failed to assign" });
+    }
+  };
+
   if (loading) return <p className="text-gray-500 text-sm">Loading templates...</p>;
 
   return (
     <div>
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Client Templates & Assignments</h3>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600"
-        >
-          {showCreate ? "Cancel" : "Create Template"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => { setShowAssign(!showAssign); setShowCreate(false); if (!showAssign) loadMyTemplates(); }}
+            className="px-3 py-1.5 bg-gray-800 text-white rounded-lg text-xs font-medium hover:bg-gray-700 border border-gray-700"
+          >
+            {showAssign ? "Cancel" : "Assign Existing"}
+          </button>
+          <button
+            onClick={() => { setShowCreate(!showCreate); setShowAssign(false); }}
+            className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600"
+          >
+            {showCreate ? "Cancel" : "Create New"}
+          </button>
+        </div>
       </div>
+
+      {/* Assign Existing Template */}
+      {showAssign && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
+          <h4 className="text-white font-semibold text-sm mb-3">Assign Your Template to Client</h4>
+          {assignResult?.success && <p className="text-green-400 text-sm mb-2">Template assigned!</p>}
+          {assignResult?.error && <p className="text-red-400 text-sm mb-2">{assignResult.error}</p>}
+          {myTemplates.length === 0 ? (
+            <p className="text-gray-600 text-sm">You have no templates to assign. Create one first.</p>
+          ) : (
+            <div className="space-y-2">
+              {myTemplates.map((t) => {
+                const alreadyAssigned = templates.some((ct) => ct.id === t.id);
+                return (
+                  <div key={t.id} className="flex items-center justify-between bg-gray-800 rounded-lg px-3 py-2.5">
+                    <div>
+                      <p className="text-white text-sm">{t.name}</p>
+                      <p className="text-gray-500 text-xs">{[t.category, t.difficulty].filter(Boolean).join(" / ")}</p>
+                    </div>
+                    {alreadyAssigned ? (
+                      <span className="text-green-400 text-xs px-2 py-1 bg-green-400/10 rounded-full">Assigned</span>
+                    ) : (
+                      <button
+                        onClick={() => assignTemplate(t.id)}
+                        className="px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600"
+                      >
+                        Assign
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Create Template Form */}
       {showCreate && (
@@ -400,34 +519,11 @@ function TemplatesTab({ clientId }) {
             </select>
           </div>
 
-          {/* Exercise Search */}
-          <div className="mb-3">
-            <div className="flex gap-2 mb-2">
-              <input
-                value={exerciseSearch}
-                onChange={(e) => setExerciseSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchExercises()}
-                placeholder="Search exercises to add..."
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
-              />
-              <button onClick={searchExercises} className="px-3 py-2 bg-gray-700 text-white rounded-lg text-sm">Search</button>
-            </div>
-
-            {exerciseResults.length > 0 && (
-              <div className="bg-gray-800 border border-gray-700 rounded-lg max-h-40 overflow-y-auto">
-                {exerciseResults.slice(0, 10).map((ex) => (
-                  <button
-                    key={ex.id}
-                    onClick={() => addExercise(ex)}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0"
-                  >
-                    <span className="text-white">{ex.name}</span>
-                    <span className="text-gray-500 text-xs ml-2">{ex.muscle_group}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Exercise Dropdown */}
+          <ExerciseDropdown
+            onSelect={addExercise}
+            selectedIds={selectedExercises.map((e) => e.exerciseId)}
+          />
 
           {/* Selected Exercises */}
           {selectedExercises.length > 0 && (
@@ -468,8 +564,8 @@ function TemplatesTab({ clientId }) {
       )}
 
       {/* Template List */}
-      {templates.length === 0 && !showCreate ? (
-        <p className="text-gray-600 text-sm text-center py-8">No templates yet. Create one for this client.</p>
+      {templates.length === 0 && !showCreate && !showAssign ? (
+        <p className="text-gray-600 text-sm text-center py-8">No templates yet. Create one or assign an existing template.</p>
       ) : (
         <div className="space-y-2">
           {templates.map((t) => (

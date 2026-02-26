@@ -41,8 +41,9 @@ function list(req, res, next) {
       conditions.push("created_by = ?");
       params.push(req.userId);
     } else {
-      conditions.push("(created_by = ? OR is_public = 1)");
-      params.push(req.userId);
+      // Show own templates, public ones, and templates assigned to this user
+      conditions.push("(created_by = ? OR is_public = 1 OR id IN (SELECT template_id FROM assigned_workouts WHERE client_id = ? AND is_active = 1))");
+      params.push(req.userId, req.userId);
     }
 
     if (category) {
@@ -79,9 +80,19 @@ function getById(req, res, next) {
     const template = getTemplateWithExercises(db, parseInt(req.params.id, 10));
     if (!template) throw new NotFoundError("Workout template");
 
-    // Check access: own template or public
+    // Check access: own template, public, assigned to user, or trainer viewing client's template
     if (template.created_by !== req.userId && !template.is_public && req.userRole !== "admin") {
-      throw new ForbiddenError();
+      // Check if assigned to this user
+      const assigned = db.prepare("SELECT id FROM assigned_workouts WHERE template_id = ? AND client_id = ? AND is_active = 1").get(template.id, req.userId);
+      if (!assigned) {
+        // Check if trainer viewing their client's template
+        if (req.userRole === "trainer") {
+          const isClient = db.prepare("SELECT id FROM users WHERE id = ? AND trainer_id = ?").get(template.created_by, req.userId);
+          if (!isClient) throw new ForbiddenError();
+        } else {
+          throw new ForbiddenError();
+        }
+      }
     }
 
     res.json(template);
