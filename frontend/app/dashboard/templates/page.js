@@ -268,11 +268,79 @@ function TemplateEditor({ template, onBack, onRefresh }) {
   );
 }
 
+function ExerciseDropdown({ onSelect, selectedIds = [] }) {
+  const [allExercises, setAllExercises] = useState([]);
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!loaded) {
+      api("/exercises?limit=200")
+        .then((d) => setAllExercises(Array.isArray(d) ? d : d.data || []))
+        .catch(() => {})
+        .finally(() => setLoaded(true));
+    }
+  }, [loaded]);
+
+  const filtered = allExercises.filter((ex) => {
+    if (selectedIds.includes(ex.id)) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      ex.name.toLowerCase().includes(q) ||
+      (ex.muscle_group || "").toLowerCase().includes(q) ||
+      (ex.equipment || "").toLowerCase().includes(q) ||
+      (ex.category || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="relative mb-3">
+      <label className="block text-gray-400 text-xs font-medium mb-1.5">Add Exercise</label>
+      <input
+        value={search}
+        onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Type to search exercises..."
+        className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+      />
+      {open && (
+        <div className="absolute z-20 w-full mt-1 bg-gray-800 border border-gray-700 rounded-lg max-h-52 overflow-y-auto shadow-xl">
+          {!loaded ? (
+            <p className="px-3 py-2 text-gray-500 text-sm">Loading exercises...</p>
+          ) : filtered.length === 0 ? (
+            <p className="px-3 py-2 text-gray-500 text-sm">No exercises found</p>
+          ) : (
+            filtered.map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => { onSelect(ex); setSearch(""); setOpen(false); }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex justify-between items-center"
+              >
+                <div>
+                  <span className="text-white">{ex.name}</span>
+                  <span className="text-gray-500 text-xs ml-2">{ex.muscle_group}</span>
+                </div>
+                {ex.equipment && <span className="text-gray-600 text-xs">{ex.equipment}</span>}
+              </button>
+            ))
+          )}
+        </div>
+      )}
+      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
+    </div>
+  );
+}
+
 export default function TemplatesPage() {
   const [templates, setTemplates] = useState([]);
   const [editing, setEditing] = useState(null);
   const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
+  const [formData, setFormData] = useState({ name: "", description: "", category: "", difficulty: "intermediate" });
+  const [selectedExercises, setSelectedExercises] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
   const load = useCallback(() => {
     api("/workout-templates?limit=100&ownOnly=true").then((d) => setTemplates(d.data || [])).catch(() => {});
@@ -280,18 +348,42 @@ export default function TemplatesPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const addExercise = (ex) => {
+    if (!selectedExercises.find((e) => e.exerciseId === ex.id)) {
+      setSelectedExercises([...selectedExercises, { exerciseId: ex.id, name: ex.name, targetSets: 3, targetReps: 10, restSeconds: 60 }]);
+    }
+  };
+  const removeExercise = (idx) => setSelectedExercises(selectedExercises.filter((_, i) => i !== idx));
+  const updateExercise = (idx, field, value) => {
+    const updated = [...selectedExercises];
+    updated[idx] = { ...updated[idx], [field]: parseInt(value) || 0 };
+    setSelectedExercises(updated);
+  };
+
   const createTemplate = async () => {
-    if (!newName.trim()) return;
+    if (!formData.name.trim()) return;
+    setSubmitting(true); setError(null);
     try {
+      // Create template
       const t = await api("/workout-templates", {
         method: "POST",
-        body: { name: newName.trim() },
+        body: { name: formData.name.trim(), description: formData.description, category: formData.category, difficulty: formData.difficulty },
       });
+      // Add exercises
+      for (const [idx, ex] of selectedExercises.entries()) {
+        await api(`/workout-templates/${t.id}/exercises`, {
+          method: "POST",
+          body: { exerciseId: ex.exerciseId, sortOrder: idx + 1, targetSets: ex.targetSets, targetReps: ex.targetReps, restSeconds: ex.restSeconds },
+        });
+      }
       setCreating(false);
-      setNewName("");
+      setFormData({ name: "", description: "", category: "", difficulty: "intermediate" });
+      setSelectedExercises([]);
       load();
-      setEditing(t);
-    } catch {}
+    } catch (err) {
+      setError(err.message || "Failed to create template");
+    }
+    setSubmitting(false);
   };
 
   if (editing) {
@@ -309,28 +401,79 @@ export default function TemplatesPage() {
       <div className="flex items-center justify-between mb-5">
         <h1 className="text-white text-xl font-bold">My Templates</h1>
         <button
-          onClick={() => setCreating(true)}
+          onClick={() => setCreating(!creating)}
           className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600"
         >
-          New Template
+          {creating ? "Cancel" : "New Template"}
         </button>
       </div>
 
       {/* Create form */}
       {creating && (
         <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Template name (e.g., Workout A - Push Day)"
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none mb-3"
-            autoFocus
-            onKeyDown={(e) => e.key === "Enter" && createTemplate()}
-          />
-          <div className="flex gap-2">
-            <button onClick={() => { setCreating(false); setNewName(""); }} className="px-4 py-2 text-gray-400 text-sm">Cancel</button>
-            <button onClick={createTemplate} className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600">Create</button>
+          <h4 className="text-white font-semibold text-sm mb-3">Create New Template</h4>
+          {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
+
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Template name *"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+              autoFocus
+            />
+            <input
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Description"
+              className="col-span-2 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+            >
+              <option value="">Category</option>
+              <option value="strength">Strength</option>
+              <option value="hypertrophy">Hypertrophy</option>
+              <option value="endurance">Endurance</option>
+              <option value="flexibility">Flexibility</option>
+              <option value="cardio">Cardio</option>
+            </select>
+            <select
+              value={formData.difficulty}
+              onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+            >
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+            </select>
           </div>
+
+          <ExerciseDropdown onSelect={addExercise} selectedIds={selectedExercises.map((e) => e.exerciseId)} />
+
+          {selectedExercises.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {selectedExercises.map((ex, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
+                  <span className="text-gray-400 text-xs w-5">{idx + 1}.</span>
+                  <span className="text-white text-sm flex-1">{ex.name}</span>
+                  <input type="number" value={ex.targetSets} onChange={(e) => updateExercise(idx, "targetSets", e.target.value)}
+                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center" title="Sets" />
+                  <span className="text-gray-600 text-xs">x</span>
+                  <input type="number" value={ex.targetReps} onChange={(e) => updateExercise(idx, "targetReps", e.target.value)}
+                    className="w-14 bg-gray-700 rounded px-2 py-1 text-white text-xs text-center" title="Reps" />
+                  <button onClick={() => removeExercise(idx)} className="text-gray-500 hover:text-red-400 text-xs px-1">X</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button onClick={createTemplate} disabled={!formData.name.trim() || submitting}
+            className="w-full py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50">
+            {submitting ? "Creating..." : "Create Template"}
+          </button>
         </div>
       )}
 
@@ -350,6 +493,7 @@ export default function TemplatesPage() {
                 )}
                 <div className="flex items-center gap-2 mt-1">
                   {t.category && <span className="text-gray-600 text-xs capitalize">{t.category}</span>}
+                  {t.difficulty && <span className="text-brand-400/60 text-xs capitalize">{t.difficulty}</span>}
                   {t.estimated_duration_min > 0 && <span className="text-gray-600 text-xs">{t.estimated_duration_min}min</span>}
                 </div>
               </div>
