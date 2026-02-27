@@ -21,6 +21,7 @@ function StatCard({ label, value, sub, color = "brand" }) {
 }
 
 function TrainerDashboard() {
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState({});
   const [recentSessions, setRecentSessions] = useState([]);
 
@@ -40,7 +41,16 @@ function TrainerDashboard() {
 
   return (
     <div>
-      <h1 className="text-white text-xl font-bold mb-4">Trainer Dashboard</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-white text-xl font-bold">Trainer Dashboard</h1>
+        <button onClick={logout}
+          className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg text-xs transition">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Sign Out
+        </button>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard label="Templates" value={stats.templates || 0} color="blue" />
         <StatCard label="Upcoming" value={stats.scheduled || 0} sub="sessions" color="green" />
@@ -85,7 +95,7 @@ function TrainerDashboard() {
 }
 
 function ClientDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [today, setToday] = useState({ sessions: [], meals: 0 });
   const [measurements, setMeasurements] = useState(null);
   const [trainerRequests, setTrainerRequests] = useState([]);
@@ -124,7 +134,16 @@ function ClientDashboard() {
 
   return (
     <div>
-      <h1 className="text-white text-xl font-bold mb-4">Dashboard</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-white text-xl font-bold">Dashboard</h1>
+        <button onClick={logout}
+          className="flex items-center gap-1.5 px-3 py-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded-lg text-xs transition">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Sign Out
+        </button>
+      </div>
 
       {/* My Trainer Card */}
       {user?.trainer_id && user?.trainer_name && (
