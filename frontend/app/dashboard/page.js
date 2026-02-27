@@ -85,6 +85,7 @@ function TrainerDashboard() {
 }
 
 function ClientDashboard() {
+  const { user } = useAuth();
   const [today, setToday] = useState({ sessions: [], meals: 0 });
   const [measurements, setMeasurements] = useState(null);
   const [trainerRequests, setTrainerRequests] = useState([]);
@@ -124,6 +125,41 @@ function ClientDashboard() {
   return (
     <div>
       <h1 className="text-white text-xl font-bold mb-4">Dashboard</h1>
+
+      {/* My Trainer Card */}
+      {user?.trainer_id && user?.trainer_name && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-brand-500/10 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-gray-500 text-[10px] uppercase tracking-wider font-semibold">Your Trainer</p>
+                <p className="text-white text-sm font-medium">{user.trainer_name}</p>
+                {user.trainer_email && <p className="text-gray-500 text-xs">{user.trainer_email}</p>}
+              </div>
+            </div>
+            <Link href="/dashboard/schedule"
+              className="flex items-center gap-1.5 px-3 py-2 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600 transition">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Book Appointment
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* No trainer assigned */}
+      {!user?.trainer_id && trainerRequests.length === 0 && (
+        <div className="bg-gray-900 border border-dashed border-gray-700 rounded-xl p-4 mb-4">
+          <p className="text-gray-500 text-sm">No trainer assigned yet. Ask your trainer to send you an invitation.</p>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard label="Workouts" value={today.sessions.length} sub="recent" color="brand" />
         <StatCard label="Meals Today" value={today.meals} color="green" />
@@ -182,6 +218,11 @@ function ClientDashboard() {
             <Link href="/dashboard/progress" className="block px-3 py-2.5 bg-gray-800 rounded-lg hover:bg-gray-700 transition text-gray-300 text-sm">
               Record Measurements
             </Link>
+            {user?.trainer_id && (
+              <Link href="/dashboard/schedule" className="block px-3 py-2.5 bg-gray-800 rounded-lg hover:bg-gray-700 transition text-gray-300 text-sm">
+                Book Appointment
+              </Link>
+            )}
           </div>
         </div>
 
