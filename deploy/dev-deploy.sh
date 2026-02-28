@@ -35,20 +35,32 @@ else
 fi
 
 # ─── 2. Generate .env if missing ──────────────────────────────
+DROPLET_IP=$(curl -sf http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || curl -sf ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
 if [ ! -f .env ]; then
   JWT_SECRET=$(openssl rand -base64 48)
   cat > .env <<ENVEOF
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=7d
-HTTP_PORT=80
+HTTP_PORT=3080
 STORAGE_TYPE=local
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=100
+PUBLIC_API_URL=http://${DROPLET_IP}:3080/api
 ENVEOF
   chmod 600 .env
   echo "==> Created .env with generated JWT_SECRET"
 else
-  echo "==> .env exists, skipping"
+  # Ensure HTTP_PORT is 3080
+  if grep -q "HTTP_PORT=" .env; then
+    sed -i "s/HTTP_PORT=.*/HTTP_PORT=3080/" .env
+  else
+    echo "HTTP_PORT=3080" >> .env
+  fi
+  # Ensure PUBLIC_API_URL is set
+  if ! grep -q "PUBLIC_API_URL=" .env; then
+    echo "PUBLIC_API_URL=http://${DROPLET_IP}:3080/api" >> .env
+  fi
+  echo "==> .env exists, ensured HTTP_PORT=3080"
 fi
 
 # ─── 3. Build images ──────────────────────────────────────────
