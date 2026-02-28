@@ -85,9 +85,15 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-gray-500 text-sm mt-6">
-          Have an invite?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/register" className="text-brand-500 hover:underline">
             Create account
+          </Link>
+        </p>
+        <p className="text-center text-gray-500 text-sm mt-2">
+          Have an invite?{" "}
+          <Link href="/register?invitation=true" className="text-brand-500 hover:underline">
+            Accept invitation
           </Link>
         </p>
       </div>

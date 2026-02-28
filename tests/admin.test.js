@@ -1,6 +1,7 @@
 const request = require("supertest");
 const app = require("../src/app");
 const { getDb, closeDb } = require("../src/config/database");
+const { registerTestUser } = require("./helpers");
 
 let adminToken;
 let trainerToken;
@@ -8,8 +9,8 @@ let clientToken;
 let clientUserId;
 
 beforeAll(async () => {
-  // Create an admin user directly in DB
-  const adminRes = await request(app).post("/api/auth/register").send({
+  // Create an admin user
+  const adminRes = await registerTestUser(app, {
     email: `admin-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Admin",
@@ -24,7 +25,7 @@ beforeAll(async () => {
     .send({ email: adminRes.body.user.email, password: "password123" });
   adminToken = loginRes.body.token;
 
-  const trainerRes = await request(app).post("/api/auth/register").send({
+  const trainerRes = await registerTestUser(app, {
     email: `admin-test-trainer-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Admin",
@@ -33,7 +34,7 @@ beforeAll(async () => {
   });
   trainerToken = trainerRes.body.token;
 
-  const clientRes = await request(app).post("/api/auth/register").send({
+  const clientRes = await registerTestUser(app, {
     email: `admin-test-client-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Admin",

@@ -1,6 +1,7 @@
 const request = require("supertest");
 const app = require("../src/app");
 const { closeDb } = require("../src/config/database");
+const { registerTestUser } = require("./helpers");
 
 let trainerToken, clientToken;
 
@@ -8,26 +9,24 @@ const uid = Date.now();
 
 beforeAll(async () => {
   // Register trainer
-  let res = await request(app)
-    .post("/api/auth/register")
-    .send({ email: `p9trainer${uid}@test.com`, password: "password123", firstName: "Phase9", lastName: "Trainer", role: "trainer" });
-  if (res.status !== 201) {
-    res = await request(app)
-      .post("/api/auth/login")
-      .send({ email: `p9trainer${uid}@test.com`, password: "password123" });
-  }
-  trainerToken = res.body.token;
+  const trainerRes = await registerTestUser(app, {
+    email: `p9trainer${uid}@test.com`,
+    password: "password123",
+    firstName: "Phase9",
+    lastName: "Trainer",
+    role: "trainer",
+  });
+  trainerToken = trainerRes.body.token;
 
   // Register client
-  let cres = await request(app)
-    .post("/api/auth/register")
-    .send({ email: `p9client${uid}@test.com`, password: "password123", firstName: "Phase9", lastName: "Client", role: "client" });
-  if (cres.status !== 201) {
-    cres = await request(app)
-      .post("/api/auth/login")
-      .send({ email: `p9client${uid}@test.com`, password: "password123" });
-  }
-  clientToken = cres.body.token;
+  const clientRes = await registerTestUser(app, {
+    email: `p9client${uid}@test.com`,
+    password: "password123",
+    firstName: "Phase9",
+    lastName: "Client",
+    role: "client",
+  });
+  clientToken = clientRes.body.token;
 });
 
 afterAll(() => closeDb());

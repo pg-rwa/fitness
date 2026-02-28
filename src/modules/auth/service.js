@@ -17,6 +17,7 @@ const {
   ForbiddenError,
 } = require("../../shared/utils/errors");
 const { eventBus } = require("../../shared/services/event-bus");
+const { validateVerificationToken } = require("../../shared/services/otp");
 
 function generateTokenPair(user) {
   const accessToken = jwt.sign({ userId: user.id, role: user.role }, jwtSecret, {
@@ -35,8 +36,11 @@ function generateTokenPair(user) {
   return { accessToken, refreshToken };
 }
 
-async function register({ email, password, firstName, lastName, role }) {
+async function register({ verificationToken, password, firstName, lastName, role }) {
   const db = getDb();
+
+  // Validate the email verification token
+  const { email } = validateVerificationToken(verificationToken, "registration");
 
   const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
   if (existing) {
@@ -210,17 +214,25 @@ async function createInvitation({ email, role, invitedBy }) {
     .prepare("SELECT * FROM invitations WHERE id = ?")
     .get(result.lastInsertRowid);
 
+  // Send OTP to the invited email
+  const { sendOTP } = require("../../shared/services/otp");
+  await sendOTP(email, "invitation");
+
   await eventBus.emit("invitation.created", { invitation });
 
   return invitation;
 }
 
-async function acceptInvitation({ token, password, firstName, lastName }) {
+async function acceptInvitation({ verificationToken, password, firstName, lastName }) {
   const db = getDb();
 
+  // Validate the email verification token
+  const { email } = validateVerificationToken(verificationToken, "invitation");
+
+  // Find the pending invitation for this email
   const invitation = db
-    .prepare("SELECT * FROM invitations WHERE token = ? AND status = 'pending'")
-    .get(token);
+    .prepare("SELECT * FROM invitations WHERE email = ? AND status = 'pending'")
+    .get(email);
 
   if (!invitation) {
     throw new NotFoundError("Invitation");

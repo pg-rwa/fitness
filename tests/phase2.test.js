@@ -1,6 +1,7 @@
 const request = require("supertest");
 const app = require("../src/app");
 const { getDb, closeDb } = require("../src/config/database");
+const { registerTestUser } = require("./helpers");
 
 let trainerToken;
 let trainerUserId;
@@ -10,7 +11,7 @@ let exerciseIds = [];
 
 beforeAll(async () => {
   // Register trainer
-  const trainerRes = await request(app).post("/api/auth/register").send({
+  const trainerRes = await registerTestUser(app, {
     email: `p2-trainer-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Phase2",
@@ -21,7 +22,7 @@ beforeAll(async () => {
   trainerUserId = trainerRes.body.user.id;
 
   // Register client
-  const clientRes = await request(app).post("/api/auth/register").send({
+  const clientRes = await registerTestUser(app, {
     email: `p2-client-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Phase2",

@@ -1,4 +1,25 @@
 const service = require("./service");
+const otpService = require("../../shared/services/otp");
+
+async function sendOTP(req, res, next) {
+  try {
+    const { email, type } = req.body;
+    const result = await otpService.sendOTP(email, type || "registration");
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function verifyOTP(req, res, next) {
+  try {
+    const { email, code, type } = req.body;
+    const result = otpService.verifyOTP(email, code, type || "registration");
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
 
 async function register(req, res, next) {
   try {
@@ -77,6 +98,8 @@ async function revokeInvitation(req, res, next) {
 }
 
 module.exports = {
+  sendOTP,
+  verifyOTP,
   register,
   login,
   refresh,

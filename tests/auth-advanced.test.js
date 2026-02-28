@@ -1,6 +1,7 @@
 const request = require("supertest");
 const app = require("../src/app");
 const { closeDb } = require("../src/config/database");
+const { registerTestUser } = require("./helpers");
 
 afterAll(() => {
   closeDb();
@@ -17,7 +18,7 @@ describe("Refresh Tokens", () => {
   let refreshToken;
 
   it("should return a refresh token on register", async () => {
-    const res = await request(app).post("/api/auth/register").send(testUser);
+    const res = await registerTestUser(app, testUser);
     expect(res.status).toBe(201);
     expect(res.body.token).toBeDefined();
     expect(res.body.refreshToken).toBeDefined();
@@ -89,12 +90,11 @@ describe("Refresh Tokens", () => {
 describe("Invitations", () => {
   let trainerToken;
   let clientToken;
-  let invitationToken;
   let invitationId;
 
   beforeAll(async () => {
     // Register a trainer
-    const trainerRes = await request(app).post("/api/auth/register").send({
+    const trainerRes = await registerTestUser(app, {
       email: `trainer-inv-${Date.now()}@example.com`,
       password: "password123",
       firstName: "Trainer",
@@ -104,7 +104,7 @@ describe("Invitations", () => {
     trainerToken = trainerRes.body.token;
 
     // Register a regular client
-    const clientRes = await request(app).post("/api/auth/register").send({
+    const clientRes = await registerTestUser(app, {
       email: `client-inv-${Date.now()}@example.com`,
       password: "password123",
       firstName: "Client",
@@ -121,7 +121,6 @@ describe("Invitations", () => {
     expect(res.status).toBe(201);
     expect(res.body.token).toBeDefined();
     expect(res.body.status).toBe("pending");
-    invitationToken = res.body.token;
     invitationId = res.body.id;
   });
 
@@ -142,11 +141,26 @@ describe("Invitations", () => {
     expect(res.body.length).toBeGreaterThan(0);
   });
 
-  it("should accept invitation with valid token", async () => {
+  it("should accept invitation via OTP verification", async () => {
+    // Create a new invitation
+    const invEmail = `invited-accept-${Date.now()}@example.com`;
+    const createRes = await request(app)
+      .post("/api/auth/invitations")
+      .set("Authorization", `Bearer ${trainerToken}`)
+      .send({ email: invEmail, role: "client" });
+    expect(createRes.status).toBe(201);
+
+    // OTP was already sent by createInvitation, verify it
+    const verifyRes = await request(app)
+      .post("/api/auth/otp/verify")
+      .send({ email: invEmail, code: "123456", type: "invitation" });
+    expect(verifyRes.status).toBe(200);
+
+    // Accept invitation with verification token
     const res = await request(app)
       .post("/api/auth/invitations/accept")
       .send({
-        token: invitationToken,
+        verificationToken: verifyRes.body.verificationToken,
         password: "password123",
         firstName: "Invited",
         lastName: "User",
@@ -157,16 +171,15 @@ describe("Invitations", () => {
     expect(res.body.refreshToken).toBeDefined();
   });
 
-  it("should reject accepting already-used invitation", async () => {
+  it("should reject accepting without verification token", async () => {
     const res = await request(app)
       .post("/api/auth/invitations/accept")
       .send({
-        token: invitationToken,
         password: "password123",
         firstName: "Duplicate",
         lastName: "User",
       });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(400);
   });
 
   it("should allow trainer to revoke a pending invitation", async () => {
@@ -186,7 +199,7 @@ describe("Invitations", () => {
 
 describe("Role-based registration", () => {
   it("should register as trainer", async () => {
-    const res = await request(app).post("/api/auth/register").send({
+    const res = await registerTestUser(app, {
       email: `role-trainer-${Date.now()}@example.com`,
       password: "password123",
       firstName: "Role",
@@ -198,7 +211,7 @@ describe("Role-based registration", () => {
   });
 
   it("should default to client role", async () => {
-    const res = await request(app).post("/api/auth/register").send({
+    const res = await registerTestUser(app, {
       email: `role-client-${Date.now()}@example.com`,
       password: "password123",
       firstName: "Role",
@@ -209,8 +222,13 @@ describe("Role-based registration", () => {
   });
 
   it("should reject invalid role", async () => {
+    // Get a verification token first
+    const email = `role-bad-${Date.now()}@example.com`;
+    await request(app).post("/api/auth/otp/send").send({ email, type: "registration" });
+    const verifyRes = await request(app).post("/api/auth/otp/verify").send({ email, code: "123456", type: "registration" });
+
     const res = await request(app).post("/api/auth/register").send({
-      email: `role-bad-${Date.now()}@example.com`,
+      verificationToken: verifyRes.body.verificationToken,
       password: "password123",
       firstName: "Role",
       lastName: "Bad",

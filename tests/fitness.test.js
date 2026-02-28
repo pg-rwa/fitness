@@ -1,13 +1,14 @@
 const request = require("supertest");
 const app = require("../src/app");
 const { closeDb } = require("../src/config/database");
+const { registerTestUser } = require("./helpers");
 
 let authToken;
 let userId;
 let exerciseIds = [];
 
 beforeAll(async () => {
-  const res = await request(app).post("/api/auth/register").send({
+  const res = await registerTestUser(app, {
     email: `fitness-${Date.now()}@example.com`,
     password: "password123",
     firstName: "Fitness",

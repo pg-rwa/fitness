@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, setTokens, setUser } from "../../lib/api";
@@ -15,22 +15,140 @@ export default function RegisterPage() {
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const inviteToken = searchParams.get("token") || "";
+  const isInvitation = searchParams.get("invitation") === "true";
+  const prefillEmail = searchParams.get("email") || "";
 
+  // Steps: 1 = enter email, 2 = verify OTP, 3 = complete profile
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
+    email: prefillEmail,
+    role: "client",
     firstName: "",
     lastName: "",
-    email: "",
     password: "",
     confirmPassword: "",
-    role: "client",
-    inviteToken,
   });
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [verificationToken, setVerificationToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+  const otpRefs = useRef([]);
+
+  const otpType = isInvitation ? "invitation" : "registration";
+
+  // Countdown timer for resend
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  // Step 1: Send OTP
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await api("/auth/otp/send", {
+        method: "POST",
+        body: { email: form.email, type: otpType },
+        noAuth: true,
+      });
+      setStep(2);
+      setCountdown(60);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Verify OTP
+  const handleVerifyOTP = async (e) => {
+    if (e) e.preventDefault();
+    const code = otp.join("");
+    if (code.length !== 6) {
+      setError("Please enter the full 6-digit code");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const data = await api("/auth/otp/verify", {
+        method: "POST",
+        body: { email: form.email, code, type: otpType },
+        noAuth: true,
+      });
+      setVerificationToken(data.verificationToken);
+      setStep(3);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResend = async () => {
+    if (countdown > 0) return;
+    setLoading(true);
+    setError("");
+    try {
+      await api("/auth/otp/send", {
+        method: "POST",
+        body: { email: form.email, type: otpType },
+        noAuth: true,
+      });
+      setOtp(["", "", "", "", "", ""]);
+      setCountdown(60);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // OTP input handling
+  const handleOtpChange = (index, value) => {
+    if (value && !/^\d$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    if (value && index < 5) {
+      otpRefs.current[index + 1]?.focus();
+    }
+    // Auto-submit when all digits entered
+    if (value && index === 5 && newOtp.every((d) => d !== "")) {
+      setTimeout(() => handleVerifyOTP(), 100);
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 0) return;
+    const newOtp = [...otp];
+    for (let i = 0; i < pasted.length; i++) {
+      newOtp[i] = pasted[i];
+    }
+    setOtp(newOtp);
+    const nextIndex = Math.min(pasted.length, 5);
+    otpRefs.current[nextIndex]?.focus();
+    if (pasted.length === 6) {
+      setTimeout(() => handleVerifyOTP(), 100);
+    }
+  };
+
+  // Step 3: Complete registration
   const handleRegister = async (e) => {
     e.preventDefault();
     if (form.password !== form.confirmPassword) {
@@ -40,25 +158,23 @@ function RegisterForm() {
     setLoading(true);
     setError("");
     try {
-      // If invite token, use invitation accept flow
-      if (form.inviteToken) {
-        const data = await api("/auth/invitations/accept", {
+      let data;
+      if (isInvitation) {
+        data = await api("/auth/invitations/accept", {
           method: "POST",
           body: {
-            token: form.inviteToken,
+            verificationToken,
             firstName: form.firstName,
             lastName: form.lastName,
             password: form.password,
           },
           noAuth: true,
         });
-        setTokens(data.token, data.refreshToken);
-        setUser(data.user);
       } else {
-        const data = await api("/auth/register", {
+        data = await api("/auth/register", {
           method: "POST",
           body: {
-            email: form.email,
+            verificationToken,
             password: form.password,
             firstName: form.firstName,
             lastName: form.lastName,
@@ -66,9 +182,9 @@ function RegisterForm() {
           },
           noAuth: true,
         });
-        setTokens(data.token, data.refreshToken);
-        setUser(data.user);
       }
+      setTokens(data.token, data.refreshToken);
+      setUser(data.user);
       router.push("/dashboard");
     } catch (err) {
       setError(err.message);
@@ -86,55 +202,54 @@ function RegisterForm() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-white text-2xl font-bold">Create Account</h1>
+          <h1 className="text-white text-2xl font-bold">
+            {step === 1 && (isInvitation ? "Accept Invitation" : "Create Account")}
+            {step === 2 && "Verify Email"}
+            {step === 3 && "Complete Profile"}
+          </h1>
           <p className="text-gray-500 text-sm mt-1">
-            {inviteToken ? "Complete your registration" : "Join FitTracker"}
+            {step === 1 && (isInvitation ? "Verify your email to get started" : "Enter your email to get started")}
+            {step === 2 && `We sent a code to ${form.email}`}
+            {step === 3 && "Set up your account details"}
           </p>
+
+          {/* Step indicator */}
+          <div className="flex justify-center gap-2 mt-4">
+            {[1, 2, 3].map((s) => (
+              <div
+                key={s}
+                className={`h-1.5 rounded-full transition-all ${
+                  s === step ? "w-8 bg-brand-500" : s < step ? "w-8 bg-brand-500/40" : "w-8 bg-gray-700"
+                }`}
+              />
+            ))}
+          </div>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-              <p className="text-red-400 text-sm">{error}</p>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-gray-400 text-xs font-medium mb-1.5">First Name</label>
-              <input
-                type="text"
-                value={form.firstName}
-                onChange={update("firstName")}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-400 text-xs font-medium mb-1.5">Last Name</label>
-              <input
-                type="text"
-                value={form.lastName}
-                onChange={update("lastName")}
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-                required
-              />
-            </div>
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-4">
+            <p className="text-red-400 text-sm">{error}</p>
           </div>
+        )}
 
-          {!inviteToken && (
-            <>
-              <div>
-                <label className="block text-gray-400 text-xs font-medium mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={update("email")}
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-                  required
-                />
-              </div>
+        {/* Step 1: Email + Role */}
+        {step === 1 && (
+          <form onSubmit={handleSendOTP} className="space-y-4">
+            <div>
+              <label className="block text-gray-400 text-xs font-medium mb-1.5">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={update("email")}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                placeholder="you@example.com"
+                required
+                autoFocus
+                readOnly={!!prefillEmail}
+              />
+            </div>
 
+            {!isInvitation && (
               <div>
                 <label className="block text-gray-400 text-xs font-medium mb-1.5">I am a</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -162,46 +277,136 @@ function RegisterForm() {
                   </button>
                 </div>
               </div>
-            </>
-          )}
+            )}
 
-          <div>
-            <label className="block text-gray-400 text-xs font-medium mb-1.5">Password</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={update("password")}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-              placeholder="Min 8 characters"
-              minLength={8}
-              required
-            />
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
+            >
+              {loading ? "Sending code..." : "Send Verification Code"}
+            </button>
+          </form>
+        )}
 
-          <div>
-            <label className="block text-gray-400 text-xs font-medium mb-1.5">Confirm Password</label>
-            <input
-              type="password"
-              value={form.confirmPassword}
-              onChange={update("confirmPassword")}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
-              minLength={8}
-              required
-            />
-          </div>
+        {/* Step 2: OTP Verification */}
+        {step === 2 && (
+          <form onSubmit={handleVerifyOTP} className="space-y-4">
+            <div className="flex justify-center gap-2">
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={(el) => (otpRefs.current[i] = el)}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(i, e.target.value)}
+                  onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                  onPaste={i === 0 ? handleOtpPaste : undefined}
+                  className="w-12 h-14 bg-gray-900 border border-gray-700 rounded-lg text-center text-white text-xl font-bold focus:border-brand-500 focus:outline-none"
+                  autoFocus={i === 0}
+                />
+              ))}
+            </div>
 
-          {inviteToken && (
-            <input type="hidden" value={form.inviteToken} />
-          )}
+            <button
+              type="submit"
+              disabled={loading || otp.some((d) => !d)}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
+            >
+              {loading ? "Verifying..." : "Verify Code"}
+            </button>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
-          >
-            {loading ? "Creating account..." : "Create Account"}
-          </button>
-        </form>
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={countdown > 0}
+                className="text-sm text-gray-400 hover:text-brand-500 disabled:text-gray-600 transition"
+              >
+                {countdown > 0 ? `Resend code in ${countdown}s` : "Resend code"}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { setStep(1); setOtp(["", "", "", "", "", ""]); setError(""); }}
+              className="w-full text-gray-500 text-sm hover:text-gray-300 transition"
+            >
+              Change email
+            </button>
+          </form>
+        )}
+
+        {/* Step 3: Profile Details */}
+        {step === 3 && (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="bg-brand-500/10 border border-brand-500/20 rounded-lg px-3 py-2 flex items-center gap-2">
+              <svg className="w-4 h-4 text-brand-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-brand-400 text-sm">{form.email} verified</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-gray-400 text-xs font-medium mb-1.5">First Name</label>
+                <input
+                  type="text"
+                  value={form.firstName}
+                  onChange={update("firstName")}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 text-xs font-medium mb-1.5">Last Name</label>
+                <input
+                  type="text"
+                  value={form.lastName}
+                  onChange={update("lastName")}
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-xs font-medium mb-1.5">Password</label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={update("password")}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                placeholder="Min 8 characters"
+                minLength={8}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-gray-400 text-xs font-medium mb-1.5">Confirm Password</label>
+              <input
+                type="password"
+                value={form.confirmPassword}
+                onChange={update("confirmPassword")}
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white placeholder-gray-600 focus:border-brand-500 focus:outline-none text-sm"
+                minLength={8}
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
+            >
+              {loading ? "Creating account..." : "Create Account"}
+            </button>
+          </form>
+        )}
 
         <p className="text-center text-gray-500 text-sm mt-6">
           Already have an account?{" "}

@@ -3,13 +3,14 @@ const app = require("../src/app");
 const { getDb } = require("../src/config/database");
 const { metrics, Metrics } = require("../src/shared/services/metrics");
 const { logger, LOG_LEVELS } = require("../src/shared/services/logger");
+const { registerTestUser } = require("./helpers");
 
 let adminToken;
 let userToken;
 
 beforeAll(async () => {
   // Create admin via register + promote
-  const adminRes = await request(app).post("/api/auth/register").send({
+  const adminRes = await registerTestUser(app, {
     email: `metrics-admin-${Date.now()}@test.com`,
     password: "admin123",
     firstName: "Metrics",
@@ -26,7 +27,7 @@ beforeAll(async () => {
   adminToken = loginRes.body.token;
 
   // Create regular user
-  const userRes = await request(app).post("/api/auth/register").send({
+  const userRes = await registerTestUser(app, {
     email: `metrics-user-${Date.now()}@test.com`,
     password: "password123",
     firstName: "Metrics",

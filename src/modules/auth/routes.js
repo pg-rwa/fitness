@@ -8,11 +8,42 @@ const { authLimiter } = require("../../shared/middleware/rate-limit");
 
 const router = Router();
 
+// ─── OTP Routes ──────────────────────────────────────────────
+router.post(
+  "/otp/send",
+  authLimiter,
+  [
+    body("email").isEmail().normalizeEmail(),
+    body("type")
+      .optional()
+      .isIn(["registration", "invitation"])
+      .withMessage("Type must be registration or invitation"),
+    validate,
+  ],
+  controller.sendOTP
+);
+
+router.post(
+  "/otp/verify",
+  authLimiter,
+  [
+    body("email").isEmail().normalizeEmail(),
+    body("code").isLength({ min: 6, max: 6 }).withMessage("Code must be 6 digits"),
+    body("type")
+      .optional()
+      .isIn(["registration", "invitation"])
+      .withMessage("Type must be registration or invitation"),
+    validate,
+  ],
+  controller.verifyOTP
+);
+
+// ─── Registration (requires email verification token) ────────
 router.post(
   "/register",
   authLimiter,
   [
-    body("email").isEmail().normalizeEmail(),
+    body("verificationToken").notEmpty().withMessage("Email verification is required"),
     body("password")
       .isLength({ min: 8 })
       .withMessage("Password must be at least 8 characters"),
@@ -46,7 +77,7 @@ router.post(
   controller.logout
 );
 
-// Invitation routes (trainers and admins can invite)
+// ─── Invitation routes (trainers and admins can invite) ──────
 router.post(
   "/invitations",
   authenticate,
@@ -71,11 +102,11 @@ router.delete(
   controller.revokeInvitation
 );
 
-// Accept invitation (public - token in body)
+// Accept invitation (requires OTP verification token)
 router.post(
   "/invitations/accept",
   [
-    body("token").notEmpty(),
+    body("verificationToken").notEmpty().withMessage("Email verification is required"),
     body("password")
       .isLength({ min: 8 })
       .withMessage("Password must be at least 8 characters"),

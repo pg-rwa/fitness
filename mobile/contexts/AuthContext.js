@@ -36,9 +36,16 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async (fields) => {
-    const data = await api("/auth/register", {
+    // Determine endpoint based on whether this is an invitation acceptance
+    const isInvitation = fields._acceptInvitation;
+    const endpoint = isInvitation ? "/auth/invitations/accept" : "/auth/register";
+
+    // Remove internal flag before sending
+    const { _acceptInvitation, ...body } = fields;
+
+    const data = await api(endpoint, {
       method: "POST",
-      body: fields,
+      body,
       noAuth: true,
     });
     await setToken(data.token);
