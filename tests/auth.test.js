@@ -58,7 +58,8 @@ describe("Auth API", () => {
         .post("/api/auth/otp/send")
         .send({ email: `otp-test-${Date.now()}@example.com`, type: "registration" });
       expect(res.status).toBe(200);
-      expect(res.body.message).toBe("Verification code sent");
+      expect(res.body.message).toMatch(/Verification code (sent|generated)/);
+
     });
 
     it("should reject invalid email", async () => {

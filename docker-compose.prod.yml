@@ -37,7 +37,7 @@ services:
       - NODE_ENV=production
       - PORT=3000
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-15m}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - STORAGE_TYPE=${STORAGE_TYPE:-local}
       - S3_BUCKET=${S3_BUCKET:-}
       - S3_REGION=${S3_REGION:-}

@@ -46,7 +46,7 @@ async function sendOTP(email, type = "registration") {
   ).run(email, code, type, expiresAt.toISOString());
 
   // Send the OTP email
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: email,
     subject: `Your FitTracker verification code: ${code}`,
     text: `Your verification code is: ${code}\n\nThis code expires in ${OTP_EXPIRY_MINUTES} minutes.\n\nIf you didn't request this code, please ignore this email.`,
@@ -62,6 +62,11 @@ async function sendOTP(email, type = "registration") {
       </div>
     `,
   });
+
+  // If email wasn't sent (no SMTP configured), return the code so the UI can show it
+  if (!emailResult) {
+    return { message: "Verification code generated (email not configured)", code };
+  }
 
   return { message: "Verification code sent" };
 }

@@ -73,10 +73,13 @@ export async function api(path, options = {}) {
           if (!retry.ok) throw new Error(retryData.error || "Request failed");
           return retryData;
         }
-      } catch {}
+      } catch (refreshErr) {
+        // Network error during refresh — don't clear tokens for transient failures
+        console.warn("[api] Token refresh failed:", refreshErr.message);
+      }
     }
+    // Only clear tokens if refresh was attempted and definitely failed (not a network glitch)
     clearTokens();
-    if (typeof window !== "undefined") window.location.href = "/login";
     throw new Error("Unauthorized");
   }
 

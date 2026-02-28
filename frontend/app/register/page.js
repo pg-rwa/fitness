@@ -33,6 +33,7 @@ function RegisterForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [fallbackCode, setFallbackCode] = useState("");
   const otpRefs = useRef([]);
 
   const otpType = isInvitation ? "invitation" : "registration";
@@ -51,12 +52,17 @@ function RegisterForm() {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setFallbackCode("");
     try {
-      await api("/auth/otp/send", {
+      const data = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email, type: otpType },
         noAuth: true,
       });
+      // If SMTP not configured, API returns the code directly
+      if (data.code) {
+        setFallbackCode(data.code);
+      }
       setStep(2);
       setCountdown(60);
     } catch (err) {
@@ -96,12 +102,16 @@ function RegisterForm() {
     if (countdown > 0) return;
     setLoading(true);
     setError("");
+    setFallbackCode("");
     try {
-      await api("/auth/otp/send", {
+      const data = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email, type: otpType },
         noAuth: true,
       });
+      if (data.code) {
+        setFallbackCode(data.code);
+      }
       setOtp(["", "", "", "", "", ""]);
       setCountdown(60);
     } catch (err) {
@@ -292,6 +302,12 @@ function RegisterForm() {
         {/* Step 2: OTP Verification */}
         {step === 2 && (
           <form onSubmit={handleVerifyOTP} className="space-y-4">
+            {fallbackCode && (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                <p className="text-amber-400 text-xs font-medium mb-1">Email not configured — your code:</p>
+                <p className="text-amber-300 text-2xl font-bold tracking-widest text-center">{fallbackCode}</p>
+              </div>
+            )}
             <div className="flex justify-center gap-2">
               {otp.map((digit, i) => (
                 <input

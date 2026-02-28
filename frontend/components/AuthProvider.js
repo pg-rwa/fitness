@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, getToken, getUser, setUser, clearTokens } from "../lib/api";
+import { api, getToken, getRefreshToken, getUser, setUser, clearTokens } from "../lib/api";
 
 const AuthContext = createContext(null);
 
@@ -29,14 +29,27 @@ export function AuthProvider({ children }) {
         setLoading(false);
       })
       .catch(() => {
-        clearTokens();
-        setLoading(false);
+        // Only clear auth if no token remains (api() already cleared on 401)
+        if (!getToken()) {
+          setUserState(null);
+          setLoading(false);
+        } else if (!cached) {
+          // Token exists but no cached user and API failed — clear
+          clearTokens();
+          setUserState(null);
+          setLoading(false);
+        }
+        // If cached user exists and token still present, keep using cache
       });
   }, []);
 
   const logout = async () => {
+    const refresh = getRefreshToken();
     try {
-      await api("/auth/logout", { method: "POST" });
+      await api("/auth/logout", {
+        method: "POST",
+        body: { refreshToken: refresh },
+      });
     } catch {}
     clearTokens();
     setUserState(null);
