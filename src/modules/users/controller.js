@@ -1,6 +1,9 @@
+const fs = require("fs");
+const path = require("path");
 const { getDb } = require("../../config/database");
 const { NotFoundError, ForbiddenError, ConflictError } = require("../../shared/utils/errors");
 const { eventBus } = require("../../shared/services/event-bus");
+const { createFileUploadService } = require("../../shared/services/file-upload");
 
 function getProfile(req, res, next) {
   try {
@@ -31,51 +34,58 @@ function getProfile(req, res, next) {
 function updateProfile(req, res, next) {
   try {
     const db = getDb();
-    const { heightCm, weightKg, dateOfBirth, gender, fitnessLevel } = req.body;
+    const {
+      firstName, lastName,
+      phone, bio, address, timezone,
+      heightCm, weightKg, dateOfBirth, gender, fitnessLevel,
+    } = req.body;
 
+    // Update users table fields (first_name, last_name)
+    if (firstName !== undefined || lastName !== undefined) {
+      const userFields = [];
+      const userValues = [];
+      if (firstName !== undefined) { userFields.push("first_name = ?"); userValues.push(firstName); }
+      if (lastName !== undefined) { userFields.push("last_name = ?"); userValues.push(lastName); }
+      userFields.push("updated_at = datetime('now')");
+      userValues.push(req.userId);
+      db.prepare(`UPDATE users SET ${userFields.join(", ")} WHERE id = ?`).run(...userValues);
+    }
+
+    // Update or create user_profiles
     const existing = db
       .prepare("SELECT id FROM user_profiles WHERE user_id = ?")
       .get(req.userId);
 
+    // Profile field mapping: { bodyKey: db_column }
+    const profileMap = {
+      phone: "phone", bio: "bio", address: "address", timezone: "timezone",
+      heightCm: "height_cm", weightKg: "weight_kg",
+      dateOfBirth: "date_of_birth", gender: "gender", fitnessLevel: "fitness_level",
+    };
+
     if (existing) {
       const fields = [];
       const values = [];
-      if (heightCm !== undefined) {
-        fields.push("height_cm = ?");
-        values.push(heightCm);
+      for (const [key, col] of Object.entries(profileMap)) {
+        if (req.body[key] !== undefined) {
+          fields.push(`${col} = ?`);
+          values.push(req.body[key] || null);
+        }
       }
-      if (weightKg !== undefined) {
-        fields.push("weight_kg = ?");
-        values.push(weightKg);
+      if (fields.length > 0) {
+        fields.push("updated_at = datetime('now')");
+        values.push(req.userId);
+        db.prepare(`UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`).run(...values);
       }
-      if (dateOfBirth !== undefined) {
-        fields.push("date_of_birth = ?");
-        values.push(dateOfBirth);
-      }
-      if (gender !== undefined) {
-        fields.push("gender = ?");
-        values.push(gender);
-      }
-      if (fitnessLevel !== undefined) {
-        fields.push("fitness_level = ?");
-        values.push(fitnessLevel);
-      }
-      fields.push("updated_at = datetime('now')");
-      values.push(req.userId);
-
-      db.prepare(
-        `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`
-      ).run(...values);
     } else {
       db.prepare(
-        "INSERT INTO user_profiles (user_id, height_cm, weight_kg, date_of_birth, gender, fitness_level) VALUES (?, ?, ?, ?, ?, ?)"
+        `INSERT INTO user_profiles (user_id, phone, bio, address, timezone, height_cm, weight_kg, date_of_birth, gender, fitness_level)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         req.userId,
-        heightCm || null,
-        weightKg || null,
-        dateOfBirth || null,
-        gender || null,
-        fitnessLevel || "beginner"
+        phone || null, bio || null, address || null, timezone || "UTC",
+        heightCm || null, weightKg || null, dateOfBirth || null,
+        gender || null, fitnessLevel || "beginner"
       );
     }
 
@@ -83,6 +93,73 @@ function updateProfile(req, res, next) {
       .prepare("SELECT * FROM user_profiles WHERE user_id = ?")
       .get(req.userId);
     res.json(profile);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Avatar Upload ──────────────────────────────────────────
+
+async function uploadAvatar(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+
+    const db = getDb();
+    const uploadService = createFileUploadService();
+
+    // Remove old avatar file if exists
+    const existing = db
+      .prepare("SELECT avatar_url FROM user_profiles WHERE user_id = ?")
+      .get(req.userId);
+
+    if (existing && existing.avatar_url) {
+      const oldPath = path.join(__dirname, "../../../uploads", path.basename(existing.avatar_url));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+
+    // Save new avatar
+    const upload = await uploadService.upload({
+      userId: req.userId,
+      buffer: req.file.buffer,
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      entityType: "avatar",
+      entityId: req.userId,
+    });
+
+    // Ensure user_profiles row exists
+    const profile = db.prepare("SELECT id FROM user_profiles WHERE user_id = ?").get(req.userId);
+    if (profile) {
+      db.prepare("UPDATE user_profiles SET avatar_url = ?, updated_at = datetime('now') WHERE user_id = ?")
+        .run(upload.url, req.userId);
+    } else {
+      db.prepare("INSERT INTO user_profiles (user_id, avatar_url) VALUES (?, ?)")
+        .run(req.userId, upload.url);
+    }
+
+    res.json({ avatar_url: upload.url });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteAvatar(req, res, next) {
+  try {
+    const db = getDb();
+    const profile = db
+      .prepare("SELECT avatar_url FROM user_profiles WHERE user_id = ?")
+      .get(req.userId);
+
+    if (profile && profile.avatar_url) {
+      const oldPath = path.join(__dirname, "../../../uploads", path.basename(profile.avatar_url));
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      db.prepare("UPDATE user_profiles SET avatar_url = NULL, updated_at = datetime('now') WHERE user_id = ?")
+        .run(req.userId);
+    }
+
+    res.json({ message: "Avatar removed" });
   } catch (err) {
     next(err);
   }
@@ -351,6 +428,8 @@ async function createTemplateForClient(req, res, next) {
 module.exports = {
   getProfile,
   updateProfile,
+  uploadAvatar,
+  deleteAvatar,
   myClients,
   searchClients,
   sendTrainerRequest,

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity, Alert, Image } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Card, Badge, SectionHeader, Button } from "../../../components/ui";
@@ -12,6 +12,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
   const [schedule, setSchedule] = useState([]);
+  const [profile, setProfile] = useState(null);
 
   useEffect(() => {
     if (isTrainer) {
@@ -19,6 +20,12 @@ export default function ProfileScreen() {
         .then((data) => setSchedule(data.data || []))
         .catch(() => {});
     }
+    api("/users/me")
+      .then((d) => {
+        const u = d.user || d;
+        setProfile(u.profile || null);
+      })
+      .catch(() => {});
   }, [isTrainer]);
 
   const handleLogout = () => {
@@ -28,6 +35,10 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const initials =
+    ((user?.first_name?.[0] || "") + (user?.last_name?.[0] || "")).toUpperCase() || "?";
+  const avatarUrl = profile?.avatar_url || null;
+
   return (
     <SafeAreaView className="flex-1 bg-dark px-5">
       <View className="pt-2 pb-8">
@@ -35,15 +46,51 @@ export default function ProfileScreen() {
 
         {/* User card */}
         <Card className="flex-row items-center">
-          <View className="bg-primary/20 rounded-full p-4 mr-4">
-            <Ionicons name="person" size={28} color="#E8614D" />
-          </View>
+          {avatarUrl ? (
+            <Image
+              source={{ uri: avatarUrl }}
+              style={{ width: 56, height: 56, borderRadius: 28 }}
+              className="mr-4 border border-gray-700"
+            />
+          ) : (
+            <View className="bg-primary/20 rounded-full mr-4 items-center justify-center" style={{ width: 56, height: 56 }}>
+              <Text className="text-primary text-xl font-bold">{initials}</Text>
+            </View>
+          )}
           <View className="flex-1">
             <Text className="text-white text-lg font-bold">{user?.first_name} {user?.last_name}</Text>
             <Text className="text-gray-400 text-sm">{user?.email}</Text>
-            <Badge text={user?.role || "client"} color="primary" className="mt-1" />
+            <View className="flex-row items-center mt-1 gap-2">
+              <Badge text={user?.role || "client"} color="primary" />
+              {profile?.phone ? (
+                <Text className="text-gray-500 text-xs">{profile.phone}</Text>
+              ) : null}
+            </View>
           </View>
+          <TouchableOpacity
+            onPress={() => router.push("/(app)/edit-profile")}
+            className="bg-gray-700/50 rounded-xl p-2.5"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="create-outline" size={20} color="#E8614D" />
+          </TouchableOpacity>
         </Card>
+
+        {/* Edit Profile button */}
+        <TouchableOpacity
+          onPress={() => router.push("/(app)/edit-profile")}
+          className="bg-dark-card rounded-2xl p-4 mb-2 flex-row items-center"
+          activeOpacity={0.7}
+        >
+          <View className="bg-primary/20 rounded-xl p-2.5 mr-3">
+            <Ionicons name="person-circle-outline" size={22} color="#E8614D" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-white font-semibold">Edit Profile</Text>
+            <Text className="text-gray-400 text-xs">Update photo, contact info & preferences</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+        </TouchableOpacity>
 
         {/* Trainer-specific sections */}
         {isTrainer && (
