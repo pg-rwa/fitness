@@ -54,7 +54,9 @@ export default function ClientsPage() {
       setInviteEmail("");
       loadData();
     } catch (err) {
-      setInviteResult({ error: err.message || "Failed to send invitation" });
+      // If user already exists, suggest "Add Existing Client" flow
+      const msg = err.message || "Failed to send invitation";
+      setInviteResult({ error: msg });
     }
   };
 
@@ -197,11 +199,17 @@ export default function ClientsPage() {
           </div>
           {inviteResult && !inviteResult.error && (
             <div className="mt-3 bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-              <p className="text-green-400 text-sm">Invitation sent!</p>
-              {inviteResult.invitation?.token && (
-                <p className="text-gray-400 text-xs mt-1">
-                  Registration link: {typeof window !== "undefined" ? window.location.origin : ""}/register?token={inviteResult.invitation.token}
-                </p>
+              {inviteResult.type === "trainer_request" ? (
+                <p className="text-green-400 text-sm">{inviteResult.message}</p>
+              ) : (
+                <>
+                  <p className="text-green-400 text-sm">Invitation sent!</p>
+                  {inviteResult.token && (
+                    <p className="text-gray-400 text-xs mt-1">
+                      Registration link: {typeof window !== "undefined" ? window.location.origin : ""}/register?token={inviteResult.token}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           )}

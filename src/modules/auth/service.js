@@ -138,8 +138,52 @@ async function logout({ refreshToken }) {
 async function createInvitation({ email, role, invitedBy }) {
   const db = getDb();
 
-  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+  const existing = db
+    .prepare("SELECT id, role, trainer_id FROM users WHERE email = ?")
+    .get(email);
   if (existing) {
+    // If the user already exists and is a client, auto-create a trainer request
+    if (existing.role === "client") {
+      if (existing.trainer_id === invitedBy) {
+        throw new ConflictError("This user is already your client");
+      }
+      // Check for existing pending request
+      const pendingReq = db
+        .prepare(
+          "SELECT id FROM trainer_requests WHERE trainer_id = ? AND client_id = ? AND status = 'pending'"
+        )
+        .get(invitedBy, existing.id);
+      if (pendingReq) {
+        throw new ConflictError(
+          "A trainer request is already pending for this client"
+        );
+      }
+      // Create or re-send trainer request
+      const existingReq = db
+        .prepare(
+          "SELECT id FROM trainer_requests WHERE trainer_id = ? AND client_id = ?"
+        )
+        .get(invitedBy, existing.id);
+      if (existingReq) {
+        db.prepare(
+          "UPDATE trainer_requests SET status = 'pending', created_at = datetime('now'), responded_at = NULL WHERE id = ?"
+        ).run(existingReq.id);
+      } else {
+        db.prepare(
+          "INSERT INTO trainer_requests (trainer_id, client_id) VALUES (?, ?)"
+        ).run(invitedBy, existing.id);
+      }
+      await eventBus.emit("trainer.request.sent", {
+        trainerId: invitedBy,
+        clientId: existing.id,
+      });
+      return {
+        type: "trainer_request",
+        message:
+          "This user already has an account. A trainer request has been sent — they can approve it from their dashboard.",
+        clientId: existing.id,
+      };
+    }
     throw new ConflictError("User with this email already exists");
   }
 
