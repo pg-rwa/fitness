@@ -385,10 +385,23 @@ export default function WorkoutsPage() {
   const [activeSession, setActiveSession] = useState(null);
   const [tab, setTab] = useState("templates");
 
+  const [deleting, setDeleting] = useState(null);
+
   const load = useCallback(() => {
     api("/workout-templates?limit=50&ownOnly=true").then((d) => setTemplates(d.data || [])).catch(() => {});
     api("/workout-sessions?page=1&limit=20").then((d) => setSessions(d.data || [])).catch(() => {});
   }, []);
+
+  const deleteSession = async (id, e) => {
+    e.stopPropagation();
+    if (!confirm("Delete this workout? This cannot be undone.")) return;
+    setDeleting(id);
+    try {
+      await api(`/workout-sessions/${id}`, { method: "DELETE" });
+      load();
+    } catch {}
+    setDeleting(null);
+  };
 
   useEffect(() => { load(); }, [load]);
 
@@ -450,23 +463,39 @@ export default function WorkoutsPage() {
           <h2 className="text-yellow-400 text-xs font-semibold uppercase tracking-wider mb-2">In Progress</h2>
           <div className="space-y-2">
             {inProgressSessions.map((s) => (
-              <button
+              <div
                 key={s.id}
-                onClick={() => resumeSession(s)}
-                className="w-full text-left bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 hover:border-yellow-500/50 transition"
+                className="flex items-center gap-2"
               >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-white font-medium text-sm">{s.name || "Workout"}</p>
-                    <p className="text-yellow-400/70 text-xs mt-0.5">
-                      Started {new Date(s.started_at || s.created_at).toLocaleString()}
-                    </p>
+                <button
+                  onClick={() => resumeSession(s)}
+                  className="flex-1 text-left bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 hover:border-yellow-500/50 transition"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-white font-medium text-sm">{s.name || "Workout"}</p>
+                      <p className="text-yellow-400/70 text-xs mt-0.5">
+                        Started {new Date(s.started_at || s.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="text-yellow-400 text-xs font-medium px-3 py-1 bg-yellow-400/10 rounded-full">
+                      Resume
+                    </span>
                   </div>
-                  <span className="text-yellow-400 text-xs font-medium px-3 py-1 bg-yellow-400/10 rounded-full">
-                    Resume
-                  </span>
-                </div>
-              </button>
+                </button>
+                <button
+                  onClick={(e) => deleteSession(s.id, e)}
+                  disabled={deleting === s.id}
+                  className="p-2 text-gray-500 hover:text-red-400 transition shrink-0"
+                  title="Delete workout"
+                >
+                  {deleting === s.id ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  )}
+                </button>
+              </div>
             ))}
           </div>
         </div>
@@ -536,26 +565,39 @@ export default function WorkoutsPage() {
       {tab === "history" && (
         <div className="space-y-2">
           {completedSessions.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => resumeSession(s)}
-              className="w-full text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition"
-            >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-white font-medium text-sm">{s.name || "Workout"}</p>
-                  <p className="text-gray-500 text-xs mt-0.5">
-                    {new Date(s.started_at || s.created_at).toLocaleDateString(undefined, {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                    {s.total_volume > 0 && ` \u00b7 ${Math.round(s.total_volume).toLocaleString()}kg total`}
-                  </p>
+            <div key={s.id} className="flex items-center gap-2">
+              <button
+                onClick={() => resumeSession(s)}
+                className="flex-1 text-left bg-gray-900 border border-gray-800 rounded-xl p-4 hover:border-gray-700 transition"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-white font-medium text-sm">{s.name || "Workout"}</p>
+                    <p className="text-gray-500 text-xs mt-0.5">
+                      {new Date(s.started_at || s.created_at).toLocaleDateString(undefined, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                      {s.total_volume > 0 && ` \u00b7 ${Math.round(s.total_volume).toLocaleString()}kg total`}
+                    </p>
+                  </div>
+                  <span className="text-green-400/80 text-xs bg-green-400/10 px-2 py-0.5 rounded-full">Done</span>
                 </div>
-                <span className="text-green-400/80 text-xs bg-green-400/10 px-2 py-0.5 rounded-full">Done</span>
-              </div>
-            </button>
+              </button>
+              <button
+                onClick={(e) => deleteSession(s.id, e)}
+                disabled={deleting === s.id}
+                className="p-2 text-gray-500 hover:text-red-400 transition shrink-0"
+                title="Delete workout"
+              >
+                {deleting === s.id ? (
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                )}
+              </button>
+            </div>
           ))}
           {completedSessions.length === 0 && (
             <div className="text-center py-12">
