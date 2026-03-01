@@ -33,8 +33,11 @@ export default function Nav() {
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
   const items = isTrainer ? trainerNav : clientNav;
 
-  const mobileMain = items.slice(0, 4);
-  const mobileOverflow = items.slice(4);
+  // Profile always visible in mobile bottom nav (standard mobile pattern)
+  const profileItem = items.find((item) => item.label === "Profile");
+  const nonProfileItems = items.filter((item) => item.label !== "Profile");
+  const mobileMain = nonProfileItems.slice(0, 3);
+  const mobileOverflow = nonProfileItems.slice(3);
   const isOverflowActive = mobileOverflow.some((item) => pathname === item.href);
 
   return (
@@ -79,6 +82,19 @@ export default function Nav() {
               </Link>
             );
           })}
+          {/* Profile - always visible */}
+          {profileItem && (
+            <Link
+              href={profileItem.href}
+              onClick={() => setMoreOpen(false)}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1 ${pathname === profileItem.href ? "text-brand-500" : "text-gray-500"}`}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d={profileItem.icon} />
+              </svg>
+              <span className="text-[10px] font-medium">{profileItem.label}</span>
+            </Link>
+          )}
           {/* More button */}
           <button
             onClick={() => setMoreOpen(!moreOpen)}
