@@ -29,12 +29,12 @@ initDb();
       ...require("../prisma/data/exercises-core-cardio"),
     ];
     const ins = db.prepare(
-      `INSERT OR REPLACE INTO exercises (name, description, category, muscle_group, secondary_muscles, equipment, instructions, video_url, photo_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT OR REPLACE INTO exercises (name, description, category, muscle_group, secondary_muscles, equipment, instructions, video_url, photo_url, tracking_type)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     db.transaction(() => {
       for (const ex of allExercises) {
-        ins.run(ex.name, ex.description, ex.category, ex.muscle_group, ex.secondary_muscles || "[]", ex.equipment, ex.instructions, ex.video_url || null, ex.photo_url || null);
+        ins.run(ex.name, ex.description, ex.category, ex.muscle_group, ex.secondary_muscles || "[]", ex.equipment, ex.instructions, ex.video_url || null, ex.photo_url || null, ex.tracking_type || "reps_weight");
       }
     })();
     console.log(`  -> Auto-seeded ${allExercises.length} exercises.`);
