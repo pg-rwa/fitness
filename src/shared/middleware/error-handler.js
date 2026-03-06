@@ -1,3 +1,4 @@
+const multer = require("multer");
 const { AppError } = require("../utils/errors");
 const { logger } = require("../services/logger");
 const { metrics } = require("../services/metrics");
@@ -12,6 +13,13 @@ function errorHandler(err, req, res, _next) {
       code: err.code,
       status: err.status,
     });
+  }
+
+  if (err instanceof multer.MulterError) {
+    const msg = err.code === "LIMIT_FILE_SIZE"
+      ? "File too large. Maximum size is 5MB."
+      : `Upload error: ${err.message}`;
+    return res.status(400).json({ error: msg, code: "UPLOAD_ERROR" });
   }
 
   if (err instanceof AppError) {

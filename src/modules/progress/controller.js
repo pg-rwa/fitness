@@ -1,3 +1,4 @@
+const fsp = require("fs/promises");
 const { getDb } = require("../../config/database");
 const { NotFoundError, ForbiddenError } = require("../../shared/utils/errors");
 const { paginate, paginatedResponse } = require("../../shared/utils/pagination");
@@ -234,13 +235,17 @@ async function uploadPhotoFile(req, res, next) {
     const { createFileUploadService } = require("../../shared/services/file-upload");
     const uploadService = createFileUploadService();
 
+    // Read from disk since multer uses disk storage
+    const fileBuffer = await fsp.readFile(req.file.path);
     const fileRecord = await uploadService.upload({
       userId: req.userId,
-      buffer: req.file.buffer,
+      buffer: fileBuffer,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       entityType: "progress_photo",
     });
+    // Clean up multer temp file
+    await fsp.unlink(req.file.path).catch(() => {});
 
     const db = getDb();
     const category = req.body.category || "front";

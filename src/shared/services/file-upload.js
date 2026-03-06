@@ -1,4 +1,5 @@
 const fs = require("fs");
+const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
 const { getDb } = require("../../config/database");
@@ -15,15 +16,17 @@ class LocalStorageAdapter {
     const ext = path.extname(filename);
     const uniqueName = `${crypto.randomBytes(16).toString("hex")}${ext}`;
     const filePath = path.join(this.uploadDir, uniqueName);
-    fs.writeFileSync(filePath, buffer);
+    await fsp.writeFile(filePath, buffer);
     return `/uploads/${uniqueName}`;
   }
 
   async remove(url) {
     const filename = path.basename(url);
     const filePath = path.join(this.uploadDir, filename);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    try {
+      await fsp.unlink(filePath);
+    } catch (err) {
+      if (err.code !== "ENOENT") throw err;
     }
   }
 }

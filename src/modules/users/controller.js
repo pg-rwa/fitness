@@ -1,4 +1,5 @@
 const fs = require("fs");
+const fsp = require("fs/promises");
 const path = require("path");
 const { getDb } = require("../../config/database");
 const { NotFoundError, ForbiddenError, ConflictError } = require("../../shared/utils/errors");
@@ -116,18 +117,21 @@ async function uploadAvatar(req, res, next) {
 
     if (existing && existing.avatar_url) {
       const oldPath = path.join(__dirname, "../../../uploads", path.basename(existing.avatar_url));
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      await fsp.unlink(oldPath).catch((e) => { if (e.code !== "ENOENT") throw e; });
     }
 
-    // Save new avatar
+    // Save new avatar (read from disk since multer uses disk storage)
+    const fileBuffer = await fsp.readFile(req.file.path);
     const upload = await uploadService.upload({
       userId: req.userId,
-      buffer: req.file.buffer,
+      buffer: fileBuffer,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       entityType: "avatar",
       entityId: req.userId,
     });
+    // Clean up multer temp file
+    await fsp.unlink(req.file.path).catch(() => {});
 
     // Ensure user_profiles row exists
     const profile = db.prepare("SELECT id FROM user_profiles WHERE user_id = ?").get(req.userId);
@@ -154,7 +158,7 @@ async function deleteAvatar(req, res, next) {
 
     if (profile && profile.avatar_url) {
       const oldPath = path.join(__dirname, "../../../uploads", path.basename(profile.avatar_url));
-      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      await fsp.unlink(oldPath).catch((e) => { if (e.code !== "ENOENT") throw e; });
       db.prepare("UPDATE user_profiles SET avatar_url = NULL, updated_at = datetime('now') WHERE user_id = ?")
         .run(req.userId);
     }
