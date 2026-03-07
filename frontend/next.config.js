@@ -22,14 +22,15 @@ const nextConfig = {
       return [];
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    // Docker/self-hosted: when NEXT_PUBLIC_API_URL is set, lib/api.js calls the API directly
-    if (apiUrl) {
+    // Docker/self-hosted: API_BACKEND_URL is a runtime server-side env var
+    // that tells Next.js where to proxy /api/* requests.
+    const backendUrl = process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (backendUrl) {
       return {
         beforeFiles: [
           {
             source: "/api/:path*",
-            destination: `${apiUrl}/:path*`,
+            destination: `${backendUrl}/:path*`,
           },
         ],
       };

@@ -85,7 +85,12 @@ export async function api(path, options = {}) {
 
   if (res.status === 204) return null;
 
-  const data = await res.json();
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error(`Server error (${res.status}). Please try again.`);
+  }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
 }
