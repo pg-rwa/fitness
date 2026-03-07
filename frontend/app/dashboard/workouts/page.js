@@ -266,12 +266,13 @@ function ActiveWorkout({ session: initialSession, onDone }) {
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
+                <ExerciseThumbnail muscleGroup={ex.muscle_group} size={32} />
                 <div>
                   <h3 className="text-white font-semibold text-sm">
                     {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
                   </h3>
                   {ex.muscle_group && (
-                    <span className="text-gray-500 text-xs">{ex.muscle_group}</span>
+                    <span className="text-gray-500 text-xs capitalize">{ex.muscle_group}</span>
                   )}
                 </div>
                 <button

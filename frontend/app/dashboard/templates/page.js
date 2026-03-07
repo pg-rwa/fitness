@@ -229,6 +229,7 @@ function TemplateEditor({ template, onBack, onRefresh }) {
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl p-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-gray-600 text-xs w-5 text-center">{i + 1}</span>
+              <ExerciseThumbnail muscleGroup={ex.muscle_group} size={28} />
               <div>
                 <p className="text-white text-sm font-medium">{ex.exercise_name}</p>
                 <p className="text-gray-500 text-xs">{ex.muscle_group || ex.category}</p>
@@ -340,13 +341,13 @@ function ExerciseDropdown({ onSelect, selectedIds = [] }) {
               <button
                 key={ex.id}
                 onClick={() => { onSelect(ex); setSearch(""); setOpen(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex justify-between items-center"
+                className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex items-center gap-2"
               >
-                <div>
-                  <span className="text-white">{ex.name}</span>
-                  <span className="text-gray-500 text-xs ml-2">{ex.muscle_group}</span>
+                <ExerciseThumbnail muscleGroup={ex.muscle_group} size={24} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-white truncate block">{ex.name}</span>
+                  <span className="text-gray-500 text-xs capitalize">{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</span>
                 </div>
-                {ex.equipment && <span className="text-gray-600 text-xs">{ex.equipment}</span>}
               </button>
             ))
           )}
