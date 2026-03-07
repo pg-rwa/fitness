@@ -2,27 +2,32 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 
 function ExerciseSearchModal({ onSelect, onClose }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filterGroup, setFilterGroup] = useState("");
 
   useEffect(() => {
-    api("/exercises?limit=200")
+    api("/exercises?limit=2000")
       .then((d) => setExerciseList(Array.isArray(d) ? d : d.data || []))
       .catch((e) => setError(e.message || "Failed to load exercises"))
       .finally(() => setLoading(false));
   }, []);
 
-  const filtered = search
-    ? exerciseList.filter(
-        (ex) =>
-          ex.name.toLowerCase().includes(search.toLowerCase()) ||
-          (ex.muscle_group || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : exerciseList;
+  const filtered = exerciseList.filter((ex) => {
+    const matchesSearch = !search ||
+      ex.name.toLowerCase().includes(search.toLowerCase()) ||
+      (ex.muscle_group || "").toLowerCase().includes(search.toLowerCase()) ||
+      (ex.equipment || "").toLowerCase().includes(search.toLowerCase());
+    const matchesGroup = !filterGroup || ex.muscle_group === filterGroup;
+    return matchesSearch && matchesGroup;
+  });
+
+  const muscleGroups = [...new Set(exerciseList.map((ex) => ex.muscle_group).filter(Boolean))].sort();
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
@@ -34,12 +39,25 @@ function ExerciseSearchModal({ onSelect, onClose }) {
           <h3 className="text-white font-bold text-sm mb-3">Add Exercise</h3>
           <input
             type="text"
-            placeholder="Search by name or muscle group..."
+            placeholder="Search by name, muscle group, or equipment..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none mb-2"
             autoFocus
           />
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setFilterGroup("")}
+              className={`px-2 py-1 rounded-full text-xs ${!filterGroup ? "bg-brand-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+            >All</button>
+            {muscleGroups.map((g) => (
+              <button
+                key={g}
+                onClick={() => setFilterGroup(filterGroup === g ? "" : g)}
+                className={`px-2 py-1 rounded-full text-xs capitalize ${filterGroup === g ? "bg-brand-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+              >{g}</button>
+            ))}
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {loading && <p className="text-gray-500 text-sm py-4 text-center">Loading...</p>}
@@ -49,14 +67,20 @@ function ExerciseSearchModal({ onSelect, onClose }) {
           {!loading && !error && filtered.length === 0 && (
             <p className="text-gray-500 text-sm py-4 text-center">No exercises found.</p>
           )}
+          {!loading && !error && filtered.length > 0 && (
+            <p className="text-gray-600 text-xs px-2 pb-1">{filtered.length} exercises</p>
+          )}
           {filtered.map((ex) => (
             <button
               key={ex.id}
               onClick={() => onSelect(ex)}
-              className="w-full text-left px-3 py-2.5 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex justify-between items-center"
+              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex items-center gap-3"
             >
-              <span>{ex.name}</span>
-              <span className="text-gray-600 text-xs">{ex.muscle_group}</span>
+              <ExerciseThumbnail muscleGroup={ex.muscle_group} size={28} />
+              <div className="flex-1 min-w-0">
+                <div className="truncate">{ex.name}</div>
+                <div className="text-gray-600 text-xs capitalize">{ex.muscle_group}{ex.equipment ? ` \u00B7 ${ex.equipment}` : ""}</div>
+              </div>
             </button>
           ))}
         </div>

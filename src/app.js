@@ -27,6 +27,13 @@ initDb();
       ...require("../prisma/data/exercises-legs"),
       ...require("../prisma/data/exercises-arms"),
       ...require("../prisma/data/exercises-core-cardio"),
+      ...require("../prisma/data/exercises-new-chest"),
+      ...require("../prisma/data/exercises-new-back"),
+      ...require("../prisma/data/exercises-new-shoulders"),
+      ...require("../prisma/data/exercises-new-legs"),
+      ...require("../prisma/data/exercises-new-arms"),
+      ...require("../prisma/data/exercises-new-core"),
+      ...require("../prisma/data/exercises-new-full-body"),
     ];
     const ins = db.prepare(
       `INSERT OR REPLACE INTO exercises (name, description, category, muscle_group, secondary_muscles, equipment, instructions, video_url, photo_url, tracking_type)

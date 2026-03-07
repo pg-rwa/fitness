@@ -7,6 +7,14 @@ const shoulderExercises = require("./data/exercises-shoulders");
 const legExercises = require("./data/exercises-legs");
 const armExercises = require("./data/exercises-arms");
 const coreCardioExercises = require("./data/exercises-core-cardio");
+// New exercises (expanded library from reference images)
+const newChest = require("./data/exercises-new-chest");
+const newBack = require("./data/exercises-new-back");
+const newShoulders = require("./data/exercises-new-shoulders");
+const newLegs = require("./data/exercises-new-legs");
+const newArms = require("./data/exercises-new-arms");
+const newCore = require("./data/exercises-new-core");
+const newFullBody = require("./data/exercises-new-full-body");
 
 // Workout templates
 const workoutTemplates = require("./data/workout-templates");
@@ -22,6 +30,13 @@ const exercises = [
   ...legExercises,
   ...armExercises,
   ...coreCardioExercises,
+  ...newChest,
+  ...newBack,
+  ...newShoulders,
+  ...newLegs,
+  ...newArms,
+  ...newCore,
+  ...newFullBody,
 ];
 
 function main() {
