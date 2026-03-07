@@ -16,57 +16,57 @@ function MuscleHighlight({ muscleGroup, color }) {
     case "chest":
       return (
         <>
-          <ellipse fill={color} opacity="0.7" cx="88" cy="90" rx="18" ry="16" />
-          <ellipse fill={color} opacity="0.7" cx="112" cy="90" rx="18" ry="16" />
+          <ellipse fill={color} opacity="0.85" cx="88" cy="90" rx="18" ry="16" />
+          <ellipse fill={color} opacity="0.85" cx="112" cy="90" rx="18" ry="16" />
         </>
       );
     case "back":
-      return <rect fill={color} opacity="0.7" x="75" y="75" width="50" height="55" rx="8" />;
+      return <rect fill={color} opacity="0.85" x="75" y="75" width="50" height="55" rx="8" />;
     case "shoulders":
       return (
         <>
-          <ellipse fill={color} opacity="0.7" cx="60" cy="68" rx="14" ry="10" />
-          <ellipse fill={color} opacity="0.7" cx="140" cy="68" rx="14" ry="10" />
+          <ellipse fill={color} opacity="0.85" cx="60" cy="68" rx="14" ry="10" />
+          <ellipse fill={color} opacity="0.85" cx="140" cy="68" rx="14" ry="10" />
         </>
       );
     case "legs":
       return (
         <>
-          <path fill={color} opacity="0.7" d="M70,180 L65,250 L82,255 L85,180 Z" />
-          <path fill={color} opacity="0.7" d="M130,180 L135,250 L118,255 L115,180 Z" />
+          <path fill={color} opacity="0.85" d="M70,180 L65,250 L82,255 L85,180 Z" />
+          <path fill={color} opacity="0.85" d="M130,180 L135,250 L118,255 L115,180 Z" />
         </>
       );
     case "arms":
       return (
         <>
-          <path fill={color} opacity="0.7" d="M45,70 L32,130 L48,135 L55,80 Z" />
-          <path fill={color} opacity="0.7" d="M155,70 L168,130 L152,135 L145,80 Z" />
+          <path fill={color} opacity="0.85" d="M45,70 L32,130 L48,135 L55,80 Z" />
+          <path fill={color} opacity="0.85" d="M155,70 L168,130 L152,135 L145,80 Z" />
         </>
       );
     case "core":
-      return <rect fill={color} opacity="0.7" x="78" y="120" width="44" height="55" rx="6" />;
+      return <rect fill={color} opacity="0.85" x="78" y="120" width="44" height="55" rx="6" />;
     case "cardio":
       return (
         <>
-          <path fill={color} opacity="0.6" d="M65,64 L135,64 L130,180 L70,180 Z" />
-          <path fill={color} opacity="0.4" d="M70,180 L65,250 L82,255 L85,180 Z" />
-          <path fill={color} opacity="0.4" d="M130,180 L135,250 L118,255 L115,180 Z" />
+          <path fill={color} opacity="0.75" d="M65,64 L135,64 L130,180 L70,180 Z" />
+          <path fill={color} opacity="0.55" d="M70,180 L65,250 L82,255 L85,180 Z" />
+          <path fill={color} opacity="0.55" d="M130,180 L135,250 L118,255 L115,180 Z" />
         </>
       );
     default:
       return (
         <>
-          <path fill={color} opacity="0.6" d="M65,64 L135,64 L130,180 L70,180 Z" />
-          <path fill={color} opacity="0.4" d="M70,180 L65,250 L82,255 L85,180 Z" />
-          <path fill={color} opacity="0.4" d="M130,180 L135,250 L118,255 L115,180 Z" />
-          <path fill={color} opacity="0.4" d="M45,70 L32,130 L48,135 L55,80 Z" />
-          <path fill={color} opacity="0.4" d="M155,70 L168,130 L152,135 L145,80 Z" />
+          <path fill={color} opacity="0.75" d="M65,64 L135,64 L130,180 L70,180 Z" />
+          <path fill={color} opacity="0.55" d="M70,180 L65,250 L82,255 L85,180 Z" />
+          <path fill={color} opacity="0.55" d="M130,180 L135,250 L118,255 L115,180 Z" />
+          <path fill={color} opacity="0.55" d="M45,70 L32,130 L48,135 L55,80 Z" />
+          <path fill={color} opacity="0.55" d="M155,70 L168,130 L152,135 L145,80 Z" />
         </>
       );
   }
 }
 
-export default function ExerciseThumbnail({ muscleGroup, size = 32 }) {
+export default function ExerciseThumbnail({ muscleGroup, size = 36 }) {
   const color = MUSCLE_COLORS[muscleGroup] || MUSCLE_COLORS["full body"];
   const height = Math.round(size * 1.6);
 
@@ -80,14 +80,14 @@ export default function ExerciseThumbnail({ muscleGroup, size = 32 }) {
       role="img"
       aria-label={muscleGroup || "full body"}
     >
-      <rect fill="#1f2937" rx="12" width="200" height="320" />
-      <ellipse fill="#4b5563" cx="100" cy="30" rx="20" ry="24" />
-      <rect fill="#4b5563" x="92" y="52" width="16" height="12" />
-      <path fill="#4b5563" d="M65,64 L135,64 L130,180 L70,180 Z" />
-      <path fill="#4b5563" d="M65,64 L45,70 L32,130 L28,180 L40,182 L48,135 L55,80" />
-      <path fill="#4b5563" d="M135,64 L155,70 L168,130 L172,180 L160,182 L152,135 L145,80" />
-      <path fill="#4b5563" d="M70,180 L65,250 L60,310 L80,312 L82,255 L85,180" />
-      <path fill="#4b5563" d="M130,180 L135,250 L140,310 L120,312 L118,255 L115,180" />
+      <rect fill="#111827" rx="12" width="200" height="320" />
+      <ellipse fill="#6b7280" cx="100" cy="30" rx="20" ry="24" />
+      <rect fill="#6b7280" x="92" y="52" width="16" height="12" />
+      <path fill="#6b7280" d="M65,64 L135,64 L130,180 L70,180 Z" />
+      <path fill="#6b7280" d="M65,64 L45,70 L32,130 L28,180 L40,182 L48,135 L55,80" />
+      <path fill="#6b7280" d="M135,64 L155,70 L168,130 L172,180 L160,182 L152,135 L145,80" />
+      <path fill="#6b7280" d="M70,180 L65,250 L60,310 L80,312 L82,255 L85,180" />
+      <path fill="#6b7280" d="M130,180 L135,250 L140,310 L120,312 L118,255 L115,180" />
       <MuscleHighlight muscleGroup={muscleGroup} color={color} />
     </svg>
   );
