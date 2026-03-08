@@ -1,6 +1,223 @@
 "use client";
-import { useEffect, useState } from "react";
-import { api } from "../../../lib/api";
+import { useEffect, useState, useRef } from "react";
+import { api, getToken } from "../../../lib/api";
+
+const CATEGORIES = ["front", "side", "back", "flexed", "custom"];
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
+
+function PhotoUploadForm({ onSave, onClose }) {
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [category, setCategory] = useState("front");
+  const [notes, setNotes] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
+  const inputRef = useRef();
+
+  const handleFile = (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    setError(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target.result);
+    reader.readAsDataURL(f);
+  };
+
+  const upload = async () => {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("photo", file);
+      formData.append("category", category);
+      if (notes) formData.append("notes", notes);
+
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/progress/photos/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Upload failed (${res.status})`);
+      }
+      onSave();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-gray-900 border border-gray-700 rounded-xl w-full max-w-md p-5" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-white font-bold mb-4">Upload Photo</h2>
+
+        {!preview ? (
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="w-full h-48 border-2 border-dashed border-gray-700 rounded-xl flex flex-col items-center justify-center text-gray-500 hover:border-brand-500 hover:text-brand-400 transition-colors"
+          >
+            <svg className="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+            <span className="text-sm">Tap to select photo</span>
+          </button>
+        ) : (
+          <div className="relative mb-3">
+            <img src={preview} alt="Preview" className="w-full max-h-64 object-contain rounded-lg bg-black" />
+            <button
+              onClick={() => { setFile(null); setPreview(null); }}
+              className="absolute top-2 right-2 bg-black/70 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm"
+            >X</button>
+          </div>
+        )}
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFile} className="hidden" />
+
+        <div className="mt-3">
+          <label className="block text-gray-400 text-xs mb-1">Category</label>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`px-3 py-1 rounded-full text-xs capitalize ${category === c ? "bg-brand-500 text-white" : "bg-gray-800 text-gray-400"}`}
+              >{c}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <label className="block text-gray-400 text-xs mb-1">Notes (optional)</label>
+          <input
+            type="text"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. Week 4 check-in"
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none"
+          />
+        </div>
+
+        {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
+
+        <div className="flex gap-2 mt-4">
+          <button onClick={onClose} className="flex-1 px-4 py-2 bg-gray-800 text-gray-400 rounded-lg text-sm">Cancel</button>
+          <button
+            onClick={upload}
+            disabled={!file || uploading}
+            className="flex-1 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600 disabled:opacity-50"
+          >{uploading ? "Uploading..." : "Upload"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhotoLightbox({ photo, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="relative max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute -top-10 right-0 text-white/70 hover:text-white text-sm">Close</button>
+        <img src={photo.photo_url} alt={photo.category} className="w-full max-h-[80vh] object-contain rounded-lg" />
+        <div className="mt-3 flex justify-between items-center">
+          <div>
+            <span className="text-brand-400 text-xs uppercase font-semibold">{photo.category}</span>
+            {photo.notes && <p className="text-gray-400 text-sm mt-1">{photo.notes}</p>}
+          </div>
+          <span className="text-gray-600 text-xs">{new Date(photo.taken_at || photo.created_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PhotosTab() {
+  const [photos, setPhotos] = useState([]);
+  const [filter, setFilter] = useState("all");
+  const [showUpload, setShowUpload] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [deleting, setDeleting] = useState(null);
+
+  const loadPhotos = () => {
+    const qs = filter !== "all" ? `?category=${filter}` : "";
+    api(`/progress/photos${qs}`).then((d) => setPhotos(d.data || d || [])).catch(() => {});
+  };
+
+  useEffect(() => { loadPhotos(); }, [filter]);
+
+  const deletePhoto = async (id) => {
+    if (!confirm("Delete this photo?")) return;
+    setDeleting(id);
+    try {
+      await api(`/progress/photos/${id}`, { method: "DELETE" });
+      setPhotos((p) => p.filter((ph) => ph.id !== id));
+      if (selected?.id === id) setSelected(null);
+    } catch {}
+    setDeleting(null);
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex gap-1.5 overflow-x-auto">
+          {["all", ...CATEGORIES].map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={`px-2.5 py-1 rounded-full text-xs capitalize whitespace-nowrap ${filter === c ? "bg-brand-500/20 text-brand-400 border border-brand-500/40" : "bg-gray-800 text-gray-500"}`}
+            >{c}</button>
+          ))}
+        </div>
+        <button
+          onClick={() => setShowUpload(true)}
+          className="ml-2 px-3 py-1.5 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600 whitespace-nowrap"
+        >+ Photo</button>
+      </div>
+
+      {photos.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((p) => (
+            <div key={p.id} className="relative group">
+              <div
+                className="aspect-square bg-gray-800 rounded-lg overflow-hidden cursor-pointer"
+                onClick={() => setSelected(p)}
+              >
+                <img
+                  src={p.photo_url}
+                  alt={p.category}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 rounded-b-lg">
+                <span className="text-white/80 text-[10px] capitalize">{p.category}</span>
+                <span className="text-white/50 text-[10px] ml-1">{new Date(p.taken_at || p.created_at).toLocaleDateString()}</span>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); deletePhoto(p.id); }}
+                className="absolute top-1.5 right-1.5 bg-black/60 text-white/70 hover:text-red-400 rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                disabled={deleting === p.id}
+              >X</button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-600 text-sm mb-3">No photos yet</p>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600"
+          >Upload your first photo</button>
+        </div>
+      )}
+
+      {showUpload && <PhotoUploadForm onSave={() => { setShowUpload(false); loadPhotos(); }} onClose={() => setShowUpload(false)} />}
+      {selected && <PhotoLightbox photo={selected} onClose={() => setSelected(null)} />}
+    </>
+  );
+}
 
 function MeasurementForm({ onSave, onClose }) {
   const [form, setForm] = useState({
@@ -81,12 +298,14 @@ export default function ProgressPage() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-white text-xl font-bold">Progress</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600"
-        >
-          Record
-        </button>
+        {tab === "measurements" && (
+          <button
+            onClick={() => setShowForm(true)}
+            className="px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600"
+          >
+            Record
+          </button>
+        )}
       </div>
 
       {showForm && <MeasurementForm onSave={() => { setShowForm(false); load(); }} onClose={() => setShowForm(false)} />}
@@ -179,11 +398,7 @@ export default function ProgressPage() {
         </>
       )}
 
-      {tab === "photos" && (
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-sm">Photo upload available in the mobile app</p>
-        </div>
-      )}
+      {tab === "photos" && <PhotosTab />}
     </div>
   );
 }
