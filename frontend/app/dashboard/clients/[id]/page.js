@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../../components/AuthProvider";
 import { api } from "../../../../lib/api";
 import Link from "next/link";
+import ExerciseThumbnail from "../../../../components/ExerciseThumbnail";
 
 const TABS = [
   { key: "overview", label: "Overview" },
@@ -357,9 +358,10 @@ function ExerciseDropdown({ onSelect, selectedIds = [] }) {
                 onClick={() => { onSelect(ex); setSearch(""); setOpen(false); }}
                 className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex justify-between items-center"
               >
-                <div>
+                <div className="flex items-center gap-2">
+                  <ExerciseThumbnail muscleGroup={ex.muscle_group} size={28} />
                   <span className="text-white">{ex.name}</span>
-                  <span className="text-gray-500 text-xs ml-2">{ex.muscle_group}</span>
+                  <span className="text-gray-500 text-xs ml-1">{ex.muscle_group}</span>
                 </div>
                 {ex.equipment && <span className="text-gray-600 text-xs">{ex.equipment}</span>}
               </button>
