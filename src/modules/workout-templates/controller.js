@@ -9,7 +9,7 @@ function getTemplateWithExercises(db, id) {
 
   const exercises = db
     .prepare(
-      `SELECT te.*, e.name as exercise_name, e.category, e.muscle_group, e.equipment, e.video_url, e.instructions
+      `SELECT te.*, e.name as exercise_name, e.category, e.muscle_group, e.equipment, e.video_url, e.photo_url, e.instructions
        FROM template_exercises te
        JOIN exercises e ON te.exercise_id = e.id
        WHERE te.template_id = ?

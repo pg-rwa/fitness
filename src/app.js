@@ -47,6 +47,107 @@ initDb();
     console.log(`  -> Auto-seeded ${allExercises.length} exercises.`);
   }
 
+  // Auto-populate photo_url for exercises missing images
+  // Uses free-exercise-db (public domain): https://github.com/yuhonas/free-exercise-db
+  const missingPhotos = db.prepare("SELECT id, name FROM exercises WHERE photo_url IS NULL").all();
+  if (missingPhotos.length > 0) {
+    const BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises";
+    const update = db.prepare("UPDATE exercises SET photo_url = ? WHERE id = ?");
+    // Known name mappings: our exercise name -> free-exercise-db image folder
+    const KNOWN_MAPPINGS = {
+      "Arnold Press": "Arnold_Dumbbell_Press",
+      "Barbell Bench Press": "Barbell_Bench_Press_-_Medium_Grip",
+      "Barbell Row": "Bent_Over_Barbell_Row",
+      "Barbell Squat": "Barbell_Full_Squat",
+      "Barbell Back Squat": "Barbell_Squat",
+      "Barbell Incline Bench Press": "Barbell_Incline_Bench_Press_-_Medium_Grip",
+      "Battle Ropes": "Battling_Ropes",
+      "Bench Tricep Dip": "Bench_Dips",
+      "Bicycle Crunch": "Air_Bike",
+      "Box Jump": "Bench_Jump",
+      "Bulgarian Split Squat": "Barbell_Side_Split_Squat",
+      "Burpees": "Burpee",
+      "Cable Curl": "Cable_Hammer_Curls_-_Rope_Attachment",
+      "Cable Flye": "Cable_Crossover",
+      "Chin-Up": "Chin-Up",
+      "Close-Grip Bench Press": "Close-Grip_Barbell_Bench_Press",
+      "Close-Grip Lat Pulldown": "Close-Grip_Front_Lat_Pulldown",
+      "Concentration Curl": "Concentration_Curls",
+      "Crunch": "Crunches",
+      "Deadlift": "Barbell_Deadlift",
+      "Decline Bench Press": "Decline_Barbell_Bench_Press",
+      "Decline Push Up": "Decline_Push-Up",
+      "Diamond Push-Up": "Diamond_Push-Up",
+      "Dip": "Dips_-_Chest_Version",
+      "Dumbbell Bench Press": "Dumbbell_Bench_Press",
+      "Dumbbell Bicep Curl": "Dumbbell_Bicep_Curl",
+      "Dumbbell Flye": "Dumbbell_Flyes",
+      "Dumbbell Lateral Raise": "Side_Lateral_Raise",
+      "Dumbbell Pullover": "Bent-Arm_Dumbbell_Pullover",
+      "Dumbbell Shoulder Press": "Dumbbell_Shoulder_Press",
+      "Dumbbell Shrug": "Dumbbell_Shrug",
+      "EZ Bar Curl": "EZ-Bar_Curl",
+      "Face Pull": "Face_Pull",
+      "Farmer's Walk": "Farmer%27s_Walk",
+      "Front Raise": "Front_Dumbbell_Raise",
+      "Front Squat": "Barbell_Full_Squat",
+      "Glute Bridge": "Barbell_Glute_Bridge",
+      "Goblet Squat": "Goblet_Squat",
+      "Good Morning": "Good_Morning",
+      "Hack Squat": "Barbell_Hack_Squat",
+      "Hammer Curl": "Hammer_Curls",
+      "Hanging Leg Raise": "Hanging_Leg_Raise",
+      "Incline Dumbbell Curl": "Alternate_Incline_Dumbbell_Curl",
+      "Incline Dumbbell Press": "Incline_Dumbbell_Press",
+      "Inverted Row": "Inverted_Row",
+      "Jumping Jacks": "Jumping_Jacks",
+      "Lat Pulldown": "Wide-Grip_Lat_Pulldown",
+      "Lateral Raise": "Side_Lateral_Raise",
+      "Leg Curl": "Seated_Leg_Curl",
+      "Leg Extension": "Leg_Extensions",
+      "Leg Press": "Leg_Press",
+      "Mountain Climber": "Mountain_Climbers",
+      "Nordic Hamstring Curl": "Natural_Glute_Ham_Raise",
+      "Overhead Press": "Standing_Military_Press",
+      "Overhead Tricep Extension": "Standing_Dumbbell_Triceps_Extension",
+      "Pec Deck Machine": "Butterfly",
+      "Preacher Curl": "Preacher_Curl_-_With_Dumbbell",
+      "Pull Up": "Pullups",
+      "Pull-Up": "Pullups",
+      "Push Up": "Pushups",
+      "Push-Up": "Pushups",
+      "Reverse Crunch": "Reverse_Crunch",
+      "Romanian Deadlift": "Romanian_Deadlift_With_Dumbbells",
+      "Seated Cable Row": "Seated_Cable_Rows",
+      "Seated Calf Raise": "Barbell_Seated_Calf_Raise",
+      "Side Plank": "Side_Bridge",
+      "Skull Crusher": "Lying_Triceps_Press",
+      "Squat Jump": "Freehand_Jump_Squat",
+      "Standing Calf Raise": "Standing_Calf_Raises",
+      "Sumo Deadlift": "Sumo_Deadlift",
+      "Superman": "Superman",
+      "T-Bar Row": "T-Bar_Row_with_Handle",
+      "Tricep Dip": "Dips_-_Triceps_Version",
+      "Tricep Kickback": "Tricep_Dumbbell_Kickback",
+      "Tricep Pushdown": "Triceps_Pushdown",
+      "Upright Row": "Upright_Barbell_Row",
+      "Wide Grip Lat Pulldown": "Wide-Grip_Lat_Pulldown",
+      "Wide Grip Pull Up": "Wide-Grip_Rear_Pull-Up",
+      "Zottman Curl": "Zottman_Curl",
+    };
+    function nameToSlug(name) {
+      return name.replace(/\//g, "_").replace(/[()]/g, "").replace(/\s+/g, "_");
+    }
+    db.transaction(() => {
+      for (const ex of missingPhotos) {
+        const folder = KNOWN_MAPPINGS[ex.name] || nameToSlug(ex.name);
+        const url = `${BASE}/${folder}/0.jpg`;
+        update.run(url, ex.id);
+      }
+    })();
+    console.log(`  -> Set photo_url for ${missingPhotos.length} exercises.`);
+  }
+
   const foodCount = db.prepare("SELECT COUNT(*) as c FROM food_items").get().c;
   if (foodCount === 0) {
     console.log("Auto-seeding food items...");

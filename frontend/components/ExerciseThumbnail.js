@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 
 const MUSCLE_CONFIG = {
   chest: { letter: "C", color: "#fca5a5", bg: "#991b1b" },
@@ -11,10 +12,9 @@ const MUSCLE_CONFIG = {
   "full body": { letter: "F", color: "#a5b4fc", bg: "#312e81" },
 };
 
-export default function ExerciseThumbnail({ muscleGroup, size = 36 }) {
+function LetterBadge({ muscleGroup, size }) {
   const config = MUSCLE_CONFIG[muscleGroup] || MUSCLE_CONFIG["full body"];
   const fontSize = Math.max(12, Math.round(size * 0.45));
-
   return (
     <div
       style={{
@@ -37,4 +37,30 @@ export default function ExerciseThumbnail({ muscleGroup, size = 36 }) {
       {config.letter}
     </div>
   );
+}
+
+export default function ExerciseThumbnail({ muscleGroup, photoUrl, size = 36 }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (photoUrl && !imgError) {
+    return (
+      <img
+        src={photoUrl}
+        alt=""
+        onError={() => setImgError(true)}
+        style={{
+          width: size,
+          height: size,
+          minWidth: size,
+          minHeight: size,
+          objectFit: "cover",
+          borderRadius: 8,
+          flexShrink: 0,
+          backgroundColor: "#1f2937",
+        }}
+      />
+    );
+  }
+
+  return <LetterBadge muscleGroup={muscleGroup} size={size} />;
 }

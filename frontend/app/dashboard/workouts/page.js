@@ -77,7 +77,7 @@ function ExerciseSearchModal({ onSelect, onClose }) {
               onClick={() => onSelect(ex.id)}
               className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex items-center gap-3"
             >
-              <ExerciseThumbnail muscleGroup={ex.muscle_group} size={36} />
+              <ExerciseThumbnail muscleGroup={ex.muscle_group} photoUrl={ex.photo_url} size={36} />
               <div className="flex-1 min-w-0">
                 <div className="truncate">{ex.name}</div>
                 <div className="text-gray-600 text-xs capitalize">{ex.muscle_group}{ex.equipment ? ` \u00B7 ${ex.equipment}` : ""}</div>
@@ -266,7 +266,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
-                <ExerciseThumbnail muscleGroup={ex.muscle_group} size={36} />
+                <ExerciseThumbnail muscleGroup={ex.muscle_group} photoUrl={ex.photo_url} size={36} />
                 <div>
                   <h3 className="text-white font-semibold text-sm">
                     {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}

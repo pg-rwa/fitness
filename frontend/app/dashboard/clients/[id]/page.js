@@ -359,7 +359,7 @@ function ExerciseDropdown({ onSelect, selectedIds = [] }) {
                 className="w-full text-left px-3 py-2 hover:bg-gray-700 text-sm border-b border-gray-700/50 last:border-0 flex justify-between items-center"
               >
                 <div className="flex items-center gap-2">
-                  <ExerciseThumbnail muscleGroup={ex.muscle_group} size={28} />
+                  <ExerciseThumbnail muscleGroup={ex.muscle_group} photoUrl={ex.photo_url} size={28} />
                   <span className="text-white">{ex.name}</span>
                   <span className="text-gray-500 text-xs ml-1">{ex.muscle_group}</span>
                 </div>
