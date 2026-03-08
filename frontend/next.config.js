@@ -22,8 +22,10 @@ const nextConfig = {
       return [];
     }
 
-    // Docker/self-hosted: API_BACKEND_URL is a runtime server-side env var
-    // that tells Next.js where to proxy /api/* requests.
+    // Docker/self-hosted: if API_BACKEND_URL is set, use it for rewrites.
+    // In standalone mode, rewrites() is evaluated at build time and baked in,
+    // so API_BACKEND_URL must be available at build time (as a Docker build arg).
+    // If not set, skip rewrites — nginx handles /api/* routing in production.
     const backendUrl = process.env.API_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
     if (backendUrl) {
       return {
@@ -35,6 +37,13 @@ const nextConfig = {
         ],
       };
     }
+
+    // SKIP_API_REWRITE=1 disables rewrites (used in Docker builds where
+    // nginx handles /api/* routing and backend DNS isn't available at build time)
+    if (process.env.SKIP_API_REWRITE === "1") {
+      return [];
+    }
+
     // Local dev: proxy to localhost:3000
     return {
       beforeFiles: [

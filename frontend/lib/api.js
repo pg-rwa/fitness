@@ -60,7 +60,8 @@ export async function api(path, options = {}) {
           body: JSON.stringify({ refreshToken: refresh }),
         });
         if (rRes.ok) {
-          const rData = await rRes.json();
+          const rText = await rRes.text();
+          const rData = JSON.parse(rText);
           setTokens(rData.token, rData.refreshToken);
           headers.Authorization = `Bearer ${rData.token}`;
           const retry = await fetch(`${API_BASE}${path}`, {
@@ -69,7 +70,8 @@ export async function api(path, options = {}) {
             body: body ? JSON.stringify(body) : undefined,
           });
           if (retry.status === 204) return null;
-          const retryData = await retry.json();
+          const retryText = await retry.text();
+          const retryData = JSON.parse(retryText);
           if (!retry.ok) throw new Error(retryData.error || "Request failed");
           return retryData;
         }
@@ -85,11 +87,20 @@ export async function api(path, options = {}) {
 
   if (res.status === 204) return null;
 
+  // Read as text first, then parse — avoids cryptic JSON parse errors
+  // when the server (or proxy) returns non-JSON (e.g. HTML error pages)
+  const text = await res.text();
   let data;
   try {
-    data = await res.json();
+    data = JSON.parse(text);
   } catch {
-    throw new Error(`Server error (${res.status}). Please try again.`);
+    // Non-JSON response — likely a proxy error or server outage
+    console.error(`[api] Non-JSON response (${res.status}):`, text.slice(0, 200));
+    throw new Error(
+      res.status >= 500
+        ? "Server is temporarily unavailable. Please try again."
+        : `Unexpected response from server (${res.status}). Please try again.`
+    );
   }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;

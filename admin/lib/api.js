@@ -36,11 +36,17 @@ export async function api(path, options = {}) {
 
   if (res.status === 204) return null;
 
+  const text = await res.text();
   let data;
   try {
-    data = await res.json();
+    data = JSON.parse(text);
   } catch {
-    throw new Error(`Server error (${res.status}). Please try again.`);
+    console.error(`[api] Non-JSON response (${res.status}):`, text.slice(0, 200));
+    throw new Error(
+      res.status >= 500
+        ? "Server is temporarily unavailable. Please try again."
+        : `Unexpected response from server (${res.status}). Please try again.`
+    );
   }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;

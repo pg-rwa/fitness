@@ -4,6 +4,9 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+# In Docker, nginx handles /api/* routing — skip Next.js rewrites at build time
+# to avoid baking in http://localhost:3000 which doesn't exist in the container
+ENV SKIP_API_REWRITE=1
 # Cache-bust: pass --build-arg CACHEBUST=$(date +%s) to force rebuild
 ARG CACHEBUST=1
 RUN echo "Build cache bust: $CACHEBUST" && npm run build
