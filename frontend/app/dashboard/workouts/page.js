@@ -5,12 +5,15 @@ import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
 import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 
+const RENDER_LIMIT = 50;
+
 function ExerciseSearchModal({ onSelect, onClose }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filterGroup, setFilterGroup] = useState("");
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     api("/exercises?limit=2000")
@@ -71,7 +74,7 @@ function ExerciseSearchModal({ onSelect, onClose }) {
           {!loading && !error && filtered.length > 0 && (
             <p className="text-gray-600 text-xs px-2 pb-1">{filtered.length} exercises</p>
           )}
-          {filtered.map((ex) => (
+          {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
             <button
               key={ex.id}
               onClick={() => onSelect(ex.id)}
@@ -84,6 +87,11 @@ function ExerciseSearchModal({ onSelect, onClose }) {
               </div>
             </button>
           ))}
+          {!showAll && !search && !filterGroup && filtered.length > RENDER_LIMIT && (
+            <button onClick={() => setShowAll(true)} className="w-full py-2 text-brand-400 text-xs hover:text-brand-300">
+              Show all {filtered.length} exercises
+            </button>
+          )}
         </div>
         <div className="p-3 border-t border-gray-800">
           <button onClick={onClose} className="w-full py-2 text-gray-400 text-sm hover:text-white">Cancel</button>

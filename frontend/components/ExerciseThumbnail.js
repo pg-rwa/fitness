@@ -47,6 +47,10 @@ export default function ExerciseThumbnail({ muscleGroup, photoUrl, size = 36 }) 
       <img
         src={photoUrl}
         alt=""
+        loading="lazy"
+        decoding="async"
+        width={size}
+        height={size}
         onError={() => setImgError(true)}
         style={{
           width: size,
