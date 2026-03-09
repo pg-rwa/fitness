@@ -2,7 +2,11 @@ const fs = require("fs");
 const fsp = require("fs/promises");
 const path = require("path");
 const crypto = require("crypto");
+const sharp = require("sharp");
 const { getDb } = require("../../config/database");
+
+const THUMB_WIDTH = 400;
+const THUMB_HEIGHT = 400;
 
 class LocalStorageAdapter {
   constructor(uploadDir) {
@@ -18,6 +22,18 @@ class LocalStorageAdapter {
     const filePath = path.join(this.uploadDir, uniqueName);
     await fsp.writeFile(filePath, buffer);
     return `/uploads/${uniqueName}`;
+  }
+
+  async saveThumbnail(buffer, filename) {
+    const thumbDir = path.join(this.uploadDir, "thumbs");
+    if (!fs.existsSync(thumbDir)) {
+      fs.mkdirSync(thumbDir, { recursive: true });
+    }
+    const ext = path.extname(filename);
+    const uniqueName = `${crypto.randomBytes(16).toString("hex")}${ext}`;
+    const filePath = path.join(thumbDir, uniqueName);
+    await fsp.writeFile(filePath, buffer);
+    return `/uploads/thumbs/${uniqueName}`;
   }
 
   async remove(url) {
@@ -80,6 +96,29 @@ class S3StorageAdapter {
     return `https://${this.bucket}.s3.amazonaws.com/${key}`;
   }
 
+  async saveThumbnail(buffer, filename) {
+    const ext = path.extname(filename);
+    const key = `${this.prefix}/thumbs/${crypto.randomBytes(16).toString("hex")}${ext}`;
+
+    await this.s3.send(
+      new this.PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ACL: "public-read",
+        ContentType: "image/jpeg",
+      })
+    );
+
+    if (this.s3.config.endpoint) {
+      const endpoint = this.s3.config.endpoint;
+      const resolved = typeof endpoint === "function" ? await endpoint() : endpoint;
+      const host = resolved.hostname || resolved;
+      return `https://${this.bucket}.${host}/${key}`;
+    }
+    return `https://${this.bucket}.s3.amazonaws.com/${key}`;
+  }
+
   async remove(url) {
     const urlObj = new URL(url);
     const key = urlObj.pathname.startsWith("/") ? urlObj.pathname.slice(1) : urlObj.pathname;
@@ -103,13 +142,28 @@ class FileUploadService {
     const url = await this.adapter.save(buffer, originalName);
     const sizeBytes = buffer.length;
 
+    // Generate thumbnail for image uploads
+    let thumbnailUrl = null;
+    if (mimeType && mimeType.startsWith("image/")) {
+      try {
+        const thumbBuffer = await sharp(buffer)
+          .resize(THUMB_WIDTH, THUMB_HEIGHT, { fit: "cover", position: "centre" })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+        const thumbName = path.basename(originalName, path.extname(originalName)) + ".jpg";
+        thumbnailUrl = await this.adapter.saveThumbnail(thumbBuffer, thumbName);
+      } catch (err) {
+        console.error("[thumbnail-generation-error]", err.message);
+      }
+    }
+
     const db = getDb();
     const result = db
       .prepare(
-        `INSERT INTO file_uploads (user_id, entity_type, entity_id, url, original_name, mime_type, size_bytes)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO file_uploads (user_id, entity_type, entity_id, url, thumbnail_url, original_name, mime_type, size_bytes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(userId, entityType || null, entityId || null, url, originalName, mimeType, sizeBytes);
+      .run(userId, entityType || null, entityId || null, url, thumbnailUrl, originalName, mimeType, sizeBytes);
 
     return db.prepare("SELECT * FROM file_uploads WHERE id = ?").get(result.lastInsertRowid);
   }

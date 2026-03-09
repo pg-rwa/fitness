@@ -254,10 +254,10 @@ async function uploadPhotoFile(req, res, next) {
 
     const result = db
       .prepare(
-        `INSERT INTO progress_photos (user_id, photo_url, category, notes, taken_at)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO progress_photos (user_id, photo_url, thumbnail_url, category, notes, taken_at)
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
-      .run(req.userId, fileRecord.url, category, notes, takenAt);
+      .run(req.userId, fileRecord.url, fileRecord.thumbnail_url || null, category, notes, takenAt);
 
     const photo = db.prepare("SELECT * FROM progress_photos WHERE id = ?").get(result.lastInsertRowid);
     await eventBus.emit("photo.uploaded", { photo, userId: req.userId });

@@ -185,7 +185,7 @@ function PhotosTab() {
                 onClick={() => setSelected(p)}
               >
                 <img
-                  src={p.photo_url}
+                  src={p.thumbnail_url || p.photo_url}
                   alt={p.category}
                   className="w-full h-full object-cover"
                   loading="lazy"
