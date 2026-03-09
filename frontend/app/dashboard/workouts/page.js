@@ -81,7 +81,7 @@ function ExerciseSearchModal({ onSelect, onClose }) {
                 onClick={() => onSelect(ex.id)}
                 className="text-left bg-gray-800/60 border border-gray-700/50 rounded-xl overflow-hidden hover:border-brand-500/50 hover:bg-gray-800 transition group"
               >
-                <ExerciseBanner muscleGroup={ex.muscle_group} className="h-16 rounded-t-xl rounded-b-none" />
+                <ExerciseBanner muscleGroup={ex.muscle_group} />
                 <div className="px-2.5 py-2">
                   <p className="text-white text-xs font-medium truncate group-hover:text-brand-300 transition">{ex.name}</p>
                   <p className="text-gray-500 text-[10px] capitalize mt-0.5 truncate">{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
