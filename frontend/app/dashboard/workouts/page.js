@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
-import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
+import ExerciseThumbnail, { ExerciseBanner } from "../../../components/ExerciseThumbnail";
 
 const RENDER_LIMIT = 50;
 
@@ -36,7 +36,7 @@ function ExerciseSearchModal({ onSelect, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
       <div
-        className="bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-xl w-full max-w-md max-h-[80vh] flex flex-col"
+        className="bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-gray-800">
@@ -63,7 +63,7 @@ function ExerciseSearchModal({ onSelect, onClose }) {
             ))}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-3">
           {loading && <p className="text-gray-500 text-sm py-4 text-center">Loading...</p>}
           {!loading && error && (
             <p className="text-red-400 text-sm py-4 text-center">{error}</p>
@@ -72,23 +72,25 @@ function ExerciseSearchModal({ onSelect, onClose }) {
             <p className="text-gray-500 text-sm py-4 text-center">No exercises found.</p>
           )}
           {!loading && !error && filtered.length > 0 && (
-            <p className="text-gray-600 text-xs px-2 pb-1">{filtered.length} exercises</p>
+            <p className="text-gray-600 text-xs px-1 pb-2">{filtered.length} exercises</p>
           )}
-          {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
-            <button
-              key={ex.id}
-              onClick={() => onSelect(ex.id)}
-              className="w-full text-left px-3 py-2 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex items-center gap-3"
-            >
-              <ExerciseThumbnail muscleGroup={ex.muscle_group} size={36} />
-              <div className="flex-1 min-w-0">
-                <div className="truncate">{ex.name}</div>
-                <div className="text-gray-600 text-xs capitalize">{ex.muscle_group}{ex.equipment ? ` \u00B7 ${ex.equipment}` : ""}</div>
-              </div>
-            </button>
-          ))}
+          <div className="grid grid-cols-2 gap-2">
+            {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => onSelect(ex.id)}
+                className="text-left bg-gray-800/60 border border-gray-700/50 rounded-xl overflow-hidden hover:border-brand-500/50 hover:bg-gray-800 transition group"
+              >
+                <ExerciseBanner muscleGroup={ex.muscle_group} className="h-16 rounded-t-xl rounded-b-none" />
+                <div className="px-2.5 py-2">
+                  <p className="text-white text-xs font-medium truncate group-hover:text-brand-300 transition">{ex.name}</p>
+                  <p className="text-gray-500 text-[10px] capitalize mt-0.5 truncate">{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
+                </div>
+              </button>
+            ))}
+          </div>
           {!showAll && !search && !filterGroup && filtered.length > RENDER_LIMIT && (
-            <button onClick={() => setShowAll(true)} className="w-full py-2 text-brand-400 text-xs hover:text-brand-300">
+            <button onClick={() => setShowAll(true)} className="w-full py-3 text-brand-400 text-xs hover:text-brand-300 mt-2">
               Show all {filtered.length} exercises
             </button>
           )}
@@ -271,10 +273,11 @@ function ActiveWorkout({ session: initialSession, onDone }) {
       {/* Exercises */}
       <div className="space-y-4">
         {exercises.map((ex) => (
-          <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <ExerciseBanner muscleGroup={ex.muscle_group} />
+            <div className="p-4">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
-                <ExerciseThumbnail muscleGroup={ex.muscle_group} size={36} />
                 <div>
                   <h3 className="text-white font-semibold text-sm">
                     {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
@@ -363,6 +366,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
                 </button>
               </div>
             )}
+            </div>
           </div>
         ))}
       </div>
