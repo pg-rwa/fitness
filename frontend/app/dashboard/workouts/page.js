@@ -75,24 +75,23 @@ function ExerciseSearchModal({ onSelect, onClose }) {
           {!loading && !error && filtered.length > 0 && (
             <p style={{ color: "#4b5563", fontSize: 11, paddingBottom: 8 }}>{filtered.length} exercises</p>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
               <button
                 key={ex.id}
                 onClick={() => onSelect(ex.id)}
-                style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 12, overflow: "hidden", cursor: "pointer", padding: 0, display: "block", width: "100%" }}
+                style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 10, overflow: "hidden", cursor: "pointer", padding: 0, display: "flex", alignItems: "stretch", width: "100%" }}
               >
-                <div style={{ width: "100%", height: 80, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ width: 64, minWidth: 64, height: 64, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                   {ex.photo_url ? (
                     <img src={ex.photo_url} alt={ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                   ) : (
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{(ex.muscle_group || "exercise").slice(0, 6)}</span>
                   )}
-                  <span style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group || "exercise"}</span>
                 </div>
-                <div style={{ padding: "8px 10px" }}>
-                  <p style={{ color: "#fff", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
-                  <p style={{ color: "#6b7280", fontSize: 10, textTransform: "capitalize", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
+                <div style={{ padding: "10px 12px", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <p style={{ color: "#fff", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
+                  <p style={{ color: "#6b7280", fontSize: 11, textTransform: "capitalize", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
                 </div>
               </button>
             ))}
@@ -282,44 +281,46 @@ function ActiveWorkout({ session: initialSession, onDone }) {
       <div className="space-y-4">
         {exercises.map((ex) => (
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <div style={{ width: "100%", height: 48, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-              {ex.photo_url ? (
-                <img src={ex.photo_url} alt={ex.exercise_name || ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-              ) : (
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
-              )}
-              <span style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group || "exercise"}</span>
-            </div>
-            <div className="p-4">
-            <div className="flex items-start justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <div>
-                  <h3 className="text-white font-semibold text-sm">
-                    {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
-                  </h3>
-                  {ex.muscle_group && (
-                    <span className="text-gray-500 text-xs capitalize">{ex.muscle_group}</span>
+            <div className="flex items-stretch">
+              {/* Exercise image */}
+              <div style={{ width: 72, minWidth: 72, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                {ex.photo_url ? (
+                  <img src={ex.photo_url} alt={ex.exercise_name || ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                ) : (
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, textAlign: "center", padding: 4 }}>{ex.muscle_group || "exercise"}</span>
+                )}
+              </div>
+              {/* Exercise info */}
+              <div className="flex-1 min-w-0 p-3">
+                <div className="flex items-start justify-between mb-1">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="min-w-0">
+                      <h3 className="text-white font-semibold text-sm truncate">
+                        {ex.exercise_name || ex.name || `Exercise #${ex.exercise_id}`}
+                      </h3>
+                      {ex.muscle_group && (
+                        <span className="text-gray-500 text-xs capitalize">{ex.muscle_group}</span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setVideoExercise({ id: ex.exercise_id || ex.id, name: ex.exercise_name || ex.name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
+                      className="text-gray-600 hover:text-brand-400 transition p-1 shrink-0"
+                      title="Watch demo"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </button>
+                  </div>
+                  {isActive && (
+                    <button
+                      onClick={() => setReplacingExId(ex.id)}
+                      className="text-gray-500 hover:text-brand-400 text-xs px-2 py-1 border border-gray-700 rounded-lg hover:border-brand-500 transition shrink-0"
+                    >
+                      Replace
+                    </button>
                   )}
                 </div>
-                <button
-                  onClick={() => setVideoExercise({ id: ex.exercise_id || ex.id, name: ex.exercise_name || ex.name, muscle_group: ex.muscle_group, equipment: ex.equipment, video_url: ex.video_url, instructions: ex.instructions })}
-                  className="text-gray-600 hover:text-brand-400 transition p-1"
-                  title="Watch demo"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </button>
-              </div>
-              {isActive && (
-                <button
-                  onClick={() => setReplacingExId(ex.id)}
-                  className="text-gray-500 hover:text-brand-400 text-xs px-2 py-1 border border-gray-700 rounded-lg hover:border-brand-500 transition"
-                >
-                  Replace
-                </button>
-              )}
-            </div>
 
             {/* Exercise history from previous sessions */}
             <ExerciseHistory exerciseId={ex.exercise_id} />
@@ -381,6 +382,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
                 </button>
               </div>
             )}
+            </div>
             </div>
           </div>
         ))}
