@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 const MUSCLE_COLORS = {
   chest: "#991b1b", back: "#1e3a5f", shoulders: "#713f12", legs: "#14532d",
   arms: "#581c87", core: "#831843", cardio: "#7c2d12", "full body": "#312e81",
