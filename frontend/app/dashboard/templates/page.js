@@ -75,24 +75,23 @@ function ExerciseSearchModal({ onSelect, onClose }) {
           {!loading && !error && filtered.length > 0 && (
             <p style={{ color: "#4b5563", fontSize: 11, paddingBottom: 8 }}>{filtered.length} exercises</p>
           )}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
               <button
                 key={ex.id}
                 onClick={() => onSelect(ex)}
-                style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 12, overflow: "hidden", cursor: "pointer", padding: 0, display: "block", width: "100%" }}
+                style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 10, overflow: "hidden", cursor: "pointer", padding: 0, display: "flex", alignItems: "stretch", width: "100%" }}
               >
-                <div style={{ width: "100%", height: 80, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                <div style={{ width: 64, minWidth: 64, height: 64, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
                   {ex.photo_url ? (
                     <img src={ex.photo_url} alt={ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                   ) : (
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+                    <span style={{ color: "rgba(255,255,255,0.6)", fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{(ex.muscle_group || "exercise").slice(0, 6)}</span>
                   )}
-                  <span style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group || "exercise"}</span>
                 </div>
-                <div style={{ padding: "8px 10px" }}>
-                  <p style={{ color: "#fff", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
-                  <p style={{ color: "#6b7280", fontSize: 10, textTransform: "capitalize", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
+                <div style={{ padding: "10px 12px", flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <p style={{ color: "#fff", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
+                  <p style={{ color: "#6b7280", fontSize: 11, textTransform: "capitalize", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
                 </div>
               </button>
             ))}

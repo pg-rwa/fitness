@@ -283,7 +283,7 @@ function ActiveWorkout({ session: initialSession, onDone }) {
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
             <div className="flex items-stretch">
               {/* Exercise image */}
-              <div style={{ width: 72, minWidth: 72, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+              <div style={{ width: 96, minWidth: 96, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                 {ex.photo_url ? (
                   <img src={ex.photo_url} alt={ex.exercise_name || ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
                 ) : (
@@ -327,56 +327,52 @@ function ActiveWorkout({ session: initialSession, onDone }) {
 
             {/* Logged sets */}
             {(ex.sets || []).length > 0 && (
-              <div className="mb-3">
-                <div className="grid grid-cols-4 gap-2 text-gray-500 text-xs mb-1 px-1">
-                  <span>Set</span><span>Reps</span><span>Weight</span><span>RPE</span>
-                </div>
-                {ex.sets.map((s, i) => (
-                  <div key={s.id || i} className="grid grid-cols-4 gap-2 text-sm px-1 py-0.5">
-                    <span className="text-gray-400">{i + 1}</span>
-                    <span className="text-white">{s.reps || "-"}</span>
-                    <span className="text-white">{s.weight_kg ? `${s.weight_kg}kg` : "-"}</span>
-                    <span className="text-gray-400">{s.rpe || "-"}</span>
+              <div className="mb-2 flex justify-end">
+                <div>
+                  <div className="flex gap-4 text-gray-500 text-xs mb-0.5">
+                    <span className="w-6 text-center">#</span><span className="w-10 text-center">Reps</span><span className="w-12 text-center">Wt</span><span className="w-8 text-center">RPE</span>
                   </div>
-                ))}
+                  {ex.sets.map((s, i) => (
+                    <div key={s.id || i} className="flex gap-4 text-xs py-0.5">
+                      <span className="w-6 text-center text-gray-400">{i + 1}</span>
+                      <span className="w-10 text-center text-white">{s.reps || "-"}</span>
+                      <span className="w-12 text-center text-white">{s.weight_kg ? `${s.weight_kg}kg` : "-"}</span>
+                      <span className="w-8 text-center text-gray-400">{s.rpe || "-"}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Log set form */}
             {isActive && (
-              <div className="flex gap-2 items-end">
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    placeholder="Reps"
-                    value={setForm[ex.id]?.reps || ""}
-                    onChange={(e) => updateSetField(ex.id, "reps", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none"
-                  />
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="number"
-                    placeholder="kg"
-                    value={setForm[ex.id]?.weight || ""}
-                    onChange={(e) => updateSetField(ex.id, "weight", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none"
-                  />
-                </div>
-                <div className="w-14">
-                  <input
-                    type="number"
-                    placeholder="RPE"
-                    min="1"
-                    max="10"
-                    value={setForm[ex.id]?.rpe || ""}
-                    onChange={(e) => updateSetField(ex.id, "rpe", e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none"
-                  />
-                </div>
+              <div className="flex gap-1.5 items-end justify-end">
+                <input
+                  type="number"
+                  placeholder="Reps"
+                  value={setForm[ex.id]?.reps || ""}
+                  onChange={(e) => updateSetField(ex.id, "reps", e.target.value)}
+                  className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="kg"
+                  value={setForm[ex.id]?.weight || ""}
+                  onChange={(e) => updateSetField(ex.id, "weight", e.target.value)}
+                  className="w-16 bg-gray-800 border border-gray-700 rounded px-2 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none text-center"
+                />
+                <input
+                  type="number"
+                  placeholder="RPE"
+                  min="1"
+                  max="10"
+                  value={setForm[ex.id]?.rpe || ""}
+                  onChange={(e) => updateSetField(ex.id, "rpe", e.target.value)}
+                  className="w-12 bg-gray-800 border border-gray-700 rounded px-1.5 py-1.5 text-white text-xs focus:border-brand-500 focus:outline-none text-center"
+                />
                 <button
                   onClick={() => logSet(ex.id)}
-                  className="px-3 py-1.5 bg-brand-500 text-white rounded text-xs font-medium hover:bg-brand-600"
+                  className="px-3 py-1.5 bg-brand-500 text-white rounded text-xs font-medium hover:bg-brand-600 shrink-0"
                 >
                   Log
                 </button>
