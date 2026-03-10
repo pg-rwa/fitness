@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { getDb } = require("../../config/database");
 const { jwtSecret } = require("../../config/auth");
-const { sendEmail } = require("./email");
+const { sendEmail, otpEmail } = require("./email");
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 10;
@@ -45,23 +45,8 @@ async function sendOTP(email, type = "registration") {
     "INSERT INTO otp_codes (email, code, type, expires_at) VALUES (?, ?, ?, ?)"
   ).run(email, code, type, expiresAt.toISOString());
 
-  // Send the OTP email
-  const emailResult = await sendEmail({
-    to: email,
-    subject: `Your FitTracker verification code: ${code}`,
-    text: `Your verification code is: ${code}\n\nThis code expires in ${OTP_EXPIRY_MINUTES} minutes.\n\nIf you didn't request this code, please ignore this email.`,
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2 style="color: #6366f1;">FitTracker Verification</h2>
-        <p>Your verification code is:</p>
-        <div style="background: #f3f4f6; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
-          <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${code}</span>
-        </div>
-        <p style="color: #6b7280; font-size: 14px;">This code expires in ${OTP_EXPIRY_MINUTES} minutes.</p>
-        <p style="color: #6b7280; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
-      </div>
-    `,
-  });
+  // Send the OTP email using styled template
+  const emailResult = await otpEmail(email, code);
 
   // If email wasn't sent (no SMTP configured), return the code so the UI can show it
   if (!emailResult) {
