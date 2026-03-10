@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
-import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
+import ExerciseThumbnail, { ExerciseBanner } from "../../../components/ExerciseThumbnail";
 const MUSCLE_COLORS = {
   chest: "#991b1b", back: "#1e3a5f", shoulders: "#713f12", legs: "#14532d",
   arms: "#581c87", core: "#831843", cardio: "#7c2d12", "full body": "#312e81",
@@ -246,7 +246,14 @@ function TemplateEditor({ template, onBack, onRefresh }) {
         )}
         {exercises.map((ex, i) => (
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <ExerciseBanner muscleGroup={ex.muscle_group} />
+            {ex.photo_url ? (
+              <div style={{ width: "100%", height: 80, position: "relative", overflow: "hidden" }}>
+                <img src={ex.photo_url} alt={ex.exercise_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                <span style={{ position: "absolute", bottom: 6, right: 10, fontSize: 10, fontWeight: 600, color: "#fff", opacity: 0.7, textTransform: "uppercase", letterSpacing: "0.05em", background: "rgba(0,0,0,0.5)", padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group}</span>
+              </div>
+            ) : (
+              <ExerciseBanner muscleGroup={ex.muscle_group} />
+            )}
             <div className="px-3 py-2.5 flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-gray-600 text-xs w-5 text-center shrink-0">{i + 1}</span>

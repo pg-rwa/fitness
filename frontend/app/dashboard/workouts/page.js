@@ -282,8 +282,13 @@ function ActiveWorkout({ session: initialSession, onDone }) {
       <div className="space-y-4">
         {exercises.map((ex) => (
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <div style={{ width: "100%", height: 48, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+            <div style={{ width: "100%", height: 48, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+              {ex.photo_url ? (
+                <img src={ex.photo_url} alt={ex.exercise_name || ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+              ) : (
+                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+              )}
+              <span style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group || "exercise"}</span>
             </div>
             <div className="p-4">
             <div className="flex items-start justify-between mb-1">
