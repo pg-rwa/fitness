@@ -82,8 +82,13 @@ function ExerciseSearchModal({ onSelect, onClose }) {
                 onClick={() => onSelect(ex.id)}
                 style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 12, overflow: "hidden", cursor: "pointer", padding: 0, display: "block", width: "100%" }}
               >
-                <div style={{ width: "100%", height: 48, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+                <div style={{ width: "100%", height: 80, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+                  {ex.photo_url ? (
+                    <img src={ex.photo_url} alt={ex.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
+                  ) : (
+                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+                  )}
+                  <span style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, padding: "2px 6px", borderRadius: 4 }}>{ex.muscle_group || "exercise"}</span>
                 </div>
                 <div style={{ padding: "8px 10px" }}>
                   <p style={{ color: "#fff", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
