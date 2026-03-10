@@ -3,7 +3,10 @@ import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../../../components/AuthProvider";
 import { api } from "../../../lib/api";
 import VideoModal from "../../../components/VideoModal";
-import ExerciseThumbnail, { ExerciseBanner } from "../../../components/ExerciseThumbnail";
+const MUSCLE_COLORS = {
+  chest: "#991b1b", back: "#1e3a5f", shoulders: "#713f12", legs: "#14532d",
+  arms: "#581c87", core: "#831843", cardio: "#7c2d12", "full body": "#312e81",
+};
 
 const RENDER_LIMIT = 50;
 
@@ -33,70 +36,70 @@ function ExerciseSearchModal({ onSelect, onClose }) {
 
   const muscleGroups = [...new Set(exerciseList.map((ex) => ex.muscle_group).filter(Boolean))].sort();
 
+  const getBannerColor = (mg) => MUSCLE_COLORS[(mg || "").toLowerCase()] || "#312e81";
+
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999 }} onClick={onClose}>
       <div
-        className="bg-gray-900 border border-gray-700 rounded-t-2xl sm:rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col"
+        style={{ background: "#111827", border: "1px solid #374151", borderRadius: 12, width: "100%", maxWidth: 500, maxHeight: "85vh", display: "flex", flexDirection: "column" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-4 border-b border-gray-800">
-          <h3 className="text-white font-bold text-sm mb-3">Choose Exercise</h3>
+        <div style={{ padding: 16, borderBottom: "1px solid #1f2937" }}>
+          <h3 style={{ color: "#fff", fontWeight: 700, fontSize: 14, marginBottom: 12 }}>Choose Exercise</h3>
           <input
             type="text"
-            placeholder="Search by name, muscle group, or equipment..."
+            placeholder="Search by name or muscle group..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm focus:border-brand-500 focus:outline-none mb-2"
+            style={{ width: "100%", background: "#1f2937", border: "1px solid #374151", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 14, outline: "none", boxSizing: "border-box" }}
             autoFocus
           />
-          <div className="flex gap-1.5 flex-wrap">
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
             <button
               onClick={() => setFilterGroup("")}
-              className={`px-2 py-1 rounded-full text-xs ${!filterGroup ? "bg-brand-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+              style={{ padding: "4px 10px", borderRadius: 20, fontSize: 11, border: "none", cursor: "pointer", background: !filterGroup ? "#ea580c" : "#1f2937", color: !filterGroup ? "#fff" : "#9ca3af" }}
             >All</button>
             {muscleGroups.map((g) => (
               <button
                 key={g}
                 onClick={() => setFilterGroup(filterGroup === g ? "" : g)}
-                className={`px-2 py-1 rounded-full text-xs capitalize ${filterGroup === g ? "bg-brand-600 text-white" : "bg-gray-800 text-gray-400 hover:bg-gray-700"}`}
+                style={{ padding: "4px 10px", borderRadius: 20, fontSize: 11, border: "none", cursor: "pointer", textTransform: "capitalize", background: filterGroup === g ? "#ea580c" : "#1f2937", color: filterGroup === g ? "#fff" : "#9ca3af" }}
               >{g}</button>
             ))}
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-3">
-          {loading && <p className="text-gray-500 text-sm py-4 text-center">Loading...</p>}
-          {!loading && error && (
-            <p className="text-red-400 text-sm py-4 text-center">{error}</p>
-          )}
-          {!loading && !error && filtered.length === 0 && (
-            <p className="text-gray-500 text-sm py-4 text-center">No exercises found.</p>
-          )}
+        <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+          {loading && <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", padding: "16px 0" }}>Loading...</p>}
+          {!loading && error && <p style={{ color: "#f87171", fontSize: 13, textAlign: "center", padding: "16px 0" }}>{error}</p>}
+          {!loading && !error && filtered.length === 0 && <p style={{ color: "#6b7280", fontSize: 13, textAlign: "center", padding: "16px 0" }}>No exercises found.</p>}
           {!loading && !error && filtered.length > 0 && (
-            <p className="text-gray-600 text-xs px-1 pb-2">{filtered.length} exercises</p>
+            <p style={{ color: "#4b5563", fontSize: 11, paddingBottom: 8 }}>{filtered.length} exercises</p>
           )}
-          <div className="grid grid-cols-2 gap-2">
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {(showAll || search || filterGroup ? filtered : filtered.slice(0, RENDER_LIMIT)).map((ex) => (
               <button
                 key={ex.id}
                 onClick={() => onSelect(ex.id)}
-                className="text-left bg-gray-800/60 border border-gray-700/50 rounded-xl overflow-hidden hover:border-brand-500/50 hover:bg-gray-800 transition group"
+                style={{ textAlign: "left", background: "rgba(31,41,55,0.6)", border: "1px solid rgba(55,65,81,0.5)", borderRadius: 12, overflow: "hidden", cursor: "pointer", padding: 0, display: "block", width: "100%" }}
               >
-                <ExerciseBanner muscleGroup={ex.muscle_group} />
-                <div className="px-2.5 py-2">
-                  <p className="text-white text-xs font-medium truncate group-hover:text-brand-300 transition">{ex.name}</p>
-                  <p className="text-gray-500 text-[10px] capitalize mt-0.5 truncate">{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
+                <div style={{ width: "100%", height: 48, background: getBannerColor(ex.muscle_group), display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+                </div>
+                <div style={{ padding: "8px 10px" }}>
+                  <p style={{ color: "#fff", fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{ex.name}</p>
+                  <p style={{ color: "#6b7280", fontSize: 10, textTransform: "capitalize", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ex.muscle_group}{ex.equipment ? ` · ${ex.equipment}` : ""}</p>
                 </div>
               </button>
             ))}
           </div>
           {!showAll && !search && !filterGroup && filtered.length > RENDER_LIMIT && (
-            <button onClick={() => setShowAll(true)} className="w-full py-3 text-brand-400 text-xs hover:text-brand-300 mt-2">
+            <button onClick={() => setShowAll(true)} style={{ width: "100%", padding: "12px 0", color: "#fb923c", fontSize: 12, background: "none", border: "none", cursor: "pointer", marginTop: 8 }}>
               Show all {filtered.length} exercises
             </button>
           )}
         </div>
-        <div className="p-3 border-t border-gray-800">
-          <button onClick={onClose} className="w-full py-2 text-gray-400 text-sm hover:text-white">Cancel</button>
+        <div style={{ padding: 12, borderTop: "1px solid #1f2937" }}>
+          <button onClick={onClose} style={{ width: "100%", padding: "8px 0", color: "#9ca3af", fontSize: 14, background: "none", border: "none", cursor: "pointer" }}>Cancel</button>
         </div>
       </div>
     </div>
@@ -274,7 +277,9 @@ function ActiveWorkout({ session: initialSession, onDone }) {
       <div className="space-y-4">
         {exercises.map((ex) => (
           <div key={ex.id} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <ExerciseBanner muscleGroup={ex.muscle_group} />
+            <div style={{ width: "100%", height: 48, background: MUSCLE_COLORS[(ex.muscle_group || "").toLowerCase()] || "#312e81", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>{ex.muscle_group || "exercise"}</span>
+            </div>
             <div className="p-4">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
