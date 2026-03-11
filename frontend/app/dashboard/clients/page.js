@@ -204,9 +204,9 @@ export default function ClientsPage() {
               ) : (
                 <>
                   <p className="text-green-400 text-sm">Invitation sent!</p>
-                  {inviteResult.token && (
+                  {inviteResult.email && (
                     <p className="text-gray-400 text-xs mt-1">
-                      Registration link: {typeof window !== "undefined" ? window.location.origin : ""}/register?token={inviteResult.token}
+                      Registration link: {typeof window !== "undefined" ? window.location.origin : ""}/register?invitation=true&email={encodeURIComponent(inviteResult.email)}
                     </p>
                   )}
                 </>
