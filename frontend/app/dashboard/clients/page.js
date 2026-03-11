@@ -18,31 +18,23 @@ export default function ClientsPage() {
   const [inviteResult, setInviteResult] = useState(null);
   const [requestResult, setRequestResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadData = () => {
-    api("/users/my-clients")
-      .then((d) => setClients(Array.isArray(d) ? d : []))
-      .catch(() => {
-        // Fallback to admin endpoint
-        api("/admin/users?limit=100")
-          .then((d) => {
-            const all = d.data || [];
-            setClients(all.filter((u) => u.trainer_id === user?.id && u.role === "client"));
-          })
-          .catch(() => {});
-      });
-
-    api("/auth/invitations")
-      .then((d) => setInvitations(Array.isArray(d) ? d : d.invitations || d.data || []))
-      .catch(() => {});
-
-    api("/users/trainer-requests")
-      .then((d) => setTrainerRequests(Array.isArray(d) ? d : []))
-      .catch(() => {});
+    setLoading(true);
+    Promise.all([
+      api("/users/my-clients").catch(() => []),
+      api("/auth/invitations").catch(() => []),
+      api("/users/trainer-requests").catch(() => []),
+    ]).then(([clientsData, invData, reqData]) => {
+      setClients(Array.isArray(clientsData) ? clientsData : []);
+      setInvitations(Array.isArray(invData) ? invData : invData.invitations || invData.data || []);
+      setTrainerRequests(Array.isArray(reqData) ? reqData : []);
+    }).finally(() => setLoading(false));
   };
 
   useEffect(() => {
-    loadData();
+    if (user) loadData();
   }, [user]);
 
   const sendInvite = async () => {
@@ -98,7 +90,16 @@ export default function ClientsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-white text-xl font-bold">Clients</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-white text-xl font-bold">Clients</h1>
+          <button onClick={loadData} disabled={loading}
+            className="w-7 h-7 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center hover:bg-gray-700 transition disabled:opacity-50"
+            title="Refresh">
+            <svg className={`w-3.5 h-3.5 text-gray-400 ${loading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
         <div className="flex gap-2">
           <button
             onClick={() => { setShowSearch(!showSearch); setShowInvite(false); }}
