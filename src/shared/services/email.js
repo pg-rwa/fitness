@@ -36,17 +36,12 @@ async function sendEmail({ to, subject, text, html }) {
   // Try Resend first
   const resend = getResendClient();
   if (resend) {
-    try {
-      const { data, error } = await resend.emails.send({ from, to, subject, text, html });
-      if (error) {
-        console.error("[email-resend-error]", error);
-        return null;
-      }
-      return data;
-    } catch (err) {
-      console.error("[email-resend-error]", err.message);
-      return null;
+    const { data, error } = await resend.emails.send({ from, to, subject, text, html });
+    if (error) {
+      console.error("[email-resend-error]", error);
+      throw new Error(`Email delivery failed: ${error.message || "Unknown error"}`);
     }
+    return data;
   }
 
   // Fall back to SMTP
@@ -58,13 +53,8 @@ async function sendEmail({ to, subject, text, html }) {
     return null;
   }
 
-  try {
-    const info = await transport.sendMail({ from, to, subject, text, html });
-    return info;
-  } catch (err) {
-    console.error("[email-smtp-error]", err.message);
-    return null;
-  }
+  const info = await transport.sendMail({ from, to, subject, text, html });
+  return info;
 }
 
 // ─── Template helpers ──────────────────────────────────────────
