@@ -257,7 +257,11 @@ async function acceptInvitationByToken({ token, password, firstName, lastName })
 
   const user = db
     .prepare(
-      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.trainer_id, u.created_at,
+              t.first_name || ' ' || t.last_name as trainer_name
+       FROM users u
+       LEFT JOIN users t ON t.id = u.trainer_id
+       WHERE u.id = ?`
     )
     .get(result.lastInsertRowid);
 
@@ -332,7 +336,11 @@ async function acceptInvitation({ verificationToken, password, firstName, lastNa
 
   const user = db
     .prepare(
-      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.trainer_id, u.created_at,
+              t.first_name || ' ' || t.last_name as trainer_name
+       FROM users u
+       LEFT JOIN users t ON t.id = u.trainer_id
+       WHERE u.id = ?`
     )
     .get(result.lastInsertRowid);
 
