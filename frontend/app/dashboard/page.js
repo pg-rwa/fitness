@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../lib/api";
@@ -86,49 +86,32 @@ function QuickAction({ href, icon, label, color }) {
 function InsightsWidget() {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [generated, setGenerated] = useState(false);
 
-  const load = useCallback(() => {
+  useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     api("/insights?limit=3")
-      .then((d) => setInsights(d.data || []))
+      .then((d) => {
+        if (cancelled) return;
+        const fetched = d.data || [];
+        setInsights(fetched);
+        // If no insights exist, generate in background (once only)
+        if (fetched.length === 0 && !generated) {
+          setGenerated(true);
+          api("/insights/generate", { method: "POST" })
+            .then((newInsights) => {
+              if (!cancelled && Array.isArray(newInsights)) {
+                setInsights(newInsights.slice(0, 3));
+              }
+            })
+            .catch(() => {});
+        }
+      })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => { load(); }, [load]);
-
-  // Auto-generate if no insights exist
-  useEffect(() => {
-    if (!loading && insights.length === 0 && !generating) {
-      setGenerating(true);
-      api("/insights/generate", { method: "POST" })
-        .then((newInsights) => {
-          if (Array.isArray(newInsights)) {
-            setInsights(newInsights.slice(0, 3));
-          }
-        })
-        .catch(() => {})
-        .finally(() => setGenerating(false));
-    }
-  }, [loading, insights.length, generating]);
-
-  if (loading || generating) {
-    return (
-      <div className="bg-gradient-to-br from-gray-900 to-gray-900/50 border border-gray-800 rounded-2xl p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-brand-500/20 flex items-center justify-center">
-            <Icon d={ICONS.sparkles} className="w-4 h-4 text-brand-400" />
-          </div>
-          <h2 className="text-white font-semibold text-sm">AI Insights</h2>
-        </div>
-        <div className="flex items-center justify-center py-6 gap-2">
-          <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-gray-500 text-sm">{generating ? "Generating insights..." : "Loading..."}</span>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-gradient-to-br from-gray-900 to-gray-900/50 border border-gray-800 rounded-2xl p-4">
@@ -143,7 +126,12 @@ function InsightsWidget() {
           View all <Icon d={ICONS.arrow} className="w-3 h-3" />
         </Link>
       </div>
-      {insights.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-6 gap-2">
+          <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-gray-500 text-sm">Loading...</span>
+        </div>
+      ) : insights.length === 0 ? (
         <p className="text-gray-600 text-sm py-4 text-center">Log some workouts and meals to get personalized AI insights</p>
       ) : (
         <div className="space-y-2">

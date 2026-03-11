@@ -17,6 +17,7 @@ export default function ClientsPage() {
   const [trainerRequests, setTrainerRequests] = useState([]);
   const [inviteResult, setInviteResult] = useState(null);
   const [requestResult, setRequestResult] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const loadData = () => {
     api("/users/my-clients")
@@ -32,7 +33,7 @@ export default function ClientsPage() {
       });
 
     api("/auth/invitations")
-      .then((d) => setInvitations(d.invitations || d.data || []))
+      .then((d) => setInvitations(Array.isArray(d) ? d : d.invitations || d.data || []))
       .catch(() => {});
 
     api("/users/trainer-requests")
@@ -216,11 +217,31 @@ export default function ClientsPage() {
                         type="button"
                         onClick={() => {
                           const link = `${window.location.origin}/register?token=${inviteResult.token}`;
-                          navigator.clipboard.writeText(link);
+                          try {
+                            if (navigator.clipboard && window.isSecureContext) {
+                              navigator.clipboard.writeText(link).then(() => {
+                                setCopied(true);
+                                setTimeout(() => setCopied(false), 2000);
+                              });
+                            } else {
+                              const ta = document.createElement("textarea");
+                              ta.value = link;
+                              ta.style.position = "fixed";
+                              ta.style.left = "-9999px";
+                              document.body.appendChild(ta);
+                              ta.select();
+                              document.execCommand("copy");
+                              document.body.removeChild(ta);
+                              setCopied(true);
+                              setTimeout(() => setCopied(false), 2000);
+                            }
+                          } catch {
+                            setCopied(false);
+                          }
                         }}
-                        className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-xs hover:bg-gray-700 transition shrink-0"
+                        className={`px-3 py-2 border rounded-lg text-xs transition shrink-0 ${copied ? "bg-green-500/20 border-green-500/30 text-green-400" : "bg-gray-800 border-gray-700 text-gray-300 hover:bg-gray-700"}`}
                       >
-                        Copy
+                        {copied ? "Copied!" : "Copy"}
                       </button>
                     </div>
                   )}
