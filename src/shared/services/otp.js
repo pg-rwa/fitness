@@ -48,12 +48,14 @@ async function sendOTP(email, type = "registration") {
   // Send the OTP email using styled template
   const emailResult = await otpEmail(email, code);
 
-  // If email wasn't sent (no SMTP configured), return the code so the UI can show it
   if (!emailResult) {
-    return { message: "Verification code generated (email not configured)", code };
+    throw Object.assign(
+      new Error("Email service is not configured. Please contact support."),
+      { status: 503 }
+    );
   }
 
-  return { message: "Verification code sent" };
+  return { message: "Verification code sent to your email" };
 }
 
 /**
