@@ -79,6 +79,24 @@ async function acceptInvitation(req, res, next) {
   }
 }
 
+async function acceptInvitationByToken(req, res, next) {
+  try {
+    const result = await service.acceptInvitationByToken(req.body);
+    res.status(201).json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getInvitationByToken(req, res, next) {
+  try {
+    const result = service.getInvitationByToken(req.params.token);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function listInvitations(req, res, next) {
   try {
     const invitations = service.listInvitations(req.userId);
@@ -106,6 +124,8 @@ module.exports = {
   logout,
   createInvitation,
   acceptInvitation,
+  acceptInvitationByToken,
+  getInvitationByToken,
   listInvitations,
   revokeInvitation,
 };

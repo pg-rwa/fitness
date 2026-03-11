@@ -17,6 +17,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const isInvitation = searchParams.get("invitation") === "true";
   const prefillEmail = searchParams.get("email") || "";
+  const inviteToken = searchParams.get("token") || "";
 
   // Steps: 1 = enter email, 2 = verify OTP, 3 = complete profile
   const [step, setStep] = useState(1);
@@ -36,6 +37,19 @@ function RegisterForm() {
   const otpRefs = useRef([]);
 
   const otpType = isInvitation ? "invitation" : "registration";
+
+  // Token-based invitation: validate token and skip to step 3
+  useEffect(() => {
+    if (!inviteToken) return;
+    setLoading(true);
+    api(`/auth/invitations/token/${inviteToken}`, { noAuth: true })
+      .then((data) => {
+        setForm((f) => ({ ...f, email: data.email, role: data.role || "client" }));
+        setStep(3);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [inviteToken]);
 
   // Countdown timer for resend
   useEffect(() => {
@@ -173,7 +187,19 @@ function RegisterForm() {
     setError("");
     try {
       let data;
-      if (isInvitation) {
+      if (inviteToken) {
+        // Token-based invitation: no OTP needed
+        data = await api("/auth/invitations/accept-token", {
+          method: "POST",
+          body: {
+            token: inviteToken,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            password: form.password,
+          },
+          noAuth: true,
+        });
+      } else if (isInvitation) {
         data = await api("/auth/invitations/accept", {
           method: "POST",
           body: {
@@ -219,12 +245,12 @@ function RegisterForm() {
           <h1 className="text-white text-2xl font-bold">
             {step === 1 && (isInvitation ? "Accept Invitation" : "Create Account")}
             {step === 2 && "Verify Email"}
-            {step === 3 && "Complete Profile"}
+            {step === 3 && (inviteToken ? "Accept Invitation" : "Complete Profile")}
           </h1>
           <p className="text-gray-500 text-sm mt-1">
             {step === 1 && (isInvitation ? "Verify your email to get started" : "Enter your email to get started")}
             {step === 2 && `We sent a code to ${form.email}`}
-            {step === 3 && "Set up your account details"}
+            {step === 3 && (inviteToken ? "Set up your account to get started" : "Set up your account details")}
           </p>
 
           {/* Step indicator */}

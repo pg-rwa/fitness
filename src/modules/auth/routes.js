@@ -117,4 +117,21 @@ router.post(
   controller.acceptInvitation
 );
 
+// Token-based invitation flow (no OTP required)
+router.get("/invitations/token/:token", controller.getInvitationByToken);
+
+router.post(
+  "/invitations/accept-token",
+  [
+    body("token").notEmpty().withMessage("Invitation token is required"),
+    body("password")
+      .isLength({ min: 8 })
+      .withMessage("Password must be at least 8 characters"),
+    body("firstName").trim().notEmpty(),
+    body("lastName").trim().notEmpty(),
+    validate,
+  ],
+  controller.acceptInvitationByToken
+);
+
 module.exports = router;

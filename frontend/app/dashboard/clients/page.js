@@ -203,11 +203,26 @@ export default function ClientsPage() {
                 <p className="text-green-400 text-sm">{inviteResult.message}</p>
               ) : (
                 <>
-                  <p className="text-green-400 text-sm">Invitation sent!</p>
-                  {inviteResult.email && (
-                    <p className="text-gray-400 text-xs mt-1">
-                      Registration link: {typeof window !== "undefined" ? window.location.origin : ""}/register?invitation=true&email={encodeURIComponent(inviteResult.email)}
-                    </p>
+                  <p className="text-green-400 text-sm">Invitation sent! Share this link with your client:</p>
+                  {inviteResult.token && (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${typeof window !== "undefined" ? window.location.origin : ""}/register?token=${inviteResult.token}`}
+                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-300 text-xs font-mono truncate"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const link = `${window.location.origin}/register?token=${inviteResult.token}`;
+                          navigator.clipboard.writeText(link);
+                        }}
+                        className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-xs hover:bg-gray-700 transition shrink-0"
+                      >
+                        Copy
+                      </button>
+                    </div>
                   )}
                 </>
               )}

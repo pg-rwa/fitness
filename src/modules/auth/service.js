@@ -223,6 +223,70 @@ async function createInvitation({ email, role, invitedBy }) {
   return invitation;
 }
 
+async function acceptInvitationByToken({ token, password, firstName, lastName }) {
+  const db = getDb();
+
+  const invitation = db
+    .prepare("SELECT * FROM invitations WHERE token = ? AND status = 'pending'")
+    .get(token);
+
+  if (!invitation) {
+    throw new NotFoundError("Invitation");
+  }
+
+  if (new Date(invitation.expires_at) < new Date()) {
+    db.prepare("UPDATE invitations SET status = 'expired' WHERE id = ?").run(invitation.id);
+    throw new ValidationError("Invitation has expired");
+  }
+
+  const existing = db.prepare("SELECT id FROM users WHERE email = ?").get(invitation.email);
+  if (existing) {
+    throw new ConflictError("An account with this email already exists");
+  }
+
+  const passwordHash = await bcrypt.hash(password, saltRounds);
+  const trainerId = invitation.role === "client" ? invitation.invited_by : null;
+
+  const result = db
+    .prepare(
+      "INSERT INTO users (email, password_hash, first_name, last_name, role, trainer_id) VALUES (?, ?, ?, ?, ?, ?)"
+    )
+    .run(invitation.email, passwordHash, firstName, lastName, invitation.role, trainerId);
+
+  db.prepare("UPDATE invitations SET status = 'accepted' WHERE id = ?").run(invitation.id);
+
+  const user = db
+    .prepare(
+      "SELECT id, email, first_name, last_name, role, trainer_id, created_at FROM users WHERE id = ?"
+    )
+    .get(result.lastInsertRowid);
+
+  const tokens = generateTokenPair(user);
+  await eventBus.emit("user.registered", { user, invitation });
+
+  return { user, token: tokens.accessToken, refreshToken: tokens.refreshToken };
+}
+
+function getInvitationByToken(token) {
+  const db = getDb();
+  const invitation = db
+    .prepare("SELECT email, role, status, expires_at FROM invitations WHERE token = ?")
+    .get(token);
+
+  if (!invitation) {
+    throw new NotFoundError("Invitation");
+  }
+  if (invitation.status !== "pending") {
+    throw new ValidationError("This invitation has already been used");
+  }
+  if (new Date(invitation.expires_at) < new Date()) {
+    db.prepare("UPDATE invitations SET status = 'expired' WHERE token = ?").run(token);
+    throw new ValidationError("Invitation has expired");
+  }
+
+  return { email: invitation.email, role: invitation.role };
+}
+
 async function acceptInvitation({ verificationToken, password, firstName, lastName }) {
   const db = getDb();
 
@@ -311,6 +375,8 @@ module.exports = {
   logout,
   createInvitation,
   acceptInvitation,
+  acceptInvitationByToken,
+  getInvitationByToken,
   listInvitations,
   revokeInvitation,
 };
