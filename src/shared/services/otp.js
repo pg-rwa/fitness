@@ -46,13 +46,23 @@ async function sendOTP(email, type = "registration") {
   ).run(email, code, type, expiresAt.toISOString());
 
   // Send the OTP email using styled template
-  const emailResult = await otpEmail(email, code);
+  let emailFailed = false;
+  try {
+    const emailResult = await otpEmail(email, code);
+    if (!emailResult) {
+      emailFailed = true;
+    }
+  } catch (emailErr) {
+    emailFailed = true;
+  }
 
-  if (!emailResult) {
-    throw Object.assign(
-      new Error("Email service is not configured. Please contact support."),
-      { status: 503 }
-    );
+  // If email delivery fails, return the code directly so registration can proceed
+  if (emailFailed) {
+    return {
+      message: "Email delivery failed. Use the code shown below.",
+      code,
+      devMode: true,
+    };
   }
 
   return { message: "Verification code sent to your email" };

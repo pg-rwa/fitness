@@ -46,19 +46,27 @@ function RegisterForm() {
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  const [devCode, setDevCode] = useState("");
+
   // Step 1: Send OTP
   const handleSendOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
-      await api("/auth/otp/send", {
+      const data = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email, type: otpType },
         noAuth: true,
       });
       setStep(2);
       setCountdown(60);
+      // If email delivery failed, the API returns the code directly
+      if (data.code) {
+        const digits = data.code.split("");
+        setOtp(digits);
+        setDevCode(data.code);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -96,14 +104,20 @@ function RegisterForm() {
     if (countdown > 0) return;
     setLoading(true);
     setError("");
+    setDevCode("");
     try {
-      await api("/auth/otp/send", {
+      const data = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email, type: otpType },
         noAuth: true,
       });
       setOtp(["", "", "", "", "", ""]);
       setCountdown(60);
+      if (data.code) {
+        const digits = data.code.split("");
+        setOtp(digits);
+        setDevCode(data.code);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -292,6 +306,11 @@ function RegisterForm() {
         {/* Step 2: OTP Verification */}
         {step === 2 && (
           <form onSubmit={handleVerifyOTP} className="space-y-4">
+            {devCode && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-2">
+                <p className="text-yellow-400 text-xs font-medium">Email delivery unavailable — code auto-filled</p>
+              </div>
+            )}
             <div className="flex justify-center gap-2">
               {otp.map((digit, i) => (
                 <input
