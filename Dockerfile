@@ -14,6 +14,7 @@ COPY package*.json ./
 COPY src ./src
 COPY migrations ./migrations
 COPY prisma ./prisma
+COPY scripts ./scripts
 
 RUN mkdir -p data uploads
 
