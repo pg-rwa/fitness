@@ -3,6 +3,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../../lib/api";
 import { Button, Input, Card, Badge, StatCard } from "../../../components/ui";
+import { RestTimer } from "../../../components/RestTimer";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -12,6 +13,7 @@ export default function StartWorkoutScreen() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [moodBefore, setMoodBefore] = useState(5);
+  const [showTimer, setShowTimer] = useState(false);
 
   const startSession = async () => {
     setLoading(true);
@@ -93,8 +95,20 @@ export default function StartWorkoutScreen() {
             <Text className="text-white text-xl font-bold">{session.name}</Text>
             <Text className="text-gray-400 text-sm">In progress</Text>
           </View>
-          <Button title="Finish" variant="secondary" onPress={completeWorkout} />
+          <View className="flex-row items-center gap-2">
+            <TouchableOpacity
+              onPress={() => setShowTimer(!showTimer)}
+              className={`rounded-xl p-2.5 ${showTimer ? "bg-accent/20" : "bg-dark-card border border-gray-600"}`}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="timer-outline" size={22} color={showTimer ? "#F59E0B" : "#6B7280"} />
+            </TouchableOpacity>
+            <Button title="Finish" variant="secondary" onPress={completeWorkout} />
+          </View>
         </View>
+
+        {/* Rest Timer */}
+        {showTimer && <RestTimer onDismiss={() => setShowTimer(false)} />}
 
         {/* Exercises */}
         {session.exercises?.map((exercise) => (

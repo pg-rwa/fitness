@@ -7,6 +7,7 @@ import { Card, StatCard, Badge, SectionHeader, PullToRefresh, EmptyState } from 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { formatDate } from "../../../lib/format";
+import { getHealthSummary } from "../../../lib/health";
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -15,16 +16,19 @@ export default function HomeScreen() {
   const [insights, setInsights] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [notifications, setNotifications] = useState({ data: [], unreadCount: 0 });
+  const [healthSummary, setHealthSummary] = useState(null);
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
 
   const loadData = useCallback(async () => {
     try {
-      const [notifData, insightData] = await Promise.all([
+      const [notifData, insightData, healthData] = await Promise.all([
         api("/notifications?limit=5"),
         api("/insights?limit=3"),
+        getHealthSummary().catch(() => null),
       ]);
       setNotifications(notifData);
       setInsights(insightData.data || []);
+      if (healthData?.summary) setHealthSummary(healthData.summary);
 
       if (!isTrainer) {
         const assignData = await api("/assigned-workouts/mine");
@@ -108,6 +112,51 @@ export default function HomeScreen() {
               <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
             </TouchableOpacity>
           </View>
+          <View className="flex-row mb-2 gap-2">
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/health-sync")}
+              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+            >
+              <Ionicons name="heart" size={20} color="#EF4444" />
+              <Text className="text-white font-medium text-sm ml-2">Health Sync</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/(tabs)/progress")}
+              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+            >
+              <Ionicons name="body" size={20} color="#10B981" />
+              <Text className="text-white font-medium text-sm ml-2">Progress</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Health Summary */}
+          {healthSummary && (healthSummary.steps?.value || healthSummary.calories_burned?.value) && (
+            <>
+              <SectionHeader title="Today's Health" action="Details" onAction={() => router.push("/(app)/health-sync")} />
+              <View className="flex-row mb-2">
+                <StatCard
+                  label="Steps"
+                  value={healthSummary.steps?.value ? Math.round(healthSummary.steps.value).toLocaleString() : "—"}
+                  icon="footsteps"
+                  color="#3B82F6"
+                />
+                <StatCard
+                  label="Calories"
+                  value={healthSummary.calories_burned?.value ? Math.round(healthSummary.calories_burned.value).toLocaleString() : "—"}
+                  unit="kcal"
+                  icon="flame"
+                  color="#F59E0B"
+                />
+                <StatCard
+                  label="Heart Rate"
+                  value={healthSummary.heart_rate?.value ? Math.round(healthSummary.heart_rate.value) : "—"}
+                  unit="bpm"
+                  icon="heart"
+                  color="#EF4444"
+                />
+              </View>
+            </>
+          )}
 
           {/* Assigned Workouts */}
           {!isTrainer && assignments.length > 0 && (

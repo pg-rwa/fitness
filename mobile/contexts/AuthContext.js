@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { api, setToken, setRefreshToken, loadToken, clearTokens } from "../lib/api";
+import { connectWebSocket, disconnectWebSocket } from "../lib/websocket";
 
 const AuthContext = createContext(null);
 
@@ -14,6 +15,7 @@ export function AuthProvider({ children }) {
         if (token) {
           const data = await api("/auth/me");
           setUser(data);
+          connectWebSocket();
         }
       } catch {
         await clearTokens();
@@ -67,6 +69,7 @@ export function AuthProvider({ children }) {
     try {
       await api("/auth/logout", { method: "POST" });
     } catch {}
+    disconnectWebSocket();
     await clearTokens();
     setUser(null);
   }, []);

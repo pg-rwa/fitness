@@ -5,6 +5,15 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000/api";
 let accessToken = null;
 let refreshPromise = null;
 
+// Offline support integration - lazy loaded to avoid circular deps
+let offlineModule = null;
+function getOffline() {
+  if (!offlineModule) {
+    try { offlineModule = require("./offline"); } catch {}
+  }
+  return offlineModule;
+}
+
 export async function loadToken() {
   accessToken = await SecureStore.getItemAsync("token");
   return accessToken;
@@ -45,18 +54,41 @@ async function refreshAccessToken() {
 }
 
 export async function api(path, options = {}) {
-  const { method = "GET", body, noAuth = false } = options;
+  const { method = "GET", body, noAuth = false, cache: cacheKey } = options;
+
+  const offline = getOffline();
+
+  // If offline and it's a GET, try cache
+  if (offline && !offline.getIsOnline() && method === "GET" && cacheKey) {
+    const cached = await offline.getCachedResponse(cacheKey || path);
+    if (cached) return cached;
+  }
 
   const headers = { "Content-Type": "application/json" };
   if (!noAuth && accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
   }
 
-  let res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkErr) {
+    // Network error - queue for retry if it's a write operation
+    if (offline && method !== "GET") {
+      await offline.queueRequest(path, { method, body });
+      return { _queued: true, message: "Saved offline, will sync when connected" };
+    }
+    // For GETs, try cache
+    if (offline && cacheKey) {
+      const cached = await offline.getCachedResponse(cacheKey || path);
+      if (cached) return cached;
+    }
+    throw new Error("No internet connection. Please check your network and try again.");
+  }
 
   // Auto-refresh on 401
   if (res.status === 401 && !noAuth && !refreshPromise) {
@@ -88,6 +120,12 @@ export async function api(path, options = {}) {
     );
   }
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+
+  // Cache successful GET responses
+  if (offline && method === "GET" && cacheKey) {
+    offline.cacheResponse(cacheKey || path, data).catch(() => {});
+  }
+
   return data;
 }
 

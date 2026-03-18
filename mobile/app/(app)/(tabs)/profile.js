@@ -169,7 +169,7 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color="#6B7280" />
           </TouchableOpacity>
           <View className="border-t border-gray-700 my-1" />
-          <TouchableOpacity className="flex-row items-center py-2">
+          <TouchableOpacity className="flex-row items-center py-2" onPress={() => router.push("/(app)/health-sync")}>
             <Ionicons name="heart-outline" size={22} color="#6B7280" />
             <Text className="text-white ml-3 flex-1">Health Sync</Text>
             <Ionicons name="chevron-forward" size={18} color="#6B7280" />

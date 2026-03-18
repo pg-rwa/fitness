@@ -2,7 +2,7 @@
   "expo": {
     "name": "FitTracker",
     "slug": "fittracker",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittracker.app"
+      "bundleIdentifier": "com.fittracker.app",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "FitTracker reads your health data to provide personalized fitness insights and track your progress.",
+        "NSHealthUpdateUsageDescription": "FitTracker writes workout data to Apple Health to keep your health records up to date."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,12 +27,30 @@
         "backgroundColor": "#1E1E2E"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.fittracker.app"
+      "package": "com.fittracker.app",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_EXERCISE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router", "expo-secure-store"]
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#E8614D"
+        }
+      ],
+      "expo-image-picker"
+    ]
   }
 }
