@@ -9,7 +9,7 @@ function getSessionFull(db, id) {
 
   const exercises = db
     .prepare(
-      `SELECT se.*, e.name as exercise_name, e.category, e.muscle_group, e.equipment, e.video_url, e.instructions
+      `SELECT se.*, e.name as exercise_name, e.category, e.muscle_group, e.equipment, e.video_url, e.instructions, e.thumbnail_url
        FROM session_exercises se
        JOIN exercises e ON se.exercise_id = e.id
        WHERE se.session_id = ?

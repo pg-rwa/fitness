@@ -40,6 +40,52 @@ initDb();
     console.log(`  -> Auto-seeded ${allExercises.length} exercises.`);
   }
 
+  // Auto-generate SVG thumbnails for exercises that don't have them
+  const missingThumbs = db.prepare("SELECT COUNT(*) as c FROM exercises WHERE thumbnail_url IS NULL AND is_custom = 0").get().c;
+  if (missingThumbs > 0) {
+    console.log(`Auto-generating ${missingThumbs} exercise thumbnails...`);
+    const fs = require("fs");
+    const thumbDir = path.join(__dirname, "../uploads/exercises");
+    if (!fs.existsSync(thumbDir)) fs.mkdirSync(thumbDir, { recursive: true });
+
+    const BODY_BASE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 320" width="200" height="320">
+  <defs><style>.body{fill:#e8e8e8;stroke:#999;stroke-width:1.5}.highlight{fill:#ef4444;opacity:0.7}.secondary{fill:#f97316;opacity:0.4}.label{font-family:-apple-system,sans-serif;font-size:11px;fill:#374151;text-anchor:middle;font-weight:600}</style></defs>
+  <ellipse class="body" cx="100" cy="30" rx="20" ry="24"/><rect class="body" x="92" y="52" width="16" height="12"/>
+  <path class="body" d="M65,64 L135,64 L130,180 L70,180 Z"/>
+  <path class="body" d="M65,64 L45,70 L32,130 L28,180 L40,182 L48,135 L55,80"/>
+  <path class="body" d="M135,64 L155,70 L168,130 L172,180 L160,182 L152,135 L145,80"/>
+  <path class="body" d="M70,180 L65,250 L60,310 L80,312 L82,255 L85,180"/>
+  <path class="body" d="M130,180 L135,250 L140,310 L120,312 L118,255 L115,180"/>
+  HIGHLIGHTS
+  <text class="label" x="100" y="315">LABEL_TEXT</text></svg>`;
+
+    const MUSCLE_HIGHLIGHTS = {
+      chest: { primary: `<ellipse class="highlight" cx="88" cy="90" rx="18" ry="16"/><ellipse class="highlight" cx="112" cy="90" rx="18" ry="16"/>`, label: "CHEST" },
+      back: { primary: `<rect class="highlight" x="75" y="75" width="50" height="55" rx="8"/>`, label: "BACK" },
+      shoulders: { primary: `<ellipse class="highlight" cx="60" cy="68" rx="14" ry="10"/><ellipse class="highlight" cx="140" cy="68" rx="14" ry="10"/>`, label: "SHOULDERS" },
+      legs: { primary: `<path class="highlight" d="M70,180 L65,250 L82,255 L85,180 Z"/><path class="highlight" d="M130,180 L135,250 L118,255 L115,180 Z"/>`, label: "LEGS" },
+      arms: { primary: `<path class="highlight" d="M45,70 L32,130 L48,135 L55,80 Z"/><path class="highlight" d="M155,70 L168,130 L152,135 L145,80 Z"/>`, label: "ARMS" },
+      core: { primary: `<rect class="highlight" x="78" y="120" width="44" height="55" rx="6"/>`, label: "CORE" },
+      "full body": { primary: `<path class="highlight" d="M65,64 L135,64 L130,180 L70,180 Z"/><path class="secondary" d="M70,180 L65,250 L82,255 L85,180 Z"/><path class="secondary" d="M130,180 L135,250 L118,255 L115,180 Z"/>`, label: "FULL BODY" },
+      cardio: { primary: `<path class="highlight" d="M65,64 L135,64 L130,180 L70,180 Z"/><path class="secondary" d="M70,180 L65,250 L82,255 L85,180 Z"/><path class="secondary" d="M130,180 L135,250 L118,255 L115,180 Z"/>`, label: "CARDIO" },
+    };
+
+    const slugify = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const exercises = db.prepare("SELECT id, name, muscle_group FROM exercises WHERE thumbnail_url IS NULL AND is_custom = 0").all();
+    const updateStmt = db.prepare("UPDATE exercises SET thumbnail_url = ? WHERE id = ?");
+    db.transaction(() => {
+      for (const ex of exercises) {
+        const slug = slugify(ex.name);
+        const filename = `${slug}.svg`;
+        const highlights = MUSCLE_HIGHLIGHTS[ex.muscle_group] || MUSCLE_HIGHLIGHTS["full body"];
+        const svg = BODY_BASE.replace("HIGHLIGHTS", highlights.primary).replace("LABEL_TEXT", highlights.label);
+        fs.writeFileSync(path.join(thumbDir, filename), svg);
+        updateStmt.run(`/uploads/exercises/${filename}`, ex.id);
+      }
+    })();
+    console.log(`  -> Generated ${exercises.length} SVG thumbnails.`);
+  }
+
   const foodCount = db.prepare("SELECT COUNT(*) as c FROM food_items").get().c;
   if (foodCount === 0) {
     console.log("Auto-seeding food items...");

@@ -53,10 +53,19 @@ function ExerciseSearchModal({ onSelect, onClose }) {
             <button
               key={ex.id}
               onClick={() => onSelect(ex)}
-              className="w-full text-left px-3 py-2.5 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex justify-between items-center"
+              className="w-full text-left px-3 py-2.5 hover:bg-gray-800 rounded-lg text-sm text-gray-300 flex items-center gap-3"
             >
-              <span>{ex.name}</span>
-              <span className="text-gray-600 text-xs">{ex.muscle_group}</span>
+              {ex.thumbnail_url ? (
+                <img src={ex.thumbnail_url} alt="" className="w-8 h-10 object-contain opacity-80 flex-shrink-0" />
+              ) : (
+                <div className="w-8 h-10 bg-gray-800 rounded flex items-center justify-center flex-shrink-0">
+                  <span className="text-gray-600 text-xs">💪</span>
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <span className="block truncate">{ex.name}</span>
+                <span className="text-gray-600 text-xs">{ex.muscle_group}</span>
+              </div>
             </button>
           ))}
         </div>
