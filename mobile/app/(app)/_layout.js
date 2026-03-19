@@ -10,7 +10,7 @@ export default function AppLayout() {
   if (!user) return <Redirect href="/(auth)/welcome" />;
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#1E1E2E" } }}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="workout" />
       <Stack.Screen name="trainer" />

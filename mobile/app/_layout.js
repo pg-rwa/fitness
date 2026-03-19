@@ -1,5 +1,6 @@
 import "../global.css";
 import { useEffect } from "react";
+import { View } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -28,12 +29,14 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <StatusBar style="light" />
-        <NetworkStatus />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#1E1E2E" } }}>
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(app)" />
-        </Stack>
+        <View style={{ flex: 1, backgroundColor: "#1E1E2E" }}>
+          <StatusBar style="light" />
+          <NetworkStatus />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen name="(app)" />
+          </Stack>
+        </View>
       </AuthProvider>
     </ErrorBoundary>
   );
