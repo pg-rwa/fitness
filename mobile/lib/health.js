@@ -20,22 +20,9 @@ let isAvailable = null;
 export async function checkHealthAvailability() {
   if (isAvailable !== null) return isAvailable;
 
-  try {
-    if (Platform.OS === "ios") {
-      healthModule = require("react-native-health");
-      if (healthModule?.default) healthModule = healthModule.default;
-      isAvailable = true;
-    } else if (Platform.OS === "android") {
-      healthModule = require("react-native-health-connect");
-      if (healthModule?.default) healthModule = healthModule.default;
-      isAvailable = true;
-    } else {
-      isAvailable = false;
-    }
-  } catch {
-    // Native module not available (running in Expo Go or not installed)
-    isAvailable = false;
-  }
+  // Health modules require native builds (dev client) - not available in Expo Go.
+  // Skip native health entirely; users can log manual records via the API.
+  isAvailable = false;
 
   return isAvailable;
 }
