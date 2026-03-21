@@ -16,6 +16,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >
+      {/* ── Shared: Home ── */}
       <Tabs.Screen
         name="index"
         options={{
@@ -23,11 +24,14 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
         }}
       />
+
+      {/* ── Client-only tabs ── */}
       <Tabs.Screen
         name="workouts"
         options={{
           title: "Workouts",
           tabBarIcon: ({ color, size }) => <Ionicons name="barbell" size={size} color={color} />,
+          href: isTrainer ? null : undefined,
         }}
       />
       <Tabs.Screen
@@ -46,13 +50,39 @@ export default function TabsLayout() {
           href: isTrainer ? null : undefined,
         }}
       />
+
+      {/* ── Trainer-only tabs ── */}
+      <Tabs.Screen
+        name="clients"
+        options={{
+          title: "Clients",
+          tabBarIcon: ({ color, size }) => <Ionicons name="people" size={size} color={color} />,
+          href: isTrainer ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="calendar"
+        options={{
+          title: "Calendar",
+          tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} />,
+          href: isTrainer ? undefined : null,
+        }}
+      />
+      <Tabs.Screen
+        name="schedule"
+        options={{
+          title: "Schedule",
+          tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size} color={color} />,
+          href: isTrainer ? undefined : null,
+        }}
+      />
+
+      {/* ── Shared: Profile ── */}
       <Tabs.Screen
         name="profile"
         options={{
-          title: isTrainer ? "Trainer" : "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name={isTrainer ? "people" : "person"} size={size} color={color} />
-          ),
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
         }}
       />
     </Tabs>

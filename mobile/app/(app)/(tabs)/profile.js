@@ -11,22 +11,16 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
-  const [schedule, setSchedule] = useState([]);
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
-    if (isTrainer) {
-      api("/scheduling/sessions?status=requested&limit=5")
-        .then((data) => setSchedule(data.data || []))
-        .catch(() => {});
-    }
     api("/users/me")
       .then((d) => {
         const u = d.user || d;
         setProfile(u.profile || null);
       })
       .catch(() => {});
-  }, [isTrainer]);
+  }, []);
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure?", [
@@ -42,7 +36,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-dark px-5">
       <View className="pt-2 pb-8">
-        <Text className="text-white text-2xl font-bold mb-4">{isTrainer ? "Trainer Hub" : "Profile"}</Text>
+        <Text className="text-white text-2xl font-bold mb-4">Profile</Text>
 
         {/* User card */}
         <Card className="flex-row items-center">
@@ -58,13 +52,13 @@ export default function ProfileScreen() {
             </View>
           )}
           <View className="flex-1">
-            <Text className="text-white text-lg font-bold">{user?.first_name} {user?.last_name}</Text>
+            <Text className="text-white text-lg font-bold">
+              {user?.first_name} {user?.last_name}
+            </Text>
             <Text className="text-gray-400 text-sm">{user?.email}</Text>
             <View className="flex-row items-center mt-1 gap-2">
               <Badge text={user?.role || "client"} color="primary" />
-              {profile?.phone ? (
-                <Text className="text-gray-500 text-xs">{profile.phone}</Text>
-              ) : null}
+              {profile?.phone ? <Text className="text-gray-500 text-xs">{profile.phone}</Text> : null}
             </View>
           </View>
           <TouchableOpacity
@@ -92,21 +86,35 @@ export default function ProfileScreen() {
           <Ionicons name="chevron-forward" size={20} color="#6B7280" />
         </TouchableOpacity>
 
-        {/* Trainer-specific sections */}
+        {/* Trainer quick links — exercises & equipment (not in tabs) */}
         {isTrainer && (
           <>
-            <SectionHeader title="Quick Actions" />
+            <SectionHeader title="Tools" />
 
             <TouchableOpacity
-              onPress={() => router.push("/(app)/trainer/clients")}
+              onPress={() => router.push("/(app)/trainer/exercises")}
               className="bg-dark-card rounded-2xl p-4 mb-2 flex-row items-center"
             >
-              <View className="bg-blue-500/20 rounded-xl p-2.5 mr-3">
-                <Ionicons name="people" size={22} color="#3B82F6" />
+              <View className="bg-primary/20 rounded-xl p-2.5 mr-3">
+                <Ionicons name="barbell" size={22} color="#E8614D" />
               </View>
               <View className="flex-1">
-                <Text className="text-white font-semibold">My Clients</Text>
-                <Text className="text-gray-400 text-xs">View and manage clients</Text>
+                <Text className="text-white font-semibold">Exercise Library</Text>
+                <Text className="text-gray-400 text-xs">Browse 100+ exercises</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/trainer/equipment")}
+              className="bg-dark-card rounded-2xl p-4 mb-2 flex-row items-center"
+            >
+              <View className="bg-purple-500/20 rounded-xl p-2.5 mr-3">
+                <Ionicons name="hardware-chip" size={22} color="#A855F7" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white font-semibold">Equipment Library</Text>
+                <Text className="text-gray-400 text-xs">Manage gym equipment</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#6B7280" />
             </TouchableOpacity>
@@ -121,39 +129,6 @@ export default function ProfileScreen() {
               <View className="flex-1">
                 <Text className="text-white font-semibold">Workout Templates</Text>
                 <Text className="text-gray-400 text-xs">Create and manage templates</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/trainer/schedule")}
-              className="bg-dark-card rounded-2xl p-4 mb-2 flex-row items-center"
-            >
-              <View className="bg-yellow-500/20 rounded-xl p-2.5 mr-3">
-                <Ionicons name="calendar" size={22} color="#F59E0B" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-semibold">Schedule</Text>
-                <Text className="text-gray-400 text-xs">Manage availability & sessions</Text>
-              </View>
-              {schedule.length > 0 && (
-                <View className="bg-primary rounded-full px-2.5 py-1 mr-2">
-                  <Text className="text-white text-xs font-bold">{schedule.length}</Text>
-                </View>
-              )}
-              <Ionicons name="chevron-forward" size={20} color="#6B7280" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/trainer/equipment")}
-              className="bg-dark-card rounded-2xl p-4 mb-2 flex-row items-center"
-            >
-              <View className="bg-purple-500/20 rounded-xl p-2.5 mr-3">
-                <Ionicons name="hardware-chip" size={22} color="#A855F7" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-white font-semibold">Equipment Library</Text>
-                <Text className="text-gray-400 text-xs">Manage gym equipment</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color="#6B7280" />
             </TouchableOpacity>
@@ -172,6 +147,12 @@ export default function ProfileScreen() {
           <TouchableOpacity className="flex-row items-center py-2" onPress={() => router.push("/(app)/health-sync")}>
             <Ionicons name="heart-outline" size={22} color="#6B7280" />
             <Text className="text-white ml-3 flex-1">Health Sync</Text>
+            <Ionicons name="chevron-forward" size={18} color="#6B7280" />
+          </TouchableOpacity>
+          <View className="border-t border-gray-700 my-1" />
+          <TouchableOpacity className="flex-row items-center py-2" onPress={() => router.push("/(app)/insights")}>
+            <Ionicons name="flash-outline" size={22} color="#6B7280" />
+            <Text className="text-white ml-3 flex-1">AI Insights</Text>
             <Ionicons name="chevron-forward" size={18} color="#6B7280" />
           </TouchableOpacity>
         </Card>

@@ -69,7 +69,7 @@ export default function HomeScreen() {
               {/* Trainer: primary actions */}
               <View className="flex-row mb-2">
                 <TouchableOpacity
-                  onPress={() => router.push("/(app)/trainer/clients")}
+                  onPress={() => router.push("/(app)/(tabs)/clients")}
                   className="flex-1 bg-primary rounded-2xl p-4 mr-2 flex-row items-center"
                 >
                   <Ionicons name="people" size={32} color="white" />
@@ -97,7 +97,7 @@ export default function HomeScreen() {
                   <Text className="text-white font-medium text-sm ml-2">Exercises</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => router.push("/(app)/trainer/schedule")}
+                  onPress={() => router.push("/(app)/(tabs)/schedule")}
                   className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
                 >
                   <Ionicons name="calendar" size={20} color="#F59E0B" />
