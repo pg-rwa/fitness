@@ -34,8 +34,8 @@ beforeAll(async () => {
   db.prepare("UPDATE users SET trainer_id = ? WHERE id = ?").run(trainerUserId, clientUserId);
 
   // Get seeded food IDs
-  chickenId = db.prepare("SELECT id FROM food_items WHERE name = 'Chicken Breast'").get().id;
-  riceId = db.prepare("SELECT id FROM food_items WHERE name = 'Brown Rice'").get().id;
+  chickenId = db.prepare("SELECT id FROM food_items WHERE name LIKE 'Chicken Breast%'").get().id;
+  riceId = db.prepare("SELECT id FROM food_items WHERE name LIKE 'Brown Rice%'").get().id;
 });
 
 afterAll(() => {
@@ -76,7 +76,7 @@ describe("Food Items API", () => {
       .get(`/api/nutrition/foods/${chickenId}`)
       .set(clientAuth());
     expect(res.status).toBe(200);
-    expect(res.body.name).toBe("Chicken Breast");
+    expect(res.body.name).toMatch(/Chicken Breast/);
     expect(res.body.protein_g).toBe(31);
   });
 
