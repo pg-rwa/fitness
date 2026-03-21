@@ -1,7 +1,6 @@
 import { View, Text } from "react-native";
 import { useState, useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeOutUp } from "react-native-reanimated";
 
 export function NetworkStatus() {
   const [isOnline, setIsOnline] = useState(true);
@@ -20,13 +19,9 @@ export function NetworkStatus() {
   if (isOnline) return null;
 
   return (
-    <Animated.View
-      entering={FadeInDown.duration(300)}
-      exiting={FadeOutUp.duration(300)}
-      className="bg-yellow-600 py-2 px-4 flex-row items-center justify-center"
-    >
+    <View className="bg-yellow-600 py-2 px-4 flex-row items-center justify-center">
       <Ionicons name="cloud-offline" size={16} color="white" />
       <Text className="text-white text-sm font-medium ml-2">No internet connection</Text>
-    </Animated.View>
+    </View>
   );
 }
