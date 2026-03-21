@@ -18,7 +18,10 @@
       "bundleIdentifier": "com.fittracker.app",
       "infoPlist": {
         "NSHealthShareUsageDescription": "FitTracker reads your health data to provide personalized fitness insights and track your progress.",
-        "NSHealthUpdateUsageDescription": "FitTracker writes workout data to Apple Health to keep your health records up to date."
+        "NSHealthUpdateUsageDescription": "FitTracker writes workout data to Apple Health to keep your health records up to date.",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
       }
     },
     "android": {
