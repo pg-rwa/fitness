@@ -45,13 +45,17 @@ export default function RegisterScreen() {
     setLoading(true);
     setError("");
     try {
-      await api("/auth/otp/send", {
+      const result = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email.trim().toLowerCase(), type: otpType },
         noAuth: true,
       });
       setStep(2);
       setCountdown(60);
+      // If email delivery failed, the API returns the code directly
+      if (result.devMode && result.code) {
+        setError(`Email not configured. Your code: ${result.code}`);
+      }
     } catch (err) {
       setError(err.message || "Failed to send code");
     } finally {
@@ -85,13 +89,16 @@ export default function RegisterScreen() {
     setLoading(true);
     setError("");
     try {
-      await api("/auth/otp/send", {
+      const result = await api("/auth/otp/send", {
         method: "POST",
         body: { email: form.email.trim().toLowerCase(), type: otpType },
         noAuth: true,
       });
       setOtp(["", "", "", "", "", ""]);
       setCountdown(60);
+      if (result.devMode && result.code) {
+        setError(`Email not configured. Your code: ${result.code}`);
+      }
     } catch (err) {
       setError(err.message || "Failed to resend");
     } finally {
