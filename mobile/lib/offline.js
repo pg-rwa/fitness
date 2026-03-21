@@ -1,11 +1,17 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 const QUEUE_KEY = "@fittracker_offline_queue";
 const CACHE_PREFIX = "@fittracker_cache_";
 
 let isOnline = true;
 let syncInProgress = false;
 let NetInfo = null;
+let AsyncStorage = null;
+
+// Safely load AsyncStorage — not available in Expo Go
+try {
+  AsyncStorage = require("@react-native-async-storage/async-storage").default;
+} catch {
+  // AsyncStorage not available (Expo Go), offline features disabled
+}
 
 // Initialize network listener
 export async function initOfflineSupport() {
@@ -33,6 +39,7 @@ export function getIsOnline() {
 
 // Queue a failed API request for retry when online
 export async function queueRequest(path, options) {
+  if (!AsyncStorage) return;
   try {
     const queue = await getQueue();
     queue.push({
@@ -50,6 +57,7 @@ export async function queueRequest(path, options) {
 
 // Get pending queue
 async function getQueue() {
+  if (!AsyncStorage) return [];
   try {
     const raw = await AsyncStorage.getItem(QUEUE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -60,7 +68,7 @@ async function getQueue() {
 
 // Process queued requests
 export async function processQueue() {
-  if (syncInProgress || !isOnline) return;
+  if (!AsyncStorage || syncInProgress || !isOnline) return;
   syncInProgress = true;
 
   try {
@@ -93,12 +101,14 @@ export async function processQueue() {
 
 // Get pending queue count
 export async function getPendingCount() {
+  if (!AsyncStorage) return 0;
   const queue = await getQueue();
   return queue.length;
 }
 
 // Cache API responses for offline access
 export async function cacheResponse(key, data, ttlMinutes = 60) {
+  if (!AsyncStorage) return;
   try {
     await AsyncStorage.setItem(
       CACHE_PREFIX + key,
@@ -113,6 +123,7 @@ export async function cacheResponse(key, data, ttlMinutes = 60) {
 
 // Get cached response
 export async function getCachedResponse(key) {
+  if (!AsyncStorage) return null;
   try {
     const raw = await AsyncStorage.getItem(CACHE_PREFIX + key);
     if (!raw) return null;
@@ -129,6 +140,7 @@ export async function getCachedResponse(key) {
 
 // Clear all cached data
 export async function clearCache() {
+  if (!AsyncStorage) return;
   try {
     const keys = await AsyncStorage.getAllKeys();
     const cacheKeys = keys.filter((k) => k.startsWith(CACHE_PREFIX));
