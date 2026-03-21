@@ -13,8 +13,8 @@ export function AuthProvider({ children }) {
       try {
         const token = await loadToken();
         if (token) {
-          const data = await api("/auth/me");
-          setUser(data);
+          const data = await api("/users/me");
+          setUser(data.user || data);
           connectWebSocket();
         }
       } catch {
