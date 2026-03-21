@@ -18,9 +18,12 @@ export default function LoginScreen() {
     setLoading(true);
     setError("");
     try {
-      await login(email.trim().toLowerCase(), password);
+      console.log("[login] Attempting login to:", process.env.EXPO_PUBLIC_API_URL);
+      const user = await login(email.trim().toLowerCase(), password);
+      console.log("[login] Success, user:", user?.email, user?.role);
       // Navigation handled by auth layout redirect when user state updates
     } catch (err) {
+      console.log("[login] Error:", err.message);
       setError(err.message || "Login failed");
     } finally {
       setLoading(false);
