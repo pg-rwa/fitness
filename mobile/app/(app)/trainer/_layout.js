@@ -9,6 +9,7 @@ export default function TrainerLayout() {
       <Stack.Screen name="template-builder" />
       <Stack.Screen name="schedule" />
       <Stack.Screen name="equipment" />
+      <Stack.Screen name="exercises" />
     </Stack>
   );
 }

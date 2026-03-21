@@ -64,70 +64,121 @@ export default function HomeScreen() {
           </View>
 
           {/* Quick Actions */}
-          <View className="flex-row mb-2">
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/workout/start")}
-              className="flex-1 bg-primary rounded-2xl p-4 mr-2 flex-row items-center"
-            >
-              <Ionicons name="play-circle" size={32} color="white" />
-              <View className="ml-3">
-                <Text className="text-white font-bold text-base">Start Workout</Text>
-                <Text className="text-white/70 text-xs">Begin a session</Text>
+          {isTrainer ? (
+            <>
+              {/* Trainer: primary actions */}
+              <View className="flex-row mb-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/trainer/clients")}
+                  className="flex-1 bg-primary rounded-2xl p-4 mr-2 flex-row items-center"
+                >
+                  <Ionicons name="people" size={32} color="white" />
+                  <View className="ml-3">
+                    <Text className="text-white font-bold text-base">My Clients</Text>
+                    <Text className="text-white/70 text-xs">View & manage</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/trainer/templates")}
+                  className="flex-1 bg-dark-card rounded-2xl p-4 border border-gray-700"
+                >
+                  <Ionicons name="document-text" size={28} color="#10B981" />
+                  <Text className="text-white font-semibold mt-2">Templates</Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
 
-            {isTrainer ? (
-              <TouchableOpacity
-                onPress={() => router.push("/(app)/trainer/clients")}
-                className="flex-1 bg-dark-card rounded-2xl p-4 border border-gray-700"
-              >
-                <Ionicons name="people" size={28} color="#E8614D" />
-                <Text className="text-white font-semibold mt-2">My Clients</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => router.push("/(app)/(tabs)/nutrition")}
-                className="flex-1 bg-dark-card rounded-2xl p-4 border border-gray-700"
-              >
-                <Ionicons name="restaurant" size={28} color="#F59E0B" />
-                <Text className="text-white font-semibold mt-2">Log Meal</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+              {/* Trainer: secondary row */}
+              <View className="flex-row mb-2 gap-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/trainer/exercises")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="barbell" size={20} color="#E8614D" />
+                  <Text className="text-white font-medium text-sm ml-2">Exercises</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/trainer/schedule")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="calendar" size={20} color="#F59E0B" />
+                  <Text className="text-white font-medium text-sm ml-2">Schedule</Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row mb-2 gap-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/trainer/equipment")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="hardware-chip" size={20} color="#A855F7" />
+                  <Text className="text-white font-medium text-sm ml-2">Equipment</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/insights")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="flash" size={20} color="#3B82F6" />
+                  <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              {/* Client: original layout */}
+              <View className="flex-row mb-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/workout/start")}
+                  className="flex-1 bg-primary rounded-2xl p-4 mr-2 flex-row items-center"
+                >
+                  <Ionicons name="play-circle" size={32} color="white" />
+                  <View className="ml-3">
+                    <Text className="text-white font-bold text-base">Start Workout</Text>
+                    <Text className="text-white/70 text-xs">Begin a session</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/(tabs)/nutrition")}
+                  className="flex-1 bg-dark-card rounded-2xl p-4 border border-gray-700"
+                >
+                  <Ionicons name="restaurant" size={28} color="#F59E0B" />
+                  <Text className="text-white font-semibold mt-2">Log Meal</Text>
+                </TouchableOpacity>
+              </View>
 
-          {/* Secondary actions */}
-          <View className="flex-row mb-2 gap-2">
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/calendar")}
-              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
-            >
-              <Ionicons name="calendar" size={20} color="#3B82F6" />
-              <Text className="text-white font-medium text-sm ml-2">Calendar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/insights")}
-              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
-            >
-              <Ionicons name="flash" size={20} color="#A855F7" />
-              <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
-            </TouchableOpacity>
-          </View>
-          <View className="flex-row mb-2 gap-2">
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/health-sync")}
-              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
-            >
-              <Ionicons name="heart" size={20} color="#EF4444" />
-              <Text className="text-white font-medium text-sm ml-2">Health Sync</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push("/(app)/(tabs)/progress")}
-              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
-            >
-              <Ionicons name="body" size={20} color="#10B981" />
-              <Text className="text-white font-medium text-sm ml-2">Progress</Text>
-            </TouchableOpacity>
-          </View>
+              {/* Client: secondary actions */}
+              <View className="flex-row mb-2 gap-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/calendar")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="calendar" size={20} color="#3B82F6" />
+                  <Text className="text-white font-medium text-sm ml-2">Calendar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/insights")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="flash" size={20} color="#A855F7" />
+                  <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
+                </TouchableOpacity>
+              </View>
+              <View className="flex-row mb-2 gap-2">
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/health-sync")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="heart" size={20} color="#EF4444" />
+                  <Text className="text-white font-medium text-sm ml-2">Health Sync</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => router.push("/(app)/(tabs)/progress")}
+                  className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+                >
+                  <Ionicons name="body" size={20} color="#10B981" />
+                  <Text className="text-white font-medium text-sm ml-2">Progress</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
           {/* Health Summary */}
           {healthSummary && (healthSummary.steps?.value || healthSummary.calories_burned?.value) && (

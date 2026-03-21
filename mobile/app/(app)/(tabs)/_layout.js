@@ -35,6 +35,7 @@ export default function TabsLayout() {
         options={{
           title: "Nutrition",
           tabBarIcon: ({ color, size }) => <Ionicons name="restaurant" size={size} color={color} />,
+          href: isTrainer ? null : undefined,
         }}
       />
       <Tabs.Screen
@@ -42,6 +43,7 @@ export default function TabsLayout() {
         options={{
           title: "Progress",
           tabBarIcon: ({ color, size }) => <Ionicons name="trending-up" size={size} color={color} />,
+          href: isTrainer ? null : undefined,
         }}
       />
       <Tabs.Screen
