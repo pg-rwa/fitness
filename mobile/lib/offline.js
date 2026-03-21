@@ -50,8 +50,8 @@ export async function queueRequest(path, options) {
       retries: 0,
     });
     await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  } catch (err) {
-    console.warn("[offline] Failed to queue request:", err.message);
+  } catch {
+    // AsyncStorage native module not available (Expo Go) — silently ignore
   }
 }
 
@@ -92,8 +92,8 @@ export async function processQueue() {
     }
 
     await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(remaining));
-  } catch (err) {
-    console.warn("[offline] Queue processing failed:", err.message);
+  } catch {
+    // Silently ignore — native module may not be available
   } finally {
     syncInProgress = false;
   }
