@@ -19,7 +19,7 @@ export default function LoginScreen() {
     setError("");
     try {
       await login(email.trim().toLowerCase(), password);
-      router.replace("/(app)/(tabs)");
+      // Navigation handled by auth layout redirect when user state updates
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {

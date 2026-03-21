@@ -149,7 +149,7 @@ export default function RegisterScreen() {
           role: form.role,
         });
       }
-      router.replace("/(app)/(tabs)");
+      // Navigation handled by auth layout redirect when user state updates
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
