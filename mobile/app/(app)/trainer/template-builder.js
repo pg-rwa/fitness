@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Alert, FlatList } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, FlatList, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/api";
@@ -15,7 +15,7 @@ export default function TemplateBuilderScreen() {
   const [exercises, setExercises] = useState([]);
   const [saving, setSaving] = useState(false);
   const [showAddExercise, setShowAddExercise] = useState(false);
-  const [availableExercises, setAvailableExercises] = useState([]);
+  const [allExercises, setAllExercises] = useState([]);
   const [exerciseSearch, setExerciseSearch] = useState("");
 
   useEffect(() => {
@@ -27,14 +27,26 @@ export default function TemplateBuilderScreen() {
     }
   }, [id]);
 
-  // Auto-load all exercises when Add Exercise screen opens
+  // Load all exercises once when Add Exercise screen opens
   useEffect(() => {
-    if (showAddExercise && availableExercises.length === 0 && !exerciseSearch) {
-      api("/exercises?limit=2000")
-        .then((data) => setAvailableExercises(Array.isArray(data) ? data : data.data || []))
-        .catch(() => {});
+    if (showAddExercise && allExercises.length === 0) {
+      api("/exercises")
+        .then((data) => setAllExercises(Array.isArray(data) ? data : data.data || []))
+        .catch((err) => console.error("[template-builder] Failed to load exercises:", err.message));
     }
   }, [showAddExercise]);
+
+  // Client-side filtered exercises
+  const availableExercises = allExercises.filter((ex) => {
+    if (!exerciseSearch) return true;
+    const q = exerciseSearch.toLowerCase();
+    return (
+      ex.name.toLowerCase().includes(q) ||
+      (ex.muscle_group || "").toLowerCase().includes(q) ||
+      (ex.equipment || "").toLowerCase().includes(q) ||
+      (ex.category || "").toLowerCase().includes(q)
+    );
+  });
 
   const save = async () => {
     if (!form.name.trim()) return Alert.alert("Error", "Name is required");
@@ -55,16 +67,6 @@ export default function TemplateBuilderScreen() {
     }
   };
 
-  const searchExercises = async (q) => {
-    setExerciseSearch(q);
-    if (q.length < 2 && q.length > 0) return setAvailableExercises([]);
-    try {
-      const url = q ? `/exercises?search=${encodeURIComponent(q)}` : "/exercises?limit=2000";
-      const data = await api(url);
-      setAvailableExercises(Array.isArray(data) ? data : data.data || []);
-    } catch {}
-  };
-
   const addExercise = async (exerciseId) => {
     try {
       await api(`/workout-templates/${id}/exercises`, {
@@ -75,7 +77,6 @@ export default function TemplateBuilderScreen() {
       setTemplate(updated);
       setShowAddExercise(false);
       setExerciseSearch("");
-      setAvailableExercises([]);
     } catch (err) {
       Alert.alert("Error", err.message);
     }
@@ -110,25 +111,36 @@ export default function TemplateBuilderScreen() {
           <Text className="text-white text-lg font-bold">Add Exercise</Text>
           <View style={{ width: 50 }} />
         </View>
-        <Input placeholder="Search exercises..." value={exerciseSearch} onChangeText={searchExercises} icon="search-outline" />
-        <FlatList
-          data={availableExercises}
-          keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => (
-            <Card onPress={() => addExercise(item.id)}>
-              <View className="flex-row items-center">
-                <View className="mr-3">
-                  <ExerciseThumbnail photoUrl={item.photo_url} muscleGroup={item.muscle_group} size={40} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-white font-semibold">{item.name}</Text>
-                  <Text className="text-gray-400 text-xs capitalize">{item.muscle_group} | {item.category}</Text>
-                </View>
-                <Ionicons name="add-circle" size={24} color="#E8614D" />
-              </View>
-            </Card>
-          )}
-        />
+        <Input placeholder="Search exercises..." value={exerciseSearch} onChangeText={setExerciseSearch} icon="search-outline" />
+        {allExercises.length === 0 ? (
+          <View className="flex-1 items-center justify-center mt-12">
+            <ActivityIndicator size="large" color="#E8614D" />
+            <Text className="text-gray-400 text-sm mt-3">Loading exercises...</Text>
+          </View>
+        ) : (
+          <>
+            <Text className="text-gray-500 text-xs my-2">{availableExercises.length} exercises</Text>
+            <FlatList
+              data={availableExercises}
+              keyExtractor={(item) => String(item.id)}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <Card onPress={() => addExercise(item.id)}>
+                  <View className="flex-row items-center">
+                    <View className="mr-3">
+                      <ExerciseThumbnail photoUrl={item.photo_url} muscleGroup={item.muscle_group} size={40} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-white font-semibold">{item.name}</Text>
+                      <Text className="text-gray-400 text-xs capitalize">{item.muscle_group} | {item.category}</Text>
+                    </View>
+                    <Ionicons name="add-circle" size={24} color="#E8614D" />
+                  </View>
+                </Card>
+              )}
+            />
+          </>
+        )}
       </SafeAreaView>
     );
   }
