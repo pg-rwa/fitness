@@ -107,7 +107,7 @@ export default function ExerciseSearchModal({ visible, onSelect, onClose }) {
                   activeOpacity={0.7}
                 >
                   {/* Color banner / thumbnail */}
-                  <ExerciseThumbnail muscleGroup={item.muscle_group} size={56} borderRadius={0} />
+                  <ExerciseThumbnail photoUrl={item.photo_url} muscleGroup={item.muscle_group} size={56} borderRadius={0} />
                   {/* Info */}
                   <View className="flex-1 px-3 py-2">
                     <Text className="text-white text-sm font-medium" numberOfLines={1}>

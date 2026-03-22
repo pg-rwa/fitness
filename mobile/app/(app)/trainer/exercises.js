@@ -67,7 +67,7 @@ export default function ExercisesScreen() {
     <Card>
       <View className="flex-row items-center">
         <View className="mr-3">
-          <ExerciseThumbnail muscleGroup={item.muscle_group} size={44} />
+          <ExerciseThumbnail photoUrl={item.photo_url} muscleGroup={item.muscle_group} size={44} />
         </View>
         <View className="flex-1">
           <Text className="text-white font-semibold">{item.name}</Text>

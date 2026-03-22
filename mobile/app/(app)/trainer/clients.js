@@ -13,8 +13,8 @@ export default function ClientsScreen() {
 
   const loadClients = useCallback(async () => {
     try {
-      const data = await api("/users?role=client&limit=100");
-      setClients(data.data || []);
+      const data = await api("/users/my-clients");
+      setClients(Array.isArray(data) ? data : data.data || []);
     } catch {}
   }, []);
 

@@ -8,7 +8,7 @@ import { formatDate, formatWeight } from "../../../lib/format";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = "http://64.227.187.54:3080/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
 const CATEGORIES = ["front", "side", "back", "flexed", "custom"];
 const screenWidth = Dimensions.get("window").width;
 const photoSize = (screenWidth - 40 - 8) / 3; // 3 columns, 20px padding each side, 4px gap

@@ -1,4 +1,5 @@
-import { View, Text } from "react-native";
+import { View, Text, Image } from "react-native";
+import { useState } from "react";
 
 export const MUSCLE_COLORS = {
   chest: "#991b1b",
@@ -24,15 +25,33 @@ export function getMuscleColor(muscleGroup) {
 }
 
 /**
- * Colored muscle-group thumbnail matching the web app's ExerciseThumbnail.
+ * Exercise thumbnail — shows photo_url if available, falls back to colored muscle-group badge.
  * @param {object} props
+ * @param {string} [props.photoUrl] - exercise photo URL
  * @param {string} props.muscleGroup - e.g. "chest", "back", "legs"
  * @param {number} [props.size=40] - width & height
  * @param {number} [props.borderRadius=10]
  */
-export default function ExerciseThumbnail({ muscleGroup, size = 40, borderRadius = 10 }) {
+export default function ExerciseThumbnail({ photoUrl, muscleGroup, size = 40, borderRadius = 10 }) {
+  const [imgError, setImgError] = useState(false);
   const bg = getMuscleColor(muscleGroup);
   const label = (muscleGroup || "exercise").replace("_", " ");
+
+  if (photoUrl && !imgError) {
+    return (
+      <Image
+        source={{ uri: photoUrl }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius,
+          backgroundColor: bg,
+        }}
+        resizeMode="cover"
+        onError={() => setImgError(true)}
+      />
+    );
+  }
 
   return (
     <View

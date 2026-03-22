@@ -172,7 +172,7 @@ export default function StartWorkoutScreen() {
             <View className="flex-row items-center mb-3">
               {/* Muscle group color indicator */}
               <View className="mr-3">
-                <ExerciseThumbnail muscleGroup={exercise.muscle_group} size={40} />
+                <ExerciseThumbnail photoUrl={exercise.photo_url} muscleGroup={exercise.muscle_group} size={40} />
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold">{exercise.exercise_name}</Text>

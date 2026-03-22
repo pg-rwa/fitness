@@ -27,6 +27,15 @@ export default function TemplateBuilderScreen() {
     }
   }, [id]);
 
+  // Auto-load all exercises when Add Exercise screen opens
+  useEffect(() => {
+    if (showAddExercise && availableExercises.length === 0 && !exerciseSearch) {
+      api("/exercises?limit=2000")
+        .then((data) => setAvailableExercises(Array.isArray(data) ? data : data.data || []))
+        .catch(() => {});
+    }
+  }, [showAddExercise]);
+
   const save = async () => {
     if (!form.name.trim()) return Alert.alert("Error", "Name is required");
     setSaving(true);
@@ -48,10 +57,11 @@ export default function TemplateBuilderScreen() {
 
   const searchExercises = async (q) => {
     setExerciseSearch(q);
-    if (q.length < 2) return setAvailableExercises([]);
+    if (q.length < 2 && q.length > 0) return setAvailableExercises([]);
     try {
-      const data = await api(`/exercises?search=${encodeURIComponent(q)}`);
-      setAvailableExercises(data);
+      const url = q ? `/exercises?search=${encodeURIComponent(q)}` : "/exercises?limit=2000";
+      const data = await api(url);
+      setAvailableExercises(Array.isArray(data) ? data : data.data || []);
     } catch {}
   };
 
@@ -108,7 +118,7 @@ export default function TemplateBuilderScreen() {
             <Card onPress={() => addExercise(item.id)}>
               <View className="flex-row items-center">
                 <View className="mr-3">
-                  <ExerciseThumbnail muscleGroup={item.muscle_group} size={40} />
+                  <ExerciseThumbnail photoUrl={item.photo_url} muscleGroup={item.muscle_group} size={40} />
                 </View>
                 <View className="flex-1">
                   <Text className="text-white font-semibold">{item.name}</Text>
@@ -165,7 +175,7 @@ export default function TemplateBuilderScreen() {
               <Card key={ex.id}>
                 <View className="flex-row items-center">
                   <View className="mr-3">
-                    <ExerciseThumbnail muscleGroup={ex.muscle_group} size={40} />
+                    <ExerciseThumbnail photoUrl={ex.photo_url} muscleGroup={ex.muscle_group} size={40} />
                   </View>
                   <View className="flex-1">
                     <Text className="text-white font-semibold">{ex.exercise_name}</Text>

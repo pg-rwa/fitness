@@ -75,7 +75,7 @@ export default function WorkoutDetailScreen() {
             <Card key={exercise.id} className="mb-3">
               <View className="flex-row items-center mb-2">
                 <View className="mr-3">
-                  <ExerciseThumbnail muscleGroup={exercise.muscle_group} size={36} />
+                  <ExerciseThumbnail photoUrl={exercise.photo_url} muscleGroup={exercise.muscle_group} size={36} />
                 </View>
                 <Text className="text-white font-semibold flex-1">{exercise.exercise_name}</Text>
                 <Text className="text-gray-400 text-xs">{completedSets}/{totalSets} sets</Text>
