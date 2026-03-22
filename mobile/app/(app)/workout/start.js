@@ -5,19 +5,9 @@ import { api } from "../../../lib/api";
 import { Button, Input, Card, Badge } from "../../../components/ui";
 import { RestTimer } from "../../../components/RestTimer";
 import ExerciseSearchModal from "../../../components/ExerciseSearchModal";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-
-const MUSCLE_COLORS = {
-  chest: "#991b1b",
-  back: "#1e3a5f",
-  shoulders: "#713f12",
-  legs: "#14532d",
-  arms: "#581c87",
-  core: "#831843",
-  cardio: "#7c2d12",
-  "full body": "#312e81",
-};
 
 export default function StartWorkoutScreen() {
   const router = useRouter();
@@ -181,20 +171,8 @@ export default function StartWorkoutScreen() {
           <Card key={exercise.id} className="mb-4">
             <View className="flex-row items-center mb-3">
               {/* Muscle group color indicator */}
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 10,
-                  backgroundColor: MUSCLE_COLORS[(exercise.muscle_group || "").toLowerCase()] || "#312e81",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 7, fontWeight: "700", textTransform: "uppercase" }}>
-                  {(exercise.muscle_group || "").slice(0, 5)}
-                </Text>
+              <View className="mr-3">
+                <ExerciseThumbnail muscleGroup={exercise.muscle_group} size={40} />
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold">{exercise.exercise_name}</Text>

@@ -5,6 +5,7 @@ import { api } from "../../../lib/api";
 import { Button, Input, Card, Badge } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 
 export default function TemplateBuilderScreen() {
   const router = useRouter();
@@ -106,6 +107,9 @@ export default function TemplateBuilderScreen() {
           renderItem={({ item }) => (
             <Card onPress={() => addExercise(item.id)}>
               <View className="flex-row items-center">
+                <View className="mr-3">
+                  <ExerciseThumbnail muscleGroup={item.muscle_group} size={40} />
+                </View>
                 <View className="flex-1">
                   <Text className="text-white font-semibold">{item.name}</Text>
                   <Text className="text-gray-400 text-xs capitalize">{item.muscle_group} | {item.category}</Text>
@@ -160,7 +164,9 @@ export default function TemplateBuilderScreen() {
             {template.exercises.map((ex, idx) => (
               <Card key={ex.id}>
                 <View className="flex-row items-center">
-                  <Text className="text-gray-500 text-sm w-8">{idx + 1}.</Text>
+                  <View className="mr-3">
+                    <ExerciseThumbnail muscleGroup={ex.muscle_group} size={40} />
+                  </View>
                   <View className="flex-1">
                     <Text className="text-white font-semibold">{ex.exercise_name}</Text>
                     <Text className="text-gray-400 text-xs">

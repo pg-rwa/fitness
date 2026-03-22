@@ -3,17 +3,7 @@ import { useState, useEffect } from "react";
 import { api } from "../lib/api";
 import { Input } from "./ui";
 import { Ionicons } from "@expo/vector-icons";
-
-const MUSCLE_COLORS = {
-  chest: "#991b1b",
-  back: "#1e3a5f",
-  shoulders: "#713f12",
-  legs: "#14532d",
-  arms: "#581c87",
-  core: "#831843",
-  cardio: "#7c2d12",
-  "full body": "#312e81",
-};
+import ExerciseThumbnail from "./ExerciseThumbnail";
 
 export default function ExerciseSearchModal({ visible, onSelect, onClose }) {
   const [exercises, setExercises] = useState([]);
@@ -44,8 +34,6 @@ export default function ExerciseSearchModal({ visible, onSelect, onClose }) {
     const matchesGroup = !filterGroup || ex.muscle_group === filterGroup;
     return matchesSearch && matchesGroup;
   });
-
-  const getBannerColor = (mg) => MUSCLE_COLORS[(mg || "").toLowerCase()] || "#312e81";
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
@@ -119,19 +107,7 @@ export default function ExerciseSearchModal({ visible, onSelect, onClose }) {
                   activeOpacity={0.7}
                 >
                   {/* Color banner / thumbnail */}
-                  <View
-                    style={{
-                      width: 56,
-                      height: 56,
-                      backgroundColor: getBannerColor(item.muscle_group),
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 8, fontWeight: "700", textTransform: "uppercase" }}>
-                      {(item.muscle_group || "exercise").slice(0, 6)}
-                    </Text>
-                  </View>
+                  <ExerciseThumbnail muscleGroup={item.muscle_group} size={56} borderRadius={0} />
                   {/* Info */}
                   <View className="flex-1 px-3 py-2">
                     <Text className="text-white text-sm font-medium" numberOfLines={1}>

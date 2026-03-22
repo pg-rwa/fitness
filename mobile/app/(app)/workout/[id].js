@@ -5,6 +5,7 @@ import { api } from "../../../lib/api";
 import { Card, Badge, StatCard, LoadingScreen } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 import { formatDate, formatDuration } from "../../../lib/format";
 
 export default function WorkoutDetailScreen() {
@@ -73,6 +74,9 @@ export default function WorkoutDetailScreen() {
           return (
             <Card key={exercise.id} className="mb-3">
               <View className="flex-row items-center mb-2">
+                <View className="mr-3">
+                  <ExerciseThumbnail muscleGroup={exercise.muscle_group} size={36} />
+                </View>
                 <Text className="text-white font-semibold flex-1">{exercise.exercise_name}</Text>
                 <Text className="text-gray-400 text-xs">{completedSets}/{totalSets} sets</Text>
               </View>

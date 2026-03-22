@@ -5,6 +5,7 @@ import { api } from "../../../lib/api";
 import { Card, Badge, EmptyState } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import ExerciseThumbnail from "../../../components/ExerciseThumbnail";
 
 const MUSCLE_GROUPS = [
   "All", "chest", "back", "shoulders", "biceps", "triceps", "forearms",
@@ -65,11 +66,8 @@ export default function ExercisesScreen() {
   const renderExercise = ({ item }) => (
     <Card>
       <View className="flex-row items-center">
-        <View
-          className="rounded-xl p-2.5 mr-3"
-          style={{ backgroundColor: (muscleColor[item.muscle_group] || "#6B7280") + "20" }}
-        >
-          <Ionicons name="barbell" size={22} color={muscleColor[item.muscle_group] || "#6B7280"} />
+        <View className="mr-3">
+          <ExerciseThumbnail muscleGroup={item.muscle_group} size={44} />
         </View>
         <View className="flex-1">
           <Text className="text-white font-semibold">{item.name}</Text>
