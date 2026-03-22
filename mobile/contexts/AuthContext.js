@@ -31,10 +31,14 @@ export function AuthProvider({ children }) {
       body: { email, password },
       noAuth: true,
     });
+    console.log("[auth] Login response keys:", Object.keys(data));
+    console.log("[auth] data.user:", JSON.stringify(data.user));
     await setToken(data.token);
     if (data.refreshToken) await setRefreshToken(data.refreshToken);
-    setUser(data.user);
-    return data.user;
+    // Handle both { user: {...} } and flat { email, role, token } response formats
+    const u = data.user || { id: data.id, email: data.email, first_name: data.first_name, last_name: data.last_name, role: data.role };
+    setUser(u);
+    return u;
   }, []);
 
   const register = useCallback(async (fields) => {
