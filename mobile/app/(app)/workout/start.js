@@ -2,10 +2,22 @@ import { View, Text, Alert, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "../../../lib/api";
-import { Button, Input, Card, Badge, StatCard } from "../../../components/ui";
+import { Button, Input, Card, Badge } from "../../../components/ui";
 import { RestTimer } from "../../../components/RestTimer";
+import ExerciseSearchModal from "../../../components/ExerciseSearchModal";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+
+const MUSCLE_COLORS = {
+  chest: "#991b1b",
+  back: "#1e3a5f",
+  shoulders: "#713f12",
+  legs: "#14532d",
+  arms: "#581c87",
+  core: "#831843",
+  cardio: "#7c2d12",
+  "full body": "#312e81",
+};
 
 export default function StartWorkoutScreen() {
   const router = useRouter();
@@ -14,6 +26,9 @@ export default function StartWorkoutScreen() {
   const [loading, setLoading] = useState(false);
   const [moodBefore, setMoodBefore] = useState(5);
   const [showTimer, setShowTimer] = useState(false);
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [replacingExId, setReplacingExId] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const startSession = async () => {
     setLoading(true);
@@ -31,7 +46,35 @@ export default function StartWorkoutScreen() {
     }
   };
 
-  useEffect(() => { startSession(); }, []);
+  useEffect(() => {
+    startSession();
+  }, []);
+
+  // Timer
+  useEffect(() => {
+    if (!session) return;
+    const startTime = new Date(session.started_at || session.created_at).getTime();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [session?.id]);
+
+  const formatTime = (secs) => {
+    const h = Math.floor(secs / 3600);
+    const m = Math.floor((secs % 3600) / 60);
+    const s = secs % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  };
+
+  const refreshSession = useCallback(async () => {
+    if (!session?.id) return;
+    try {
+      const updated = await api(`/workout-sessions/${session.id}`);
+      setSession(updated);
+    } catch {}
+  }, [session?.id]);
 
   const logSet = async (seId, setData) => {
     try {
@@ -39,9 +82,7 @@ export default function StartWorkoutScreen() {
         method: "POST",
         body: { ...setData, completed: true },
       });
-      // Reload session
-      const updated = await api(`/workout-sessions/${session.id}`);
-      setSession(updated);
+      await refreshSession();
     } catch (err) {
       Alert.alert("Error", err.message);
     }
@@ -53,9 +94,34 @@ export default function StartWorkoutScreen() {
         method: "PUT",
         body: setData,
       });
-      const updated = await api(`/workout-sessions/${session.id}`);
-      setSession(updated);
+      await refreshSession();
     } catch {}
+  };
+
+  const addExercise = async (exerciseId) => {
+    try {
+      await api(`/workout-sessions/${session.id}/exercises`, {
+        method: "POST",
+        body: { exerciseId },
+      });
+      await refreshSession();
+      setShowAddExercise(false);
+    } catch (err) {
+      Alert.alert("Error", err.message);
+    }
+  };
+
+  const replaceExercise = async (newExerciseId) => {
+    try {
+      await api(`/workout-sessions/${session.id}/exercises/${replacingExId}/replace`, {
+        method: "PUT",
+        body: { newExerciseId, updateTemplate: true },
+      });
+      await refreshSession();
+      setReplacingExId(null);
+    } catch (err) {
+      Alert.alert("Error", err.message);
+    }
   };
 
   const completeWorkout = async () => {
@@ -93,7 +159,7 @@ export default function StartWorkoutScreen() {
         <View className="flex-row items-center justify-between mt-2 mb-4">
           <View>
             <Text className="text-white text-xl font-bold">{session.name}</Text>
-            <Text className="text-gray-400 text-sm">In progress</Text>
+            <Text className="text-primary text-sm font-mono">{formatTime(elapsed)}</Text>
           </View>
           <View className="flex-row items-center gap-2">
             <TouchableOpacity
@@ -114,13 +180,34 @@ export default function StartWorkoutScreen() {
         {session.exercises?.map((exercise) => (
           <Card key={exercise.id} className="mb-4">
             <View className="flex-row items-center mb-3">
-              <View className="bg-primary/20 rounded-lg p-2 mr-3">
-                <Ionicons name="barbell" size={18} color="#E8614D" />
+              {/* Muscle group color indicator */}
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: MUSCLE_COLORS[(exercise.muscle_group || "").toLowerCase()] || "#312e81",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 7, fontWeight: "700", textTransform: "uppercase" }}>
+                  {(exercise.muscle_group || "").slice(0, 5)}
+                </Text>
               </View>
               <View className="flex-1">
                 <Text className="text-white font-semibold">{exercise.exercise_name}</Text>
                 <Text className="text-gray-400 text-xs capitalize">{exercise.muscle_group}</Text>
               </View>
+              {/* Replace button */}
+              <TouchableOpacity
+                onPress={() => setReplacingExId(exercise.id)}
+                className="border border-gray-600 rounded-lg px-2.5 py-1.5"
+                activeOpacity={0.7}
+              >
+                <Text className="text-gray-400 text-xs">Replace</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Sets table header */}
@@ -134,7 +221,12 @@ export default function StartWorkoutScreen() {
 
             {/* Sets */}
             {exercise.sets?.map((set) => (
-              <View key={set.id} className={`flex-row items-center px-2 py-2 rounded-lg mb-1 ${set.completed ? "bg-green-500/10" : "bg-dark"}`}>
+              <View
+                key={set.id}
+                className={`flex-row items-center px-2 py-2 rounded-lg mb-1 ${
+                  set.completed ? "bg-green-500/10" : "bg-dark"
+                }`}
+              >
                 <Text className="text-gray-400 text-sm w-10">{set.set_number}</Text>
                 <Text className="text-white text-sm flex-1 text-center">{set.reps || "-"}</Text>
                 <Text className="text-white text-sm flex-1 text-center">{set.weight_kg || "-"}</Text>
@@ -143,7 +235,11 @@ export default function StartWorkoutScreen() {
                   className="w-10 items-center"
                   onPress={() => {
                     if (!set.completed) {
-                      updateSet(exercise.id, set.id, { completed: true, reps: set.reps || 10, weightKg: set.weight_kg || 0 });
+                      updateSet(exercise.id, set.id, {
+                        completed: true,
+                        reps: set.reps || 10,
+                        weightKg: set.weight_kg || 0,
+                      });
                     }
                   }}
                 >
@@ -167,8 +263,32 @@ export default function StartWorkoutScreen() {
           </Card>
         ))}
 
+        {/* Add Exercise button */}
+        <TouchableOpacity
+          onPress={() => setShowAddExercise(true)}
+          className="bg-dark-card border border-dashed border-gray-600 rounded-2xl p-4 mb-4 flex-row items-center justify-center"
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add-circle" size={24} color="#E8614D" />
+          <Text className="text-primary font-semibold text-base ml-2">Add Exercise</Text>
+        </TouchableOpacity>
+
         <View className="pb-8" />
       </ScrollView>
+
+      {/* Exercise Search Modal — for adding */}
+      <ExerciseSearchModal
+        visible={showAddExercise}
+        onSelect={addExercise}
+        onClose={() => setShowAddExercise(false)}
+      />
+
+      {/* Exercise Search Modal — for replacing */}
+      <ExerciseSearchModal
+        visible={!!replacingExId}
+        onSelect={replaceExercise}
+        onClose={() => setReplacingExId(null)}
+      />
     </SafeAreaView>
   );
 }
