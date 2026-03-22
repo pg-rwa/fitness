@@ -1,6 +1,6 @@
-import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, Modal } from "react-native";
-import { useRouter } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, Modal, RefreshControl } from "react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useCallback } from "react";
 import { api } from "../../../lib/api";
 import { Card, Badge, Button, SectionHeader, EmptyState } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -198,6 +198,7 @@ export default function TrainerScheduleScreen() {
   const [availability, setAvailability] = useState([]);
   const [tab, setTab] = useState("pending");
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -214,7 +215,14 @@ export default function TrainerScheduleScreen() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // Reload data when screen comes into focus
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const approveSession = async (id) => {
     try {
@@ -324,6 +332,7 @@ export default function TrainerScheduleScreen() {
           data={pending}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8614D" />}
           renderItem={({ item }) => (
             <Card>
               <View className="flex-row items-center justify-between mb-1">
@@ -357,6 +366,7 @@ export default function TrainerScheduleScreen() {
           data={sessions}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8614D" />}
           renderItem={({ item }) => (
             <Card>
               <View className="flex-row items-center justify-between mb-1">

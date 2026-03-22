@@ -1,5 +1,6 @@
-import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, Modal, TextInput } from "react-native";
+import { View, Text, FlatList, TouchableOpacity, Alert, ScrollView, Modal, TextInput, RefreshControl } from "react-native";
 import { useEffect, useState, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Card, Badge, Button, EmptyState } from "../../../components/ui";
@@ -247,6 +248,7 @@ export default function ScheduleTab() {
 
   const isTrainer = user?.role === "trainer";
   const trainerId = user?.trainer_id;
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -270,7 +272,14 @@ export default function ScheduleTab() {
     }
   }, [isTrainer, trainerId]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  // Reload data when screen comes into focus
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }, [loadData]);
 
   const approveSession = async (id) => {
     try {
@@ -401,6 +410,7 @@ export default function ScheduleTab() {
           data={pending}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8614D" />}
           renderItem={({ item }) => (
             <Card>
               <View className="flex-row items-center justify-between mb-1">
@@ -446,6 +456,7 @@ export default function ScheduleTab() {
           data={sessions}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8614D" />}
           renderItem={({ item }) => (
             <Card>
               <View className="flex-row items-center justify-between mb-1">
@@ -476,7 +487,7 @@ export default function ScheduleTab() {
 
       {/* Trainer Availability (read-only for clients) */}
       {tab === "availability" && (
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#E8614D" />}>
           {!trainerId && !isTrainer ? (
             <EmptyState icon="person-outline" title="No trainer assigned" message="You need an assigned trainer to see availability" />
           ) : availability.length === 0 ? (
