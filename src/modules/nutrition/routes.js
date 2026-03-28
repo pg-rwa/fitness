@@ -4,9 +4,16 @@ const controller = require("./controller");
 const { validate } = require("../../shared/middleware/validate");
 const { authenticate } = require("../../shared/middleware/authenticate");
 const { authorize } = require("../../shared/middleware/authorize");
+const { uploadImage } = require("../../shared/middleware/upload");
 
 const router = Router();
 router.use(authenticate);
+
+// AI meal photo analysis
+router.post("/analyze-photo", uploadImage.single("photo"), controller.analyzeMealPhoto);
+
+// Barcode lookup
+router.get("/barcode/:barcode", controller.lookupBarcode);
 
 // Food items
 router.get("/foods", controller.searchFoods);

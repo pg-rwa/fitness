@@ -148,6 +148,152 @@ const foodItems = [
   { name: "Mustard", brand: null, serving_size: 5, serving_unit: "g", calories: 3, protein_g: 0.2, carbs_g: 0.3, fat_g: 0.2, fiber_g: 0.2, sugar_g: 0.1, sodium_mg: 55, is_verified: 1 },
   { name: "Cream Cheese", brand: null, serving_size: 28, serving_unit: "g", calories: 99, protein_g: 1.7, carbs_g: 1.6, fat_g: 10, fiber_g: 0, sugar_g: 0.7, sodium_mg: 91, is_verified: 1 },
   { name: "Guacamole", brand: null, serving_size: 30, serving_unit: "g", calories: 50, protein_g: 0.6, carbs_g: 3, fat_g: 4.5, fiber_g: 2, sugar_g: 0.2, sodium_mg: 115, is_verified: 1 },
+
+  // ─── INDIAN FOODS ──────────────────────────────────────────────
+  { name: "Roti / Chapati", brand: null, serving_size: 40, serving_unit: "g", calories: 120, protein_g: 3.5, carbs_g: 20, fat_g: 3.5, fiber_g: 2, sugar_g: 0.5, sodium_mg: 150, is_verified: 1 },
+  { name: "Naan Bread", brand: null, serving_size: 90, serving_unit: "g", calories: 260, protein_g: 9, carbs_g: 45, fat_g: 5, fiber_g: 2, sugar_g: 3, sodium_mg: 400, is_verified: 1 },
+  { name: "Paratha (plain)", brand: null, serving_size: 80, serving_unit: "g", calories: 260, protein_g: 5, carbs_g: 30, fat_g: 13, fiber_g: 2, sugar_g: 1, sodium_mg: 280, is_verified: 1 },
+  { name: "Idli (steamed)", brand: null, serving_size: 40, serving_unit: "g", calories: 58, protein_g: 2, carbs_g: 12, fat_g: 0.4, fiber_g: 0.5, sugar_g: 0.3, sodium_mg: 65, is_verified: 1 },
+  { name: "Dosa (plain)", brand: null, serving_size: 100, serving_unit: "g", calories: 168, protein_g: 4, carbs_g: 27, fat_g: 5, fiber_g: 1, sugar_g: 1, sodium_mg: 120, is_verified: 1 },
+  { name: "Masala Dosa", brand: null, serving_size: 180, serving_unit: "g", calories: 310, protein_g: 7, carbs_g: 42, fat_g: 13, fiber_g: 3, sugar_g: 3, sodium_mg: 350, is_verified: 1 },
+  { name: "Upma", brand: null, serving_size: 200, serving_unit: "g", calories: 230, protein_g: 5, carbs_g: 32, fat_g: 9, fiber_g: 3, sugar_g: 1, sodium_mg: 420, is_verified: 1 },
+  { name: "Poha (flattened rice)", brand: null, serving_size: 200, serving_unit: "g", calories: 250, protein_g: 5, carbs_g: 40, fat_g: 8, fiber_g: 2, sugar_g: 2, sodium_mg: 310, is_verified: 1 },
+  { name: "Dal (cooked lentils)", brand: null, serving_size: 200, serving_unit: "g", calories: 180, protein_g: 12, carbs_g: 28, fat_g: 3, fiber_g: 8, sugar_g: 2, sodium_mg: 340, is_verified: 1 },
+  { name: "Paneer (cottage cheese)", brand: null, serving_size: 100, serving_unit: "g", calories: 265, protein_g: 18, carbs_g: 3, fat_g: 20, fiber_g: 0, sugar_g: 1, sodium_mg: 18, is_verified: 1 },
+  { name: "Palak Paneer", brand: null, serving_size: 200, serving_unit: "g", calories: 290, protein_g: 16, carbs_g: 10, fat_g: 22, fiber_g: 4, sugar_g: 3, sodium_mg: 480, is_verified: 1 },
+  { name: "Butter Chicken", brand: null, serving_size: 200, serving_unit: "g", calories: 370, protein_g: 28, carbs_g: 12, fat_g: 24, fiber_g: 2, sugar_g: 5, sodium_mg: 620, is_verified: 1 },
+  { name: "Chicken Tikka", brand: null, serving_size: 150, serving_unit: "g", calories: 250, protein_g: 30, carbs_g: 6, fat_g: 12, fiber_g: 1, sugar_g: 2, sodium_mg: 480, is_verified: 1 },
+  { name: "Chole (chickpea curry)", brand: null, serving_size: 200, serving_unit: "g", calories: 240, protein_g: 10, carbs_g: 32, fat_g: 9, fiber_g: 8, sugar_g: 4, sodium_mg: 520, is_verified: 1 },
+  { name: "Rajma (kidney bean curry)", brand: null, serving_size: 200, serving_unit: "g", calories: 220, protein_g: 11, carbs_g: 34, fat_g: 5, fiber_g: 10, sugar_g: 3, sodium_mg: 480, is_verified: 1 },
+  { name: "Biryani (chicken)", brand: null, serving_size: 250, serving_unit: "g", calories: 400, protein_g: 18, carbs_g: 50, fat_g: 14, fiber_g: 2, sugar_g: 2, sodium_mg: 620, is_verified: 1 },
+  { name: "Samosa (vegetable)", brand: null, serving_size: 80, serving_unit: "g", calories: 210, protein_g: 4, carbs_g: 25, fat_g: 11, fiber_g: 2, sugar_g: 1, sodium_mg: 300, is_verified: 1 },
+  { name: "Raita (yogurt)", brand: null, serving_size: 100, serving_unit: "g", calories: 60, protein_g: 3, carbs_g: 5, fat_g: 3, fiber_g: 0.5, sugar_g: 4, sodium_mg: 170, is_verified: 1 },
+  { name: "Khichdi (rice & lentils)", brand: null, serving_size: 200, serving_unit: "g", calories: 200, protein_g: 7, carbs_g: 34, fat_g: 4, fiber_g: 3, sugar_g: 1, sodium_mg: 290, is_verified: 1 },
+  { name: "Aloo Gobi", brand: null, serving_size: 200, serving_unit: "g", calories: 180, protein_g: 5, carbs_g: 22, fat_g: 9, fiber_g: 5, sugar_g: 4, sodium_mg: 380, is_verified: 1 },
+
+  // ─── ASIAN FOODS ───────────────────────────────────────────────
+  { name: "Sushi Rice (cooked)", brand: null, serving_size: 100, serving_unit: "g", calories: 143, protein_g: 2.5, carbs_g: 31, fat_g: 0.3, fiber_g: 0.3, sugar_g: 3, sodium_mg: 100, is_verified: 1 },
+  { name: "Miso Soup", brand: null, serving_size: 240, serving_unit: "ml", calories: 40, protein_g: 3, carbs_g: 5, fat_g: 1, fiber_g: 1, sugar_g: 2, sodium_mg: 860, is_verified: 1 },
+  { name: "Pad Thai", brand: null, serving_size: 250, serving_unit: "g", calories: 380, protein_g: 14, carbs_g: 50, fat_g: 14, fiber_g: 2, sugar_g: 8, sodium_mg: 720, is_verified: 1 },
+  { name: "Fried Rice", brand: null, serving_size: 200, serving_unit: "g", calories: 310, protein_g: 8, carbs_g: 45, fat_g: 11, fiber_g: 2, sugar_g: 2, sodium_mg: 560, is_verified: 1 },
+  { name: "Ramen Noodles (cooked)", brand: null, serving_size: 200, serving_unit: "g", calories: 280, protein_g: 8, carbs_g: 40, fat_g: 10, fiber_g: 1, sugar_g: 1, sodium_mg: 1400, is_verified: 1 },
+  { name: "Spring Roll (vegetable)", brand: null, serving_size: 65, serving_unit: "g", calories: 120, protein_g: 3, carbs_g: 15, fat_g: 5, fiber_g: 1, sugar_g: 1, sodium_mg: 220, is_verified: 1 },
+  { name: "Stir-fry Vegetables", brand: null, serving_size: 150, serving_unit: "g", calories: 80, protein_g: 3, carbs_g: 10, fat_g: 4, fiber_g: 3, sugar_g: 4, sodium_mg: 320, is_verified: 1 },
+  { name: "Teriyaki Chicken", brand: null, serving_size: 150, serving_unit: "g", calories: 280, protein_g: 28, carbs_g: 15, fat_g: 12, fiber_g: 0, sugar_g: 12, sodium_mg: 680, is_verified: 1 },
+  { name: "Tom Yum Soup", brand: null, serving_size: 250, serving_unit: "ml", calories: 90, protein_g: 5, carbs_g: 8, fat_g: 4, fiber_g: 1, sugar_g: 3, sodium_mg: 720, is_verified: 1 },
+  { name: "Soy Milk", brand: null, serving_size: 240, serving_unit: "ml", calories: 80, protein_g: 7, carbs_g: 4, fat_g: 4, fiber_g: 1, sugar_g: 1, sodium_mg: 90, is_verified: 1 },
+
+  // ─── MEXICAN / LATIN FOODS ────────────────────────────────────
+  { name: "Burrito (bean & cheese)", brand: null, serving_size: 200, serving_unit: "g", calories: 370, protein_g: 15, carbs_g: 45, fat_g: 14, fiber_g: 6, sugar_g: 3, sodium_mg: 720, is_verified: 1 },
+  { name: "Taco (beef)", brand: null, serving_size: 100, serving_unit: "g", calories: 210, protein_g: 12, carbs_g: 16, fat_g: 11, fiber_g: 2, sugar_g: 2, sodium_mg: 340, is_verified: 1 },
+  { name: "Quesadilla (cheese)", brand: null, serving_size: 150, serving_unit: "g", calories: 380, protein_g: 16, carbs_g: 30, fat_g: 22, fiber_g: 2, sugar_g: 2, sodium_mg: 540, is_verified: 1 },
+  { name: "Black Bean Soup", brand: null, serving_size: 250, serving_unit: "ml", calories: 180, protein_g: 11, carbs_g: 30, fat_g: 2, fiber_g: 10, sugar_g: 3, sodium_mg: 480, is_verified: 1 },
+  { name: "Tortilla Chips", brand: null, serving_size: 28, serving_unit: "g", calories: 140, protein_g: 2, carbs_g: 18, fat_g: 7, fiber_g: 1, sugar_g: 0.2, sodium_mg: 120, is_verified: 1 },
+
+  // ─── BREAKFAST & BAKERY ────────────────────────────────────────
+  { name: "Pancakes (plain)", brand: null, serving_size: 75, serving_unit: "g", calories: 175, protein_g: 5, carbs_g: 25, fat_g: 6, fiber_g: 1, sugar_g: 5, sodium_mg: 340, is_verified: 1 },
+  { name: "Waffle (plain)", brand: null, serving_size: 75, serving_unit: "g", calories: 215, protein_g: 6, carbs_g: 26, fat_g: 10, fiber_g: 1, sugar_g: 3, sodium_mg: 380, is_verified: 1 },
+  { name: "French Toast", brand: null, serving_size: 65, serving_unit: "g", calories: 149, protein_g: 5, carbs_g: 16, fat_g: 7, fiber_g: 0.5, sugar_g: 4, sodium_mg: 290, is_verified: 1 },
+  { name: "Bagel (plain)", brand: null, serving_size: 105, serving_unit: "g", calories: 270, protein_g: 10, carbs_g: 53, fat_g: 1.5, fiber_g: 2, sugar_g: 6, sodium_mg: 450, is_verified: 1 },
+  { name: "Croissant", brand: null, serving_size: 57, serving_unit: "g", calories: 231, protein_g: 5, carbs_g: 26, fat_g: 12, fiber_g: 1, sugar_g: 4, sodium_mg: 220, is_verified: 1 },
+  { name: "Muffin (blueberry)", brand: null, serving_size: 113, serving_unit: "g", calories: 350, protein_g: 5, carbs_g: 52, fat_g: 14, fiber_g: 1, sugar_g: 28, sodium_mg: 320, is_verified: 1 },
+  { name: "Granola Bar", brand: "Generic", serving_size: 42, serving_unit: "g", calories: 190, protein_g: 3, carbs_g: 29, fat_g: 7, fiber_g: 2, sugar_g: 12, sodium_mg: 90, is_verified: 1 },
+  { name: "Overnight Oats", brand: null, serving_size: 250, serving_unit: "g", calories: 310, protein_g: 12, carbs_g: 45, fat_g: 9, fiber_g: 5, sugar_g: 14, sodium_mg: 120, is_verified: 1 },
+  { name: "Cereal (corn flakes)", brand: "Generic", serving_size: 30, serving_unit: "g", calories: 110, protein_g: 2, carbs_g: 25, fat_g: 0.2, fiber_g: 0.5, sugar_g: 3, sodium_mg: 200, is_verified: 1 },
+  { name: "Muesli", brand: null, serving_size: 50, serving_unit: "g", calories: 180, protein_g: 5, carbs_g: 32, fat_g: 4, fiber_g: 3, sugar_g: 10, sodium_mg: 35, is_verified: 1 },
+
+  // ─── SOUPS & SALADS ───────────────────────────────────────────
+  { name: "Chicken Soup", brand: null, serving_size: 250, serving_unit: "ml", calories: 150, protein_g: 12, carbs_g: 15, fat_g: 5, fiber_g: 1, sugar_g: 3, sodium_mg: 800, is_verified: 1 },
+  { name: "Tomato Soup", brand: null, serving_size: 250, serving_unit: "ml", calories: 120, protein_g: 3, carbs_g: 18, fat_g: 4, fiber_g: 2, sugar_g: 10, sodium_mg: 680, is_verified: 1 },
+  { name: "Minestrone Soup", brand: null, serving_size: 250, serving_unit: "ml", calories: 120, protein_g: 5, carbs_g: 18, fat_g: 3, fiber_g: 4, sugar_g: 5, sodium_mg: 600, is_verified: 1 },
+  { name: "Caesar Salad (with dressing)", brand: null, serving_size: 200, serving_unit: "g", calories: 230, protein_g: 7, carbs_g: 10, fat_g: 18, fiber_g: 2, sugar_g: 2, sodium_mg: 480, is_verified: 1 },
+  { name: "Greek Salad", brand: null, serving_size: 200, serving_unit: "g", calories: 160, protein_g: 5, carbs_g: 8, fat_g: 12, fiber_g: 2, sugar_g: 5, sodium_mg: 420, is_verified: 1 },
+
+  // ─── PASTA & ITALIAN ──────────────────────────────────────────
+  { name: "Spaghetti Bolognese", brand: null, serving_size: 300, serving_unit: "g", calories: 420, protein_g: 22, carbs_g: 52, fat_g: 14, fiber_g: 4, sugar_g: 8, sodium_mg: 600, is_verified: 1 },
+  { name: "Penne Arrabiata", brand: null, serving_size: 300, serving_unit: "g", calories: 380, protein_g: 12, carbs_g: 58, fat_g: 12, fiber_g: 4, sugar_g: 6, sodium_mg: 520, is_verified: 1 },
+  { name: "Pizza Margherita (1 slice)", brand: null, serving_size: 107, serving_unit: "g", calories: 272, protein_g: 12, carbs_g: 33, fat_g: 10, fiber_g: 2, sugar_g: 4, sodium_mg: 550, is_verified: 1 },
+  { name: "Lasagna", brand: null, serving_size: 250, serving_unit: "g", calories: 380, protein_g: 20, carbs_g: 32, fat_g: 18, fiber_g: 3, sugar_g: 6, sodium_mg: 640, is_verified: 1 },
+  { name: "Garlic Bread", brand: null, serving_size: 50, serving_unit: "g", calories: 195, protein_g: 4, carbs_g: 22, fat_g: 10, fiber_g: 1, sugar_g: 2, sodium_mg: 320, is_verified: 1 },
+
+  // ─── FAST FOOD & CONVENIENCE ──────────────────────────────────
+  { name: "Cheeseburger", brand: null, serving_size: 150, serving_unit: "g", calories: 350, protein_g: 18, carbs_g: 30, fat_g: 18, fiber_g: 1, sugar_g: 6, sodium_mg: 680, is_verified: 1 },
+  { name: "French Fries", brand: null, serving_size: 117, serving_unit: "g", calories: 365, protein_g: 4, carbs_g: 44, fat_g: 19, fiber_g: 4, sugar_g: 0.3, sodium_mg: 280, is_verified: 1 },
+  { name: "Chicken Nuggets (6pc)", brand: null, serving_size: 96, serving_unit: "g", calories: 280, protein_g: 14, carbs_g: 16, fat_g: 18, fiber_g: 1, sugar_g: 0.5, sodium_mg: 540, is_verified: 1 },
+  { name: "Hot Dog", brand: null, serving_size: 100, serving_unit: "g", calories: 290, protein_g: 10, carbs_g: 24, fat_g: 17, fiber_g: 1, sugar_g: 4, sodium_mg: 680, is_verified: 1 },
+  { name: "Grilled Chicken Sandwich", brand: null, serving_size: 180, serving_unit: "g", calories: 380, protein_g: 30, carbs_g: 35, fat_g: 12, fiber_g: 2, sugar_g: 6, sodium_mg: 720, is_verified: 1 },
+  { name: "Wrap (chicken Caesar)", brand: null, serving_size: 200, serving_unit: "g", calories: 360, protein_g: 22, carbs_g: 30, fat_g: 17, fiber_g: 2, sugar_g: 3, sodium_mg: 620, is_verified: 1 },
+
+  // ─── MIDDLE EASTERN ───────────────────────────────────────────
+  { name: "Falafel (4 pieces)", brand: null, serving_size: 100, serving_unit: "g", calories: 330, protein_g: 13, carbs_g: 32, fat_g: 18, fiber_g: 5, sugar_g: 3, sodium_mg: 540, is_verified: 1 },
+  { name: "Shawarma (chicken)", brand: null, serving_size: 200, serving_unit: "g", calories: 380, protein_g: 28, carbs_g: 30, fat_g: 16, fiber_g: 2, sugar_g: 4, sodium_mg: 620, is_verified: 1 },
+  { name: "Tabbouleh", brand: null, serving_size: 150, serving_unit: "g", calories: 120, protein_g: 3, carbs_g: 16, fat_g: 6, fiber_g: 3, sugar_g: 2, sodium_mg: 320, is_verified: 1 },
+  { name: "Pita Bread", brand: null, serving_size: 60, serving_unit: "g", calories: 165, protein_g: 5.5, carbs_g: 33, fat_g: 0.7, fiber_g: 1.3, sugar_g: 1, sodium_mg: 322, is_verified: 1 },
+  { name: "Baba Ganoush", brand: null, serving_size: 60, serving_unit: "g", calories: 90, protein_g: 2, carbs_g: 8, fat_g: 6, fiber_g: 3, sugar_g: 2, sodium_mg: 200, is_verified: 1 },
+
+  // ─── SMOOTHIES & HEALTH DRINKS ────────────────────────────────
+  { name: "Green Smoothie", brand: null, serving_size: 350, serving_unit: "ml", calories: 180, protein_g: 4, carbs_g: 35, fat_g: 3, fiber_g: 5, sugar_g: 22, sodium_mg: 80, is_verified: 1 },
+  { name: "Protein Smoothie (banana)", brand: null, serving_size: 350, serving_unit: "ml", calories: 280, protein_g: 25, carbs_g: 35, fat_g: 5, fiber_g: 3, sugar_g: 20, sodium_mg: 150, is_verified: 1 },
+  { name: "Acai Bowl", brand: null, serving_size: 300, serving_unit: "g", calories: 350, protein_g: 6, carbs_g: 55, fat_g: 12, fiber_g: 7, sugar_g: 30, sodium_mg: 40, is_verified: 1 },
+  { name: "Kombucha", brand: null, serving_size: 240, serving_unit: "ml", calories: 30, protein_g: 0, carbs_g: 7, fat_g: 0, fiber_g: 0, sugar_g: 4, sodium_mg: 10, is_verified: 1 },
+  { name: "Black Coffee", brand: null, serving_size: 240, serving_unit: "ml", calories: 2, protein_g: 0.3, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 5, is_verified: 1 },
+  { name: "Latte (whole milk)", brand: null, serving_size: 350, serving_unit: "ml", calories: 180, protein_g: 10, carbs_g: 16, fat_g: 9, fiber_g: 0, sugar_g: 15, sodium_mg: 130, is_verified: 1 },
+  { name: "Green Tea", brand: null, serving_size: 240, serving_unit: "ml", calories: 2, protein_g: 0, carbs_g: 0, fat_g: 0, fiber_g: 0, sugar_g: 0, sodium_mg: 2, is_verified: 1 },
+
+  // ─── DESSERTS & SWEETS ────────────────────────────────────────
+  { name: "Brownie", brand: null, serving_size: 56, serving_unit: "g", calories: 227, protein_g: 3, carbs_g: 36, fat_g: 9, fiber_g: 1, sugar_g: 21, sodium_mg: 85, is_verified: 1 },
+  { name: "Ice Cream (vanilla)", brand: null, serving_size: 66, serving_unit: "g", calories: 137, protein_g: 2, carbs_g: 16, fat_g: 7, fiber_g: 0, sugar_g: 14, sodium_mg: 50, is_verified: 1 },
+  { name: "Frozen Yogurt", brand: null, serving_size: 100, serving_unit: "g", calories: 127, protein_g: 3, carbs_g: 22, fat_g: 4, fiber_g: 0, sugar_g: 18, sodium_mg: 60, is_verified: 1 },
+  { name: "Chocolate Chip Cookie", brand: null, serving_size: 30, serving_unit: "g", calories: 140, protein_g: 1.5, carbs_g: 19, fat_g: 7, fiber_g: 0.5, sugar_g: 10, sodium_mg: 95, is_verified: 1 },
+  { name: "Banana Bread (1 slice)", brand: null, serving_size: 60, serving_unit: "g", calories: 196, protein_g: 3, carbs_g: 33, fat_g: 6, fiber_g: 1, sugar_g: 14, sodium_mg: 180, is_verified: 1 },
+
+  // ─── ADDITIONAL PROTEINS & SEAFOOD ────────────────────────────
+  { name: "Turkey Bacon", brand: null, serving_size: 28, serving_unit: "g", calories: 60, protein_g: 5, carbs_g: 1, fat_g: 4, fiber_g: 0, sugar_g: 1, sodium_mg: 320, is_verified: 1 },
+  { name: "Bacon (pork)", brand: null, serving_size: 28, serving_unit: "g", calories: 120, protein_g: 9, carbs_g: 0, fat_g: 9, fiber_g: 0, sugar_g: 0, sodium_mg: 365, is_verified: 1 },
+  { name: "Sausage (pork)", brand: null, serving_size: 56, serving_unit: "g", calories: 170, protein_g: 8, carbs_g: 1, fat_g: 15, fiber_g: 0, sugar_g: 1, sodium_mg: 400, is_verified: 1 },
+  { name: "Deli Ham", brand: null, serving_size: 56, serving_unit: "g", calories: 60, protein_g: 10, carbs_g: 2, fat_g: 1.5, fiber_g: 0, sugar_g: 1, sodium_mg: 520, is_verified: 1 },
+  { name: "Deli Turkey", brand: null, serving_size: 56, serving_unit: "g", calories: 50, protein_g: 10, carbs_g: 2, fat_g: 0.5, fiber_g: 0, sugar_g: 1, sodium_mg: 480, is_verified: 1 },
+  { name: "Crab Meat", brand: null, serving_size: 100, serving_unit: "g", calories: 87, protein_g: 18, carbs_g: 0, fat_g: 1, fiber_g: 0, sugar_g: 0, sodium_mg: 320, is_verified: 1 },
+  { name: "Scallops", brand: null, serving_size: 100, serving_unit: "g", calories: 111, protein_g: 21, carbs_g: 5, fat_g: 1, fiber_g: 0, sugar_g: 0, sodium_mg: 392, is_verified: 1 },
+  { name: "Sardines (canned in oil)", brand: null, serving_size: 92, serving_unit: "g", calories: 208, protein_g: 25, carbs_g: 0, fat_g: 11, fiber_g: 0, sugar_g: 0, sodium_mg: 465, is_verified: 1 },
+  { name: "Anchovies", brand: null, serving_size: 20, serving_unit: "g", calories: 42, protein_g: 6, carbs_g: 0, fat_g: 2, fiber_g: 0, sugar_g: 0, sodium_mg: 734, is_verified: 1 },
+
+  // ─── MORE VEGETABLES ──────────────────────────────────────────
+  { name: "Mushrooms (white)", brand: null, serving_size: 100, serving_unit: "g", calories: 22, protein_g: 3, carbs_g: 3, fat_g: 0.3, fiber_g: 1, sugar_g: 2, sodium_mg: 5, is_verified: 1 },
+  { name: "Zucchini", brand: null, serving_size: 100, serving_unit: "g", calories: 17, protein_g: 1.2, carbs_g: 3, fat_g: 0.3, fiber_g: 1, sugar_g: 2.5, sodium_mg: 8, is_verified: 1 },
+  { name: "Eggplant", brand: null, serving_size: 100, serving_unit: "g", calories: 25, protein_g: 1, carbs_g: 6, fat_g: 0.2, fiber_g: 3, sugar_g: 3, sodium_mg: 2, is_verified: 1 },
+  { name: "Brussels Sprouts", brand: null, serving_size: 100, serving_unit: "g", calories: 43, protein_g: 3.4, carbs_g: 9, fat_g: 0.3, fiber_g: 3.8, sugar_g: 2.2, sodium_mg: 25, is_verified: 1 },
+  { name: "Cauliflower", brand: null, serving_size: 100, serving_unit: "g", calories: 25, protein_g: 1.9, carbs_g: 5, fat_g: 0.3, fiber_g: 2, sugar_g: 1.9, sodium_mg: 30, is_verified: 1 },
+  { name: "Celery", brand: null, serving_size: 100, serving_unit: "g", calories: 14, protein_g: 0.7, carbs_g: 3, fat_g: 0.2, fiber_g: 1.6, sugar_g: 1.3, sodium_mg: 80, is_verified: 1 },
+  { name: "Carrot", brand: null, serving_size: 100, serving_unit: "g", calories: 41, protein_g: 0.9, carbs_g: 10, fat_g: 0.2, fiber_g: 2.8, sugar_g: 4.7, sodium_mg: 69, is_verified: 1 },
+  { name: "Beetroot", brand: null, serving_size: 100, serving_unit: "g", calories: 43, protein_g: 1.6, carbs_g: 10, fat_g: 0.2, fiber_g: 2.8, sugar_g: 7, sodium_mg: 78, is_verified: 1 },
+  { name: "Onion", brand: null, serving_size: 100, serving_unit: "g", calories: 40, protein_g: 1.1, carbs_g: 9, fat_g: 0.1, fiber_g: 1.7, sugar_g: 4.2, sodium_mg: 4, is_verified: 1 },
+  { name: "Garlic", brand: null, serving_size: 10, serving_unit: "g", calories: 15, protein_g: 0.6, carbs_g: 3.3, fat_g: 0.1, fiber_g: 0.2, sugar_g: 0.1, sodium_mg: 2, is_verified: 1 },
+
+  // ─── MORE FRUITS ──────────────────────────────────────────────
+  { name: "Papaya", brand: null, serving_size: 150, serving_unit: "g", calories: 65, protein_g: 0.9, carbs_g: 16, fat_g: 0.4, fiber_g: 2.7, sugar_g: 12, sodium_mg: 12, is_verified: 1 },
+  { name: "Kiwi", brand: null, serving_size: 75, serving_unit: "g", calories: 46, protein_g: 0.8, carbs_g: 11, fat_g: 0.4, fiber_g: 2.3, sugar_g: 7, sodium_mg: 2, is_verified: 1 },
+  { name: "Pomegranate Seeds", brand: null, serving_size: 100, serving_unit: "g", calories: 83, protein_g: 1.7, carbs_g: 19, fat_g: 1.2, fiber_g: 4, sugar_g: 14, sodium_mg: 3, is_verified: 1 },
+  { name: "Peach", brand: null, serving_size: 150, serving_unit: "g", calories: 59, protein_g: 1.4, carbs_g: 14, fat_g: 0.4, fiber_g: 2.3, sugar_g: 12, sodium_mg: 0, is_verified: 1 },
+  { name: "Pear", brand: null, serving_size: 180, serving_unit: "g", calories: 102, protein_g: 0.7, carbs_g: 27, fat_g: 0.3, fiber_g: 5.5, sugar_g: 17, sodium_mg: 2, is_verified: 1 },
+  { name: "Plum", brand: null, serving_size: 66, serving_unit: "g", calories: 30, protein_g: 0.5, carbs_g: 7.5, fat_g: 0.2, fiber_g: 0.9, sugar_g: 6.5, sodium_mg: 0, is_verified: 1 },
+  { name: "Coconut (fresh)", brand: null, serving_size: 45, serving_unit: "g", calories: 159, protein_g: 1.5, carbs_g: 7, fat_g: 15, fiber_g: 4, sugar_g: 2.8, sodium_mg: 9, is_verified: 1 },
+  { name: "Dried Cranberries", brand: null, serving_size: 40, serving_unit: "g", calories: 130, protein_g: 0, carbs_g: 33, fat_g: 0.5, fiber_g: 2, sugar_g: 29, sodium_mg: 2, is_verified: 1 },
+
+  // ─── GRAINS & BREAD ───────────────────────────────────────────
+  { name: "Whole Wheat Bread (1 slice)", brand: null, serving_size: 28, serving_unit: "g", calories: 69, protein_g: 3.6, carbs_g: 12, fat_g: 1, fiber_g: 1.9, sugar_g: 1.4, sodium_mg: 132, is_verified: 1 },
+  { name: "Sourdough Bread (1 slice)", brand: null, serving_size: 36, serving_unit: "g", calories: 100, protein_g: 4, carbs_g: 19, fat_g: 0.6, fiber_g: 1, sugar_g: 1, sodium_mg: 180, is_verified: 1 },
+  { name: "Tortilla (flour, 8in)", brand: null, serving_size: 49, serving_unit: "g", calories: 140, protein_g: 4, carbs_g: 24, fat_g: 3.5, fiber_g: 1, sugar_g: 1, sodium_mg: 340, is_verified: 1 },
+  { name: "Couscous (cooked)", brand: null, serving_size: 100, serving_unit: "g", calories: 112, protein_g: 3.8, carbs_g: 23, fat_g: 0.2, fiber_g: 1.4, sugar_g: 0.1, sodium_mg: 5, is_verified: 1 },
+  { name: "Bulgur Wheat (cooked)", brand: null, serving_size: 100, serving_unit: "g", calories: 83, protein_g: 3.1, carbs_g: 19, fat_g: 0.2, fiber_g: 4.5, sugar_g: 0.1, sodium_mg: 5, is_verified: 1 },
+  { name: "Rice Cakes", brand: null, serving_size: 9, serving_unit: "g", calories: 35, protein_g: 0.7, carbs_g: 7.3, fat_g: 0.3, fiber_g: 0.4, sugar_g: 0.1, sodium_mg: 26, is_verified: 1 },
+
+  // ─── SPREADS & DIPS ───────────────────────────────────────────
+  { name: "Butter", brand: null, serving_size: 14, serving_unit: "g", calories: 102, protein_g: 0.1, carbs_g: 0, fat_g: 11.5, fiber_g: 0, sugar_g: 0, sodium_mg: 91, is_verified: 1 },
+  { name: "Ghee (clarified butter)", brand: null, serving_size: 14, serving_unit: "g", calories: 123, protein_g: 0, carbs_g: 0, fat_g: 14, fiber_g: 0, sugar_g: 0, sodium_mg: 0, is_verified: 1 },
+  { name: "Jam / Jelly", brand: null, serving_size: 20, serving_unit: "g", calories: 50, protein_g: 0.1, carbs_g: 13, fat_g: 0, fiber_g: 0.2, sugar_g: 10, sodium_mg: 6, is_verified: 1 },
+  { name: "Nutella", brand: "Ferrero", serving_size: 37, serving_unit: "g", calories: 200, protein_g: 2, carbs_g: 22, fat_g: 12, fiber_g: 1, sugar_g: 21, sodium_mg: 15, is_verified: 1 },
+  { name: "Tzatziki", brand: null, serving_size: 60, serving_unit: "g", calories: 50, protein_g: 2, carbs_g: 3, fat_g: 3.5, fiber_g: 0, sugar_g: 2, sodium_mg: 150, is_verified: 1 },
 ];
 
 module.exports = foodItems;

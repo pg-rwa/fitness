@@ -105,3 +105,27 @@ export async function api(path, options = {}) {
   if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
   return data;
 }
+
+export async function apiUpload(path, formData) {
+  const token = getToken();
+  const headers = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Unexpected response from server (${res.status})`);
+  }
+  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  return data;
+}

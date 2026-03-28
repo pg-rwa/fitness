@@ -426,31 +426,65 @@ function ClientDashboard() {
   );
 }
 
+/* ─── Mini Progress Ring ─── */
+function ProgressRing({ percent, size = 40, strokeWidth = 3, color = "text-brand-500" }) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+  return (
+    <svg width={size} height={size} className={`-rotate-90 ${color}`}>
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} className="stroke-gray-800" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" strokeWidth={strokeWidth} stroke="currentColor"
+        strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset} className="transition-all duration-700" />
+    </svg>
+  );
+}
+
 /* ═══ Trainer Dashboard ═══ */
 function TrainerDashboard() {
   const { user, logout } = useAuth();
   const [stats, setStats] = useState({});
   const [clients, setClients] = useState([]);
   const [recentSessions, setRecentSessions] = useState([]);
+  const [scheduledSessions, setScheduledSessions] = useState([]);
+  const [notifCount, setNotifCount] = useState(0);
 
   useEffect(() => {
     Promise.all([
       api("/workout-sessions?limit=5").catch(() => ({ data: [] })),
       api("/workout-templates?limit=1&ownOnly=true").catch(() => ({ pagination: { total: 0 } })),
-      api("/scheduling/sessions?limit=5").catch(() => ({ data: [] })),
+      api("/scheduling/sessions?limit=10").catch(() => ({ data: [] })),
       api("/users/my-clients").catch(() => []),
-    ]).then(([sessions, templates, scheduled, clientsData]) => {
-      setRecentSessions(sessions.data || []);
+      api("/notifications?unread=true&limit=1").catch(() => ({ pagination: { total: 0 } })),
+    ]).then(([sessions, templates, scheduled, clientsData, notifs]) => {
+      const allSessions = sessions.data || [];
+      const allScheduled = scheduled.data || [];
+      setRecentSessions(allSessions);
       setClients(Array.isArray(clientsData) ? clientsData : []);
+      setScheduledSessions(allScheduled.filter(s => s.status === "confirmed" || s.status === "pending"));
+      setNotifCount(notifs.pagination?.total || 0);
+      const completedThisWeek = allSessions.filter(s => {
+        const d = new Date(s.started_at || s.created_at);
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return d >= weekAgo && s.ended_at;
+      }).length;
       setStats({
         templates: templates.pagination?.total || 0,
-        scheduled: (scheduled.data || []).length,
+        scheduled: allScheduled.filter(s => s.status === "confirmed" || s.status === "pending").length,
+        completedThisWeek,
+        totalSessions: allSessions.length,
       });
     });
   }, []);
 
+  const activeClients = clients.filter(c => c.status === "active" || !c.status);
+  const weeklyGoal = Math.max(clients.length * 2, 5);
+  const weeklyPct = weeklyGoal > 0 ? Math.round((stats.completedThisWeek || 0) / weeklyGoal * 100) : 0;
+
   return (
     <div className="max-w-2xl mx-auto">
+      {/* ─ Header with notification badge ─ */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-white text-xl font-bold">{getGreeting()}, {user?.first_name || "Trainer"}</h1>
@@ -458,13 +492,45 @@ function TrainerDashboard() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        <button onClick={logout}
-          className="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center hover:bg-gray-700 hover:border-red-500/50 transition group">
-          <Icon d={ICONS.logout} className="w-4 h-4 text-gray-500 group-hover:text-red-400 transition" />
-        </button>
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard/notifications" className="relative w-9 h-9 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center hover:bg-gray-700 transition">
+            <Icon d={ICONS.bell} className="w-4 h-4 text-gray-400" />
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-[9px] text-white font-bold flex items-center justify-center">{notifCount}</span>
+            )}
+          </Link>
+          <button onClick={logout}
+            className="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center hover:bg-gray-700 hover:border-red-500/50 transition group">
+            <Icon d={ICONS.logout} className="w-4 h-4 text-gray-500 group-hover:text-red-400 transition" />
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      {/* ─ Weekly Overview Banner ─ */}
+      <div className="bg-gradient-to-r from-brand-500/15 via-purple-500/10 to-blue-500/15 border border-brand-500/20 rounded-2xl p-4 mb-5">
+        <div className="flex items-center gap-4">
+          <ProgressRing percent={weeklyPct} size={52} strokeWidth={4} color="text-brand-500" />
+          <div className="flex-1">
+            <p className="text-white text-sm font-semibold">Weekly Progress</p>
+            <p className="text-gray-400 text-xs mt-0.5">
+              {stats.completedThisWeek || 0} of {weeklyGoal} sessions completed this week
+            </p>
+            <div className="flex gap-4 mt-2">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-green-400" />
+                <span className="text-gray-400 text-[10px]">{activeClients.length} active clients</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                <span className="text-gray-400 text-[10px]">{stats.scheduled || 0} upcoming</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─ Stats Grid ─ */}
+      <div className="grid grid-cols-4 gap-2.5 mb-5">
         <StatCard
           icon={ICONS.user}
           label="Clients"
@@ -483,12 +549,20 @@ function TrainerDashboard() {
           icon={ICONS.calendar}
           label="Upcoming"
           value={stats.scheduled || 0}
-          sub="sessions"
           gradient="bg-gradient-to-br from-green-500/20 to-green-900/20"
           href="/dashboard/schedule"
         />
+        <StatCard
+          icon={ICONS.dumbbell}
+          label="This Week"
+          value={stats.completedThisWeek || 0}
+          sub="sessions"
+          gradient="bg-gradient-to-br from-orange-500/20 to-orange-900/20"
+          href="/dashboard/workouts"
+        />
       </div>
 
+      {/* ─ Quick Actions ─ */}
       <div className="mb-5">
         <h2 className="text-white font-semibold text-sm mb-3 px-1">Quick Actions</h2>
         <div className="grid grid-cols-4 gap-4">
@@ -499,12 +573,48 @@ function TrainerDashboard() {
         </div>
       </div>
 
+      {/* ─ Upcoming Sessions ─ */}
+      {scheduledSessions.length > 0 && (
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="text-white font-semibold text-sm">Upcoming Sessions</h2>
+            <Link href="/dashboard/schedule" className="text-brand-500 text-xs font-medium hover:text-brand-400 transition flex items-center gap-1">
+              View all <Icon d={ICONS.arrow} className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {scheduledSessions.slice(0, 3).map((s) => {
+              const sessionDate = new Date(s.scheduled_at || s.start_time || s.created_at);
+              const isToday = sessionDate.toDateString() === new Date().toDateString();
+              const isTomorrow = sessionDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
+              const dayLabel = isToday ? "Today" : isTomorrow ? "Tomorrow" : sessionDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+              return (
+                <div key={s.id} className={`flex items-center gap-3 bg-gray-900 border rounded-xl p-3 ${isToday ? "border-brand-500/40" : "border-gray-800"}`}>
+                  <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center shrink-0 ${isToday ? "bg-brand-500/20" : "bg-gray-800"}`}>
+                    <span className={`text-[10px] font-bold ${isToday ? "text-brand-400" : "text-gray-400"}`}>{sessionDate.toLocaleDateString("en-US", { month: "short" })}</span>
+                    <span className={`text-sm font-bold -mt-0.5 ${isToday ? "text-brand-300" : "text-gray-300"}`}>{sessionDate.getDate()}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{s.client_name || s.notes || "Session"}</p>
+                    <p className="text-gray-500 text-xs">{dayLabel} {sessionDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${s.status === "confirmed" ? "bg-green-500/10 text-green-400" : "bg-yellow-500/10 text-yellow-400"}`}>
+                    {s.status === "confirmed" ? "Confirmed" : "Pending"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ─ AI Insights ─ */}
       <div className="mb-5">
         <InsightsWidget />
       </div>
 
       {/* ─ Clients ─ */}
-      {clients.length > 0 && (
+      {clients.length > 0 ? (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-3 px-1">
             <h2 className="text-white font-semibold text-sm">My Clients</h2>
@@ -512,49 +622,85 @@ function TrainerDashboard() {
               Manage <Icon d={ICONS.arrow} className="w-3 h-3" />
             </Link>
           </div>
-          <div className="space-y-2">
-            {clients.slice(0, 5).map((c) => (
+          <div className="grid grid-cols-2 gap-2">
+            {clients.slice(0, 6).map((c) => (
               <Link key={c.id} href={`/dashboard/clients/${c.id}`}
-                className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition">
-                <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center shrink-0">
-                  <span className="text-brand-400 font-bold text-xs">{c.first_name?.[0]}{c.last_name?.[0]}</span>
+                className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-3 hover:border-gray-700 hover:bg-gray-800/50 transition group">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500/30 to-purple-500/30 flex items-center justify-center shrink-0 border border-brand-500/20">
+                  <span className="text-brand-300 font-bold text-xs">{c.first_name?.[0]}{c.last_name?.[0]}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">{c.first_name} {c.last_name}</p>
-                  <p className="text-gray-500 text-xs">{c.email}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${c.status === "active" || !c.status ? "bg-green-400" : "bg-gray-500"}`} />
+                    <p className="text-gray-500 text-[10px]">{c.status === "active" || !c.status ? "Active" : c.status}</p>
+                  </div>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${c.status === "active" ? "bg-green-500/10 text-green-400" : "bg-gray-500/10 text-gray-400"}`}>
-                  {c.status || "active"}
-                </span>
+                <Icon d={ICONS.arrow} className="w-3.5 h-3.5 text-gray-700 group-hover:text-gray-500 transition" />
               </Link>
             ))}
           </div>
+          {clients.length > 6 && (
+            <Link href="/dashboard/clients" className="block text-center text-brand-500 text-xs font-medium mt-2 hover:text-brand-400 transition">
+              + {clients.length - 6} more clients
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="mb-5 bg-gray-900/50 border border-dashed border-gray-700 rounded-2xl p-5 text-center">
+          <div className="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center mx-auto mb-3">
+            <Icon d={ICONS.user} className="w-6 h-6 text-gray-600" />
+          </div>
+          <p className="text-gray-400 text-sm font-medium">No clients yet</p>
+          <p className="text-gray-600 text-xs mt-1">Invite clients to get started</p>
+          <Link href="/dashboard/clients" className="inline-flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-lg text-xs font-medium mt-3 hover:bg-brand-600 transition">
+            <Icon d={ICONS.plus} className="w-3.5 h-3.5" /> Invite Client
+          </Link>
         </div>
       )}
 
+      {/* ─ Explore ─ */}
       <div className="mb-5">
         <h2 className="text-white font-semibold text-sm mb-3 px-1">Explore</h2>
         <div className="space-y-2">
-          <FeatureCard href="/dashboard/clients" icon={ICONS.user} iconBg="bg-blue-500/20" label="Clients" description="Manage your clients" />
-          <FeatureCard href="/dashboard/calendar" icon={ICONS.calendar} iconBg="bg-green-500/20" label="Calendar" description="View scheduled sessions" />
-          <FeatureCard href="/dashboard/schedule" icon={ICONS.clock} iconBg="bg-purple-500/20" label="Schedule" description="Upcoming appointments" />
-          <FeatureCard href="/dashboard/notifications" icon={ICONS.bell} iconBg="bg-yellow-500/20" label="Notifications" description="Alerts & updates" />
+          <FeatureCard href="/dashboard/clients" icon={ICONS.user} iconBg="bg-blue-500/20" label="Clients" description="Manage & track your clients" />
+          <FeatureCard href="/dashboard/templates" icon={ICONS.clipboard} iconBg="bg-brand-500/20" label="Templates" description="Create & assign workout plans" />
+          <FeatureCard href="/dashboard/calendar" icon={ICONS.calendar} iconBg="bg-green-500/20" label="Calendar" description="View all scheduled sessions" />
+          <FeatureCard href="/dashboard/schedule" icon={ICONS.clock} iconBg="bg-purple-500/20" label="Schedule" description="Manage availability & appointments" />
+          <FeatureCard href="/dashboard/insights" icon={ICONS.sparkles} iconBg="bg-cyan-500/20" label="AI Insights" description="AI-powered fitness analysis" />
+          <FeatureCard
+            href="/dashboard/notifications"
+            icon={ICONS.bell}
+            iconBg="bg-yellow-500/20"
+            label="Notifications"
+            description="Alerts & updates"
+            badge={notifCount > 0 ? `${notifCount}` : undefined}
+          />
         </div>
       </div>
 
+      {/* ─ Recent Activity ─ */}
       {recentSessions.length > 0 && (
         <div className="mb-5">
-          <h2 className="text-white font-semibold text-sm mb-3 px-1">Recent Sessions</h2>
+          <div className="flex items-center justify-between mb-3 px-1">
+            <h2 className="text-white font-semibold text-sm">Recent Sessions</h2>
+            <Link href="/dashboard/workouts" className="text-brand-500 text-xs font-medium hover:text-brand-400 transition flex items-center gap-1">
+              See all <Icon d={ICONS.arrow} className="w-3 h-3" />
+            </Link>
+          </div>
           <div className="space-y-2">
             {recentSessions.map((s) => (
-              <div key={s.id} className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-3">
+              <div key={s.id} className="flex items-center gap-3 bg-gray-900 border border-gray-800 rounded-xl p-3 hover:border-gray-700 transition">
                 <div className="w-9 h-9 rounded-lg bg-brand-500/10 flex items-center justify-center shrink-0">
                   <Icon d={ICONS.dumbbell} className="w-4 h-4 text-brand-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-white text-sm font-medium truncate">{s.name || "Workout"}</p>
-                  <p className="text-gray-500 text-xs">{new Date(s.started_at || s.created_at).toLocaleDateString()}</p>
+                  <p className="text-gray-500 text-xs">{new Date(s.started_at || s.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
                 </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${s.ended_at ? "bg-green-500/10 text-green-400" : "bg-yellow-500/10 text-yellow-400"}`}>
+                  {s.ended_at ? "Done" : "Active"}
+                </span>
               </div>
             ))}
           </div>

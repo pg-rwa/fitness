@@ -365,9 +365,176 @@ function setNutritionTargets(req, res, next) {
   }
 }
 
+// ─── AI Meal Photo Analysis ─────────────────────────────────
+
+async function analyzeMealPhoto(req, res, next) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    const fs = require("fs");
+    const imagePath = req.file.path;
+    const imageData = fs.readFileSync(imagePath);
+    const base64Image = imageData.toString("base64");
+    const mimeType = req.file.mimetype || "image/jpeg";
+
+    // Clean up temp file
+    fs.unlink(imagePath, () => {});
+
+    let analysis;
+
+    if (process.env.ANTHROPIC_API_KEY) {
+      try {
+        const Anthropic = require("@anthropic-ai/sdk");
+        const client = new Anthropic();
+
+        const message = await client.messages.create({
+          model: "claude-sonnet-4-5-20250929",
+          max_tokens: 1024,
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: mimeType,
+                    data: base64Image,
+                  },
+                },
+                {
+                  type: "text",
+                  text: `Analyze this food/meal photo and identify all visible food items with their estimated nutritional values.
+
+Return a JSON object with this exact structure:
+{
+  "meal_name": "Brief description of the overall meal",
+  "confidence": "high" | "medium" | "low",
+  "items": [
+    {
+      "name": "Food item name",
+      "estimated_portion": "e.g. 1 cup, 150g, 1 medium piece",
+      "serving_size": number (in grams),
+      "serving_unit": "g",
+      "calories": number,
+      "protein_g": number,
+      "carbs_g": number,
+      "fat_g": number,
+      "fiber_g": number,
+      "sugar_g": number
+    }
+  ],
+  "total_calories": number,
+  "total_protein_g": number,
+  "total_carbs_g": number,
+  "total_fat_g": number,
+  "tips": "Optional brief nutrition tip about this meal"
+}
+
+Be as accurate as possible with portion estimates based on visual cues. If you cannot identify the food clearly, set confidence to "low".
+
+Return ONLY valid JSON, no markdown or extra text.`,
+                },
+              ],
+            },
+          ],
+        });
+
+        const text = message.content[0].text.trim();
+        const cleaned = text.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+        analysis = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.error("[nutrition] AI analysis error:", aiErr.message);
+        return res.status(500).json({ error: "AI analysis failed. Please try again or log manually." });
+      }
+    } else {
+      return res.status(503).json({ error: "AI analysis is not configured. Please set ANTHROPIC_API_KEY." });
+    }
+
+    res.json(analysis);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── Barcode Lookup ─────────────────────────────────────────
+
+async function lookupBarcode(req, res, next) {
+  try {
+    const { barcode } = req.params;
+    if (!barcode) {
+      return res.status(400).json({ error: "Barcode is required" });
+    }
+
+    // First check local database
+    const db = getDb();
+    const localItem = db.prepare("SELECT * FROM food_items WHERE barcode = ?").get(barcode);
+    if (localItem) {
+      return res.json({ source: "local", item: localItem });
+    }
+
+    // Query Open Food Facts API
+    const https = require("https");
+    const data = await new Promise((resolve, reject) => {
+      const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json`;
+      https.get(url, { headers: { "User-Agent": "FitTracker/1.0" } }, (response) => {
+        let body = "";
+        response.on("data", (chunk) => { body += chunk; });
+        response.on("end", () => {
+          try { resolve(JSON.parse(body)); } catch { reject(new Error("Invalid API response")); }
+        });
+        response.on("error", reject);
+      }).on("error", reject);
+    });
+
+    if (data.status !== 1 || !data.product) {
+      return res.status(404).json({ error: "Product not found for this barcode" });
+    }
+
+    const p = data.product;
+    const nutriments = p.nutriments || {};
+
+    const item = {
+      name: p.product_name || p.product_name_en || "Unknown Product",
+      brand: p.brands || null,
+      serving_size: nutriments.serving_size ? parseFloat(nutriments.serving_size) || 100 : 100,
+      serving_unit: "g",
+      calories: Math.round(nutriments["energy-kcal_100g"] || nutriments["energy-kcal_serving"] || 0),
+      protein_g: Math.round((nutriments.proteins_100g || 0) * 10) / 10,
+      carbs_g: Math.round((nutriments.carbohydrates_100g || 0) * 10) / 10,
+      fat_g: Math.round((nutriments.fat_100g || 0) * 10) / 10,
+      fiber_g: Math.round((nutriments.fiber_100g || 0) * 10) / 10,
+      sugar_g: Math.round((nutriments.sugars_100g || 0) * 10) / 10,
+      sodium_mg: Math.round((nutriments.sodium_100g || 0) * 1000 * 10) / 10,
+      barcode: barcode,
+      photo_url: p.image_url || null,
+      source: "openfoodfacts",
+    };
+
+    // Save to local database for future lookups
+    try {
+      db.prepare(
+        `INSERT OR IGNORE INTO food_items (name, brand, serving_size, serving_unit, calories, protein_g, carbs_g, fat_g, fiber_g, sugar_g, sodium_mg, barcode, photo_url, is_verified)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`
+      ).run(item.name, item.brand, item.serving_size, item.serving_unit, item.calories, item.protein_g, item.carbs_g, item.fat_g, item.fiber_g, item.sugar_g, item.sodium_mg, item.barcode, item.photo_url);
+
+      const saved = db.prepare("SELECT * FROM food_items WHERE barcode = ?").get(barcode);
+      if (saved) item.id = saved.id;
+    } catch (saveErr) {
+      console.error("[nutrition] Failed to save barcode item:", saveErr.message);
+    }
+
+    res.json({ source: "openfoodfacts", item });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   searchFoods, getFoodById, createFood, updateFood,
   listPresets, createPreset, deletePreset,
   logMeal, getMealsByDate, deleteMeal, dailySummary,
-  setNutritionTargets,
+  setNutritionTargets, analyzeMealPhoto, lookupBarcode,
 };
