@@ -70,14 +70,14 @@ export default function ProfilePage() {
     }
   };
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > MAX_FILE_SIZE) {
-      setError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max is 5MB.`);
+      setError(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max is 10MB.`);
       if (fileRef.current) fileRef.current.value = "";
       return;
     }
@@ -177,7 +177,7 @@ export default function ProfilePage() {
                 )}
                 {uploading ? "Uploading..." : "Upload Photo"}
               </button>
-              <p className="text-gray-600 text-xs">Max 5MB</p>
+              <p className="text-gray-600 text-xs">Max 10MB</p>
               {avatarUrl && (
                 <button
                   onClick={removeAvatar}

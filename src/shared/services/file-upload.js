@@ -7,6 +7,7 @@ const { getDb } = require("../../config/database");
 
 const THUMB_WIDTH = 400;
 const THUMB_HEIGHT = 400;
+const MAX_IMAGE_DIMENSION = 2048; // Max width/height for original images
 
 class LocalStorageAdapter {
   constructor(uploadDir) {
@@ -139,14 +140,29 @@ class FileUploadService {
   }
 
   async upload({ userId, buffer, originalName, mimeType, entityType, entityId }) {
-    const url = await this.adapter.save(buffer, originalName);
-    const sizeBytes = buffer.length;
+    // Resize oversized images to max dimension while preserving aspect ratio
+    let processedBuffer = buffer;
+    if (mimeType && mimeType.startsWith("image/")) {
+      try {
+        const metadata = await sharp(buffer).metadata();
+        if (metadata.width > MAX_IMAGE_DIMENSION || metadata.height > MAX_IMAGE_DIMENSION) {
+          processedBuffer = await sharp(buffer)
+            .resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, { fit: "inside", withoutEnlargement: true })
+            .toBuffer();
+        }
+      } catch (err) {
+        console.error("[image-resize-error]", err.message);
+      }
+    }
+
+    const url = await this.adapter.save(processedBuffer, originalName);
+    const sizeBytes = processedBuffer.length;
 
     // Generate thumbnail for image uploads
     let thumbnailUrl = null;
     if (mimeType && mimeType.startsWith("image/")) {
       try {
-        const thumbBuffer = await sharp(buffer)
+        const thumbBuffer = await sharp(processedBuffer)
           .resize(THUMB_WIDTH, THUMB_HEIGHT, { fit: "cover", position: "centre" })
           .jpeg({ quality: 80 })
           .toBuffer();
