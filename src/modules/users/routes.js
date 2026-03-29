@@ -62,6 +62,9 @@ router.put(
   controller.respondToRequest
 );
 
+// Get user by ID (trainers see own clients, admins see anyone)
+router.get("/:id", authorize("trainer", "admin"), controller.getUserById);
+
 // Trainer creates template for client
 router.post(
   "/clients/:clientId/templates",

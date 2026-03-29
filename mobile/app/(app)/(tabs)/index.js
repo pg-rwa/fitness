@@ -21,6 +21,7 @@ export default function HomeScreen() {
 
   const [trainerStats, setTrainerStats] = useState({ clients: 0, templates: 0, upcoming: 0, weekSessions: 0 });
   const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [trainerRequests, setTrainerRequests] = useState([]);
 
   const loadData = useCallback(async () => {
     try {
@@ -55,8 +56,12 @@ export default function HomeScreen() {
         });
         setUpcomingSessions(allScheduled.slice(0, 3));
       } else {
-        const assignData = await api("/assigned-workouts/mine");
+        const [assignData, requestData] = await Promise.all([
+          api("/assigned-workouts/mine"),
+          api("/users/client-requests").catch(() => []),
+        ]);
         setAssignments(assignData);
+        setTrainerRequests(requestData);
       }
     } catch {}
   }, [isTrainer]);
@@ -249,6 +254,72 @@ export default function HomeScreen() {
                   <Text className="text-white font-medium text-sm ml-2">Progress</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* My Trainer Card */}
+              {user?.trainer_name && (
+                <>
+                  <SectionHeader title="My Trainer" />
+                  <Card>
+                    <View className="flex-row items-center">
+                      <View className="bg-primary/20 rounded-full p-3 mr-3">
+                        <Ionicons name="person" size={24} color="#E8614D" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-white font-bold text-base">{user.trainer_name}</Text>
+                        <Text className="text-gray-400 text-sm">{user.trainer_email}</Text>
+                      </View>
+                      <TouchableOpacity onPress={() => router.push("/(app)/(tabs)/schedule")}>
+                        <Ionicons name="calendar-outline" size={22} color="#10B981" />
+                      </TouchableOpacity>
+                    </View>
+                  </Card>
+                </>
+              )}
+
+              {/* Pending Trainer Requests */}
+              {trainerRequests.length > 0 && (
+                <>
+                  <SectionHeader title="Trainer Requests" />
+                  {trainerRequests.map((req) => (
+                    <Card key={req.id}>
+                      <View className="flex-row items-center">
+                        <View className="bg-blue-500/20 rounded-full p-2.5 mr-3">
+                          <Ionicons name="person-add" size={20} color="#3B82F6" />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-white font-semibold">{req.trainer_name}</Text>
+                          <Text className="text-gray-400 text-xs">{req.trainer_email}</Text>
+                          <Text className="text-gray-500 text-xs mt-0.5">Wants to be your trainer</Text>
+                        </View>
+                        <View className="flex-row gap-2">
+                          <TouchableOpacity
+                            onPress={async () => {
+                              try {
+                                await api(`/users/trainer-requests/${req.id}/respond`, { method: "PUT", body: { action: "approve" } });
+                                loadData();
+                              } catch {}
+                            }}
+                            className="bg-green-600 rounded-lg px-3 py-1.5"
+                          >
+                            <Text className="text-white text-xs font-semibold">Accept</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={async () => {
+                              try {
+                                await api(`/users/trainer-requests/${req.id}/respond`, { method: "PUT", body: { action: "decline" } });
+                                loadData();
+                              } catch {}
+                            }}
+                            className="bg-gray-600 rounded-lg px-3 py-1.5"
+                          >
+                            <Text className="text-white text-xs font-semibold">Decline</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </Card>
+                  ))}
+                </>
+              )}
             </>
           )}
 

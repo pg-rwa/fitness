@@ -169,6 +169,41 @@ async function deleteAvatar(req, res, next) {
   }
 }
 
+// ─── Get User by ID (trainer/admin viewing a client) ────────
+
+function getUserById(req, res, next) {
+  try {
+    const db = getDb();
+    const targetId = parseInt(req.params.id, 10);
+
+    // Trainers can only view their own clients; admins can view anyone
+    const user = db
+      .prepare(
+        `SELECT u.id, u.email, u.first_name, u.last_name, u.role, u.trainer_id, u.status, u.created_at,
+                t.first_name || ' ' || t.last_name as trainer_name, t.email as trainer_email
+         FROM users u
+         LEFT JOIN users t ON t.id = u.trainer_id
+         WHERE u.id = ?`
+      )
+      .get(targetId);
+
+    if (!user) throw new NotFoundError("User");
+
+    // Trainers can only see their own clients
+    if (req.userRole === "trainer" && user.trainer_id !== req.userId) {
+      throw new ForbiddenError("You can only view your own clients");
+    }
+
+    const profile = db
+      .prepare("SELECT * FROM user_profiles WHERE user_id = ?")
+      .get(targetId);
+
+    res.json({ ...user, profile: profile || null });
+  } catch (err) {
+    next(err);
+  }
+}
+
 // ─── Trainer's Client List ──────────────────────────────────
 
 function myClients(req, res, next) {
@@ -434,6 +469,7 @@ module.exports = {
   updateProfile,
   uploadAvatar,
   deleteAvatar,
+  getUserById,
   myClients,
   searchClients,
   sendTrainerRequest,

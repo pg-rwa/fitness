@@ -374,10 +374,25 @@ async function analyzeMealPhoto(req, res, next) {
     }
 
     const fs = require("fs");
+    const sharp = require("sharp");
     const imagePath = req.file.path;
-    const imageData = fs.readFileSync(imagePath);
-    const base64Image = imageData.toString("base64");
-    const mimeType = req.file.mimetype || "image/jpeg";
+
+    // Resize image to fit Claude API limits (max 1568px on longest side)
+    // This also reduces base64 payload size for faster analysis
+    let resizedBuffer;
+    try {
+      resizedBuffer = await sharp(imagePath)
+        .resize(1568, 1568, { fit: "inside", withoutEnlargement: true })
+        .jpeg({ quality: 85 })
+        .toBuffer();
+    } catch (resizeErr) {
+      console.error("[nutrition] Image resize error:", resizeErr.message);
+      // Fallback to raw file if resize fails
+      resizedBuffer = fs.readFileSync(imagePath);
+    }
+
+    const base64Image = resizedBuffer.toString("base64");
+    const mimeType = "image/jpeg";
 
     // Clean up temp file
     fs.unlink(imagePath, () => {});
@@ -390,7 +405,7 @@ async function analyzeMealPhoto(req, res, next) {
         const client = new Anthropic();
 
         const message = await client.messages.create({
-          model: "claude-sonnet-4-5-20250929",
+          model: "claude-sonnet-4-5-20250514",
           max_tokens: 1024,
           messages: [
             {
