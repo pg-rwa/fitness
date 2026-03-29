@@ -152,3 +152,71 @@ Routes: `/api/*` -> API, `/admin/*` -> Admin, `/` -> Frontend.
 - Advanced analytics (charts, CSV export)
 - Social features (challenges, leaderboards)
 - App Store submission
+
+## Current Focus: Mobile App (iOS & Android)
+
+We are actively building the FitTracker mobile app for iOS and Android using Expo 54 / React Native / NativeWind / Expo Router.
+
+### What's Built (Phase 7 — ~85% Complete)
+
+**Infrastructure (Done):**
+- Expo project with Expo Router file-based navigation
+- NativeWind (Tailwind CSS for RN) styling with dark theme (coral/orange accents)
+- JWT auth with expo-secure-store, automatic token refresh
+- Offline-first architecture (request queuing, response caching, auto-retry)
+- WebSocket real-time updates with auto-reconnect
+- API client (`mobile/lib/api.js`) with offline queue and cache
+- Reusable UI component library (`mobile/components/ui.js`)
+- Push notifications via expo-notifications with Android channels
+- Image handling (camera, picker, resizer)
+
+**Auth Screens (Done):**
+- Welcome/onboarding carousel, Login, Register (with invite code), Forgot password
+
+**Client Screens (Done):**
+- Home Dashboard — today's schedule, meals progress, streak, AI insight
+- Workouts — session history, templates, start new workout
+- Workout Session — exercise list, set logging (reps/weight/RPE), rest timer, mood
+- Nutrition — daily macros vs targets, meal logging, food search, presets, photo upload
+- Progress — body measurements with trends, progress photos with compare
+- Calendar — month/week view aggregating all events
+- Profile — edit profile, notification prefs, health sync toggle
+
+**Trainer Screens (Done):**
+- Dashboard — client metrics, upcoming sessions, templates
+- Client List & Detail — tabbed view (workouts, schedule, nutrition, progress)
+- Template Builder — exercises, targets, machine settings, superset groups
+- Schedule Management — weekly availability, approve/decline sessions
+- Equipment & Exercise management
+
+**Health Integration (Partial):**
+- UI and platform abstraction built (`mobile/lib/health.js`)
+- Manual logging works; native HealthKit/Health Connect needs EAS dev client builds
+
+**Push Notifications (Done):**
+- Token registration, Android channels, local scheduling, badge management
+
+### What's Left
+
+1. **Native health module builds** — Apple HealthKit & Google Health Connect require `eas build` with dev client profile (code is ready, just needs native build)
+2. **App Store submission** — Need Apple Developer & Google Play credentials, privacy policy, TestFlight/internal testing, then production release
+3. **Minor polish** — Celebration animations refinement, edge case UI fixes
+
+### Key Files
+- `mobile/app/` — All screens (Expo Router file-based)
+- `mobile/components/` — UI library, ExerciseSearchModal, RestTimer, ErrorBoundary
+- `mobile/lib/` — api.js, websocket.js, offline.js, health.js, notifications.js, format.js, image.js
+- `mobile/contexts/AuthContext.js` — Auth state management
+- `mobile/app.json` — App config (bundle ID: com.fittracker.app)
+- `mobile/eas.json` — EAS Build profiles (dev/preview/production)
+
+### Build Commands
+```bash
+cd mobile && npm install && npx expo start          # Dev (Expo Go)
+eas build --profile development --platform all      # Dev client build
+eas build --profile preview --platform all           # Preview build
+eas build --profile production --platform ios        # Production iOS
+eas build --profile production --platform android    # Production Android
+eas submit --platform ios                            # Submit to App Store
+eas submit --platform android                        # Submit to Play Store
+```
