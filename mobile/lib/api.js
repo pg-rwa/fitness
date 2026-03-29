@@ -129,6 +129,47 @@ export async function api(path, options = {}) {
   return data;
 }
 
+export async function apiUpload(path, formData) {
+  const headers = {};
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  let res;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+  } catch (networkErr) {
+    throw new Error("No internet connection. Please check your network and try again.");
+  }
+
+  if (res.status === 401 && !refreshPromise) {
+    try {
+      refreshPromise = refreshAccessToken();
+      await refreshPromise;
+      refreshPromise = null;
+      headers.Authorization = `Bearer ${accessToken}`;
+      res = await fetch(`${API_URL}${path}`, { method: "POST", headers, body: formData });
+    } catch {
+      refreshPromise = null;
+      throw new Error("AUTH_EXPIRED");
+    }
+  }
+
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(`Unexpected response from server (${res.status})`);
+  }
+  if (!res.ok) throw new Error(data.error || `Request failed: ${res.status}`);
+  return data;
+}
+
 export async function clearTokens() {
   accessToken = null;
   await SecureStore.deleteItemAsync("token");

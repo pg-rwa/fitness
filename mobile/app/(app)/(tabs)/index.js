@@ -19,6 +19,9 @@ export default function HomeScreen() {
   const [healthSummary, setHealthSummary] = useState(null);
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
 
+  const [trainerStats, setTrainerStats] = useState({ clients: 0, templates: 0, upcoming: 0, weekSessions: 0 });
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+
   const loadData = useCallback(async () => {
     try {
       const [notifData, insightData, healthData] = await Promise.all([
@@ -30,7 +33,28 @@ export default function HomeScreen() {
       setInsights(insightData.data || []);
       if (healthData?.summary) setHealthSummary(healthData.summary);
 
-      if (!isTrainer) {
+      if (isTrainer) {
+        const [sessions, templates, scheduled, clients] = await Promise.all([
+          api("/workout-sessions?limit=20").catch(() => ({ data: [] })),
+          api("/workout-templates?limit=1&ownOnly=true").catch(() => ({ pagination: { total: 0 } })),
+          api("/scheduling/sessions?limit=10").catch(() => ({ data: [] })),
+          api("/users/my-clients").catch(() => []),
+        ]);
+        const allSessions = sessions.data || [];
+        const allScheduled = (scheduled.data || []).filter(s => s.status === "confirmed" || s.status === "pending");
+        const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const weekSessions = allSessions.filter(s => {
+          const d = new Date(s.started_at || s.created_at);
+          return d >= weekAgo && s.ended_at;
+        }).length;
+        setTrainerStats({
+          clients: Array.isArray(clients) ? clients.length : 0,
+          templates: templates.pagination?.total || 0,
+          upcoming: allScheduled.length,
+          weekSessions,
+        });
+        setUpcomingSessions(allScheduled.slice(0, 3));
+      } else {
         const assignData = await api("/assigned-workouts/mine");
         setAssignments(assignData);
       }
@@ -66,6 +90,27 @@ export default function HomeScreen() {
           {/* Quick Actions */}
           {isTrainer ? (
             <>
+              {/* Trainer: Stats Grid */}
+              <View className="flex-row mb-2 gap-2">
+                <StatCard label="Clients" value={trainerStats.clients} icon="people" color="#E8614D" />
+                <StatCard label="Templates" value={trainerStats.templates} icon="document-text" color="#3B82F6" />
+                <StatCard label="Upcoming" value={trainerStats.upcoming} icon="calendar" color="#10B981" />
+                <StatCard label="This Week" value={trainerStats.weekSessions} icon="barbell" color="#F59E0B" />
+              </View>
+
+              {/* Weekly Progress Bar */}
+              {trainerStats.clients > 0 && (
+                <Card className="mb-1">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Text className="text-white font-semibold text-sm">Weekly Progress</Text>
+                    <Text className="text-gray-400 text-xs">{trainerStats.weekSessions} / {Math.max(trainerStats.clients * 2, 5)} sessions</Text>
+                  </View>
+                  <View className="w-full bg-gray-700 h-2 rounded-full">
+                    <View className="bg-primary h-2 rounded-full" style={{ width: `${Math.min(100, Math.round((trainerStats.weekSessions / Math.max(trainerStats.clients * 2, 5)) * 100))}%` }} />
+                  </View>
+                </Card>
+              )}
+
               {/* Trainer: primary actions */}
               <View className="flex-row mb-2">
                 <TouchableOpacity
@@ -120,6 +165,33 @@ export default function HomeScreen() {
                   <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Upcoming Sessions */}
+              {upcomingSessions.length > 0 && (
+                <>
+                  <SectionHeader title="Upcoming Sessions" action="View All" onAction={() => router.push("/(app)/(tabs)/schedule")} />
+                  {upcomingSessions.map((s) => {
+                    const d = new Date(s.scheduled_at || s.start_time || s.created_at);
+                    const isToday = d.toDateString() === new Date().toDateString();
+                    return (
+                      <Card key={s.id}>
+                        <View className="flex-row items-center">
+                          <View className={`rounded-xl p-2.5 mr-3 ${isToday ? "bg-primary/20" : "bg-gray-700"}`}>
+                            <Ionicons name="calendar" size={20} color={isToday ? "#E8614D" : "#9CA3AF"} />
+                          </View>
+                          <View className="flex-1">
+                            <Text className="text-white font-semibold">{s.client_name || "Client"}</Text>
+                            <Text className="text-gray-400 text-xs mt-0.5">
+                              {isToday ? "Today" : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })} at {d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                            </Text>
+                          </View>
+                          {isToday && <Badge text="Today" color="primary" />}
+                        </View>
+                      </Card>
+                    );
+                  })}
+                </>
+              )}
             </>
           ) : (
             <>
