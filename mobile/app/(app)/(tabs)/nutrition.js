@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { resizeImageIfNeeded } from "../../../lib/image";
 
 // ─── Barcode Scanner Modal ─────────────────────────────────
 function BarcodeScannerModal({ visible, onClose, onScanned }) {
@@ -90,7 +91,9 @@ function PhotoAnalysisModal({ visible, onClose, onAddItems }) {
       quality: 0.8,
     });
     if (!picked.canceled) {
-      setPhoto(picked.assets[0]);
+      const asset = picked.assets[0];
+      const resizedUri = await resizeImageIfNeeded(asset.uri, { width: asset.width, height: asset.height });
+      setPhoto({ ...asset, uri: resizedUri });
       setResult(null);
       setError("");
     }
@@ -107,7 +110,9 @@ function PhotoAnalysisModal({ visible, onClose, onAddItems }) {
       quality: 0.8,
     });
     if (!picked.canceled) {
-      setPhoto(picked.assets[0]);
+      const asset = picked.assets[0];
+      const resizedUri = await resizeImageIfNeeded(asset.uri, { width: asset.width, height: asset.height });
+      setPhoto({ ...asset, uri: resizedUri });
       setResult(null);
       setError("");
     }

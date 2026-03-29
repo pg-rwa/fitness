@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import * as SecureStore from "expo-secure-store";
+import { resizeImageIfNeeded } from "../../lib/image";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
 
@@ -90,7 +91,7 @@ export default function EditProfileScreen() {
       setUploading(true);
       setError("");
       const asset = result.assets[0];
-      const uri = asset.uri;
+      const uri = await resizeImageIfNeeded(asset.uri, { width: asset.width, height: asset.height });
       const filename = uri.split("/").pop() || "avatar.jpg";
       const match = /\.(\w+)$/.exec(filename);
       const ext = match ? match[1] : "jpg";

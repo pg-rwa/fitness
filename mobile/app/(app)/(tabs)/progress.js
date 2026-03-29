@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { formatDate, formatWeight } from "../../../lib/format";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
+import { resizeImageIfNeeded } from "../../../lib/image";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
 const CATEGORIES = ["front", "side", "back", "flexed", "custom"];
@@ -28,7 +29,9 @@ function PhotoUploadModal({ visible, onSave, onClose }) {
       quality: 0.8,
     });
     if (!result.canceled && result.assets?.[0]) {
-      setImage(result.assets[0]);
+      const asset = result.assets[0];
+      const resizedUri = await resizeImageIfNeeded(asset.uri, { width: asset.width, height: asset.height });
+      setImage({ ...asset, uri: resizedUri });
       setError(null);
     }
   };
@@ -44,7 +47,9 @@ function PhotoUploadModal({ visible, onSave, onClose }) {
       quality: 0.8,
     });
     if (!result.canceled && result.assets?.[0]) {
-      setImage(result.assets[0]);
+      const asset = result.assets[0];
+      const resizedUri = await resizeImageIfNeeded(asset.uri, { width: asset.width, height: asset.height });
+      setImage({ ...asset, uri: resizedUri });
       setError(null);
     }
   };
