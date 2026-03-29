@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
+export const API_BASE = API_URL.replace("/api", "");
 
 let accessToken = null;
 let refreshPromise = null;

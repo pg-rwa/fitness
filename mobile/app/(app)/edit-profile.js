@@ -5,11 +5,9 @@ import { Input, Button, Card } from "../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { api } from "../../lib/api";
+import { api, API_URL } from "../../lib/api";
 import * as SecureStore from "expo-secure-store";
 import { resizeImageIfNeeded } from "../../lib/image";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
 
 export default function EditProfileScreen() {
   const { user, refreshUser } = useAuth();

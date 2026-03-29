@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 
-const WS_URL = ("http://64.227.187.54:3080/api")
+const WS_URL = (process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api")
   .replace("/api", "")
   .replace("http://", "ws://")
   .replace("https://", "wss://");

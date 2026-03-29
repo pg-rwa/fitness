@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, Alert, Image, FlatList, Modal, Dimensions, ActivityIndicator } from "react-native";
 import { useEffect, useState, useCallback } from "react";
-import { api } from "../../../lib/api";
+import { api, API_URL } from "../../../lib/api";
 import { Card, StatCard, SectionHeader, Button, Input, PullToRefresh, EmptyState, Badge } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,8 +8,6 @@ import { formatDate, formatWeight } from "../../../lib/format";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";
 import { resizeImageIfNeeded } from "../../../lib/image";
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://64.227.187.54:3080/api";
 const CATEGORIES = ["front", "side", "back", "flexed", "custom"];
 const screenWidth = Dimensions.get("window").width;
 const photoSize = (screenWidth - 40 - 8) / 3; // 3 columns, 20px padding each side, 4px gap

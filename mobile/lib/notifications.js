@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 import { api } from "./api";
 
 let Notifications = null;
@@ -77,7 +78,7 @@ export async function registerForPushNotifications() {
 
   try {
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: "fittracker",
+      projectId: Constants.expoConfig?.extra?.eas?.projectId,
     });
     return tokenData.data;
   } catch (err) {

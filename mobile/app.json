@@ -66,7 +66,13 @@
           "color": "#E8614D"
         }
       ],
-      "expo-image-picker"
+      "expo-image-picker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FitTracker uses the camera to take progress photos and scan food barcodes."
+        }
+      ]
     ],
     "extra": {
       "eas": {
