@@ -17,6 +17,7 @@ export default function AppLayout() {
       <Stack.Screen name="calendar" />
       <Stack.Screen name="insights" />
       <Stack.Screen name="notifications" />
+      <Stack.Screen name="social" />
     </Stack>
   );
 }

@@ -17,6 +17,9 @@ const defaults = {
   "ai-insights": true,
   notifications: true,
   admin: true,
+  social: true,
+  analytics: true,
+  "push-notifications": true,
 };
 
 class FeatureFlags {

@@ -7,6 +7,7 @@ import { Card, StatCard, Badge, SectionHeader, PullToRefresh, EmptyState } from 
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { formatDate } from "../../../lib/format";
+import { registerForPushNotifications } from "../../../lib/push-notifications";
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ export default function HomeScreen() {
     } catch {}
   }, [isTrainer]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => { loadData(); registerForPushNotifications(); }, [loadData]);
 
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
 
@@ -107,6 +108,16 @@ export default function HomeScreen() {
               <Ionicons name="flash" size={20} color="#A855F7" />
               <Text className="text-white font-medium text-sm ml-2">AI Insights</Text>
             </TouchableOpacity>
+          </View>
+          <View className="flex-row mb-2 gap-2">
+            <TouchableOpacity
+              onPress={() => router.push("/(app)/social")}
+              className="flex-1 bg-dark-card rounded-2xl p-3 border border-gray-700 flex-row items-center"
+            >
+              <Ionicons name="trophy" size={20} color="#FBBF24" />
+              <Text className="text-white font-medium text-sm ml-2">Challenges</Text>
+            </TouchableOpacity>
+            <View className="flex-1" />
           </View>
 
           {/* Assigned Workouts */}
