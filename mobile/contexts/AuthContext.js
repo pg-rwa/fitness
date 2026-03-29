@@ -31,8 +31,8 @@ export function AuthProvider({ children }) {
       body: { email, password },
       noAuth: true,
     });
-    console.log("[auth] Login response keys:", Object.keys(data));
-    console.log("[auth] data.user:", JSON.stringify(data.user));
+    __DEV__ && console.log("[auth] Login response keys:", Object.keys(data));
+    __DEV__ && console.log("[auth] data.user:", JSON.stringify(data.user));
     await setToken(data.token);
     if (data.refreshToken) await setRefreshToken(data.refreshToken);
     // Handle both { user: {...} } and flat { email, role, token } response formats

@@ -30,11 +30,11 @@ export default function TemplateBuilderScreen() {
   // Load all exercises once when Add Exercise screen opens
   useEffect(() => {
     if (showAddExercise && allExercises.length === 0) {
-      console.log("[template-builder] Loading all exercises...");
+      __DEV__ && console.log("[template-builder] Loading all exercises...");
       api("/exercises")
         .then((data) => {
           const list = Array.isArray(data) ? data : data.data || [];
-          console.log("[template-builder] Loaded", list.length, "exercises");
+          __DEV__ && console.log("[template-builder] Loaded", list.length, "exercises");
           setAllExercises(list);
         })
         .catch((err) => console.error("[template-builder] Failed to load exercises:", err.message));

@@ -435,7 +435,7 @@ export default function ScheduleTab() {
       setSessions(all.filter((s) => s.status !== "requested" && s.status !== "proposed"));
       setAvailability(availData);
     } catch (err) {
-      console.log("[schedule] load error:", err.message);
+      __DEV__ && console.log("[schedule] load error:", err.message);
     }
   }, [isTrainer, trainerId]);
 

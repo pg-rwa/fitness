@@ -2,6 +2,7 @@
   "expo": {
     "name": "FitTracker",
     "slug": "fittracker",
+    "owner": "fittracker",
     "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,11 +17,20 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.fittracker.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSHealthShareUsageDescription": "FitTracker reads your health data to provide personalized fitness insights and track your progress.",
         "NSHealthUpdateUsageDescription": "FitTracker writes workout data to Apple Health to keep your health records up to date.",
+        "NSCameraUsageDescription": "FitTracker uses your camera to take progress photos and scan food barcodes.",
+        "NSPhotoLibraryUsageDescription": "FitTracker accesses your photo library to upload progress photos.",
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
+          "NSAllowsArbitraryLoads": false,
+          "NSExceptionDomains": {
+            "64.227.187.54": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": false
+            }
+          }
         }
       }
     },
@@ -31,7 +41,10 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.fittracker.app",
+      "versionCode": 1,
       "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.health.READ_STEPS",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_SLEEP",
@@ -54,6 +67,11 @@
         }
       ],
       "expo-image-picker"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "YOUR_EAS_PROJECT_ID"
+      }
+    }
   }
 }
