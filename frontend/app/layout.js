@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "FitTracker",
+  title: "Peqo",
   description: "Personal fitness tracking platform",
 };
 

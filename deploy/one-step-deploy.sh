@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# ─── FitTracker One-Step Deploy ──────────────────────────────────
-# Single command to deploy FitTracker to DigitalOcean.
+# ─── Peqo One-Step Deploy ──────────────────────────────────
+# Single command to deploy Peqo to DigitalOcean.
 #
 # Does everything: git push → sync code → backup DB → build → deploy → verify
 #
@@ -108,7 +108,7 @@ elapsed() {
 # ─── Banner ──────────────────────────────────────────────────────
 echo ""
 echo -e "${CYAN}╔══════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${NC}  ${BOLD}FitTracker — One-Step Deploy${NC}                        ${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}  ${BOLD}Peqo — One-Step Deploy${NC}                        ${CYAN}║${NC}"
 echo -e "${CYAN}╚══════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  Target:   ${BOLD}${DEPLOY_HOST}${NC}"

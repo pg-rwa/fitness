@@ -1,6 +1,6 @@
-# FitTracker
+# Peqo
 
-A multi-role fitness SaaS platform for trainers and clients.
+Your AI fitness companion. A multi-role fitness SaaS platform for trainers and clients.
 
 ## Tech Stack
 

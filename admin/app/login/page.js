@@ -38,7 +38,7 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-white text-2xl font-bold">FitTracker Admin</h1>
+          <h1 className="text-white text-2xl font-bold">Peqo Admin</h1>
           <p className="text-gray-500 mt-1">Sign in to the admin dashboard</p>
         </div>
 

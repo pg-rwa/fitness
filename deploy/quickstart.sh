@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Quickstart (IP-only, no SSL) ────────────────────
+# ─── Peqo Quickstart (IP-only, no SSL) ────────────────────
 # SSH into your fresh Ubuntu droplet and run:
 #   curl -sSL <raw-url> | bash
 # Or clone the repo and run:
@@ -13,7 +13,7 @@ HTTP_PORT="${HTTP_PORT:-8080}"
 
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
-echo "  ║      FitTracker - Quickstart Deploy      ║"
+echo "  ║      Peqo - Quickstart Deploy      ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo ""
 
@@ -85,7 +85,7 @@ if [ ! -f .env ]; then
   JWT_SECRET=$(openssl rand -base64 48)
 
   cat > .env <<EOF
-# ─── FitTracker Production Config ────────────────
+# ─── Peqo Production Config ────────────────
 JWT_SECRET=${JWT_SECRET}
 JWT_EXPIRES_IN=15m
 

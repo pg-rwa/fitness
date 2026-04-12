@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Dev Deployment ─────────────────────────────────
+# ─── Peqo Dev Deployment ─────────────────────────────────
 # Deploy to a DigitalOcean droplet for dev/testing (no SSL)
 #
 # Quick start (run on the droplet):
@@ -14,7 +14,7 @@ set -euo pipefail
 COMPOSE_FILE="docker-compose.prod.yml"
 
 echo "============================================"
-echo "  FitTracker Dev Deployment"
+echo "  Peqo Dev Deployment"
 echo "============================================"
 echo ""
 

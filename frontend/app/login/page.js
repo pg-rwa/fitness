@@ -40,7 +40,7 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-white text-2xl font-bold">FitTracker</h1>
+          <h1 className="text-white text-2xl font-bold">Peqo</h1>
           <p className="text-gray-500 text-sm mt-1">Sign in to your account</p>
         </div>
 

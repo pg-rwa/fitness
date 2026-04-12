@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Server Setup ────────────────────────────────────
+# ─── Peqo Server Setup ────────────────────────────────────
 # Run this once on a fresh Ubuntu/Debian server (e.g. DigitalOcean Droplet)
 # Usage: bash deploy/setup.sh yourdomain.com your@email.com
 set -euo pipefail
@@ -8,7 +8,7 @@ DOMAIN="${1:?Usage: setup.sh <domain> <email>}"
 EMAIL="${2:?Usage: setup.sh <domain> <email>}"
 APP_DIR="/opt/fittracker"
 
-echo "==> Setting up FitTracker on ${DOMAIN}"
+echo "==> Setting up Peqo on ${DOMAIN}"
 
 # ─── 1. System packages ─────────────────────────────────────────
 echo "==> Installing Docker..."
@@ -49,7 +49,7 @@ SMTP_HOST=
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASS=
-EMAIL_FROM=FitTracker <noreply@${DOMAIN}>
+EMAIL_FROM=Peqo <noreply@${DOMAIN}>
 ANTHROPIC_API_KEY=
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX=100

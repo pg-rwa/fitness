@@ -1,4 +1,4 @@
-# ─── FitTracker Production Crontab ──────────────────────────────
+# ─── Peqo Production Crontab ──────────────────────────────
 # Install: crontab deploy/monitoring/crontab.example
 # Edit env vars below before installing.
 

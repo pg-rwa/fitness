@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Health Check ────────────────────────────────────
+# ─── Peqo Health Check ────────────────────────────────────
 # Checks API health and sends alerts on failure.
 # Run via cron every minute:
 #   * * * * * cd /opt/fittracker && bash deploy/monitoring/health-check.sh
@@ -30,13 +30,13 @@ send_alert() {
   if [ -n "${ALERT_WEBHOOK_URL:-}" ]; then
     curl -sf -X POST "${ALERT_WEBHOOK_URL}" \
       -H "Content-Type: application/json" \
-      -d "{\"text\": \"🚨 FitTracker Alert: ${message}\"}" \
+      -d "{\"text\": \"🚨 Peqo Alert: ${message}\"}" \
       > /dev/null 2>&1 || true
   fi
 
   # Email alert
   if [ -n "${ALERT_EMAIL:-}" ] && command -v mail > /dev/null 2>&1; then
-    echo "${message}" | mail -s "FitTracker Alert" "${ALERT_EMAIL}"
+    echo "${message}" | mail -s "Peqo Alert" "${ALERT_EMAIL}"
   fi
 }
 

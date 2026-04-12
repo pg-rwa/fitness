@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Database Backup ─────────────────────────────────
+# ─── Peqo Database Backup ─────────────────────────────────
 # Creates a timestamped backup of the SQLite database
 # Usage: bash deploy/backup.sh [backup-dir]
 #   Recommended: run via cron daily

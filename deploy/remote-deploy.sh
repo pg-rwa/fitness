@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# ─── FitTracker Remote Deploy ─────────────────────────────────
-# Deploy FitTracker to a DigitalOcean droplet via SSH.
+# ─── Peqo Remote Deploy ─────────────────────────────────
+# Deploy Peqo to a DigitalOcean droplet via SSH.
 #
 # Usage (from your local machine):
 #   bash deploy/remote-deploy.sh root@64.227.187.54
@@ -9,7 +9,7 @@
 #   1. Stops ALL running Docker containers on the droplet
 #   2. Kills anything on port 3000/80 (old apps)
 #   3. Copies this repo to /opt/fittracker
-#   4. Builds and starts FitTracker on port 80
+#   4. Builds and starts Peqo on port 80
 #
 set -euo pipefail
 
@@ -20,7 +20,7 @@ PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
-echo "  ║    FitTracker → Remote Deploy            ║"
+echo "  ║    Peqo → Remote Deploy            ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo ""
 echo "  Target:  ${REMOTE}"
@@ -111,7 +111,7 @@ rsync -az --delete \
 echo "==> Files synced"
 
 # ─── 3. Build and start on the remote ─────────────────────────
-echo "==> Building and starting FitTracker..."
+echo "==> Building and starting Peqo..."
 ssh "${REMOTE}" bash <<'STARTSCRIPT'
 set -euo pipefail
 cd /opt/fittracker
@@ -176,7 +176,7 @@ docker compose -f docker-compose.prod.yml ps
 
 echo ""
 echo "  ╔══════════════════════════════════════════╗"
-echo "  ║         FitTracker is LIVE!              ║"
+echo "  ║         Peqo is LIVE!              ║"
 echo "  ╚══════════════════════════════════════════╝"
 echo ""
 echo "  Frontend:  http://${DROPLET_IP}/"

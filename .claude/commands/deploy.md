@@ -1,6 +1,6 @@
-# Deploy FitTracker to DigitalOcean
+# Deploy Peqo to DigitalOcean
 
-Run a one-step deployment of FitTracker to the DigitalOcean droplet.
+Run a one-step deployment of Peqo to the DigitalOcean droplet.
 
 ## What to do
 

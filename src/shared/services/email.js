@@ -21,7 +21,7 @@ function getTransporter() {
   return transporter;
 }
 
-const from = process.env.EMAIL_FROM || "FitTracker <noreply@fittracker.app>";
+const from = process.env.EMAIL_FROM || "Peqo <noreply@fittracker.app>";
 
 async function sendEmail({ to, subject, text, html }) {
   const transport = getTransporter();

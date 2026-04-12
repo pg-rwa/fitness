@@ -23,7 +23,7 @@ export default function Sidebar() {
           </svg>
         </div>
         <div>
-          <h1 className="text-white font-bold text-lg">FitTracker</h1>
+          <h1 className="text-white font-bold text-lg">Peqo</h1>
           <p className="text-gray-500 text-xs">Admin Panel</p>
         </div>
       </div>

@@ -13,9 +13,9 @@ export default function WelcomeScreen() {
         <View className="bg-primary/20 rounded-full p-6 mb-6">
           <Ionicons name="fitness" size={64} color="#E8614D" />
         </View>
-        <Text className="text-white text-3xl font-bold text-center">FitTracker</Text>
+        <Text className="text-white text-3xl font-bold text-center">Peqo</Text>
         <Text className="text-gray-400 text-center mt-3 text-base leading-6">
-          Your personal fitness companion.{"\n"}Track workouts, nutrition, and progress.
+          Your AI fitness companion.{"\n"}Talks, tracks, and trains with you.
         </Text>
       </View>
 

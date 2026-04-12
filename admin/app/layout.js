@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "FitTracker Admin",
-  description: "Admin dashboard for FitTracker platform",
+  title: "Peqo Admin",
+  description: "Admin dashboard for Peqo platform",
 };
 
 export default function RootLayout({ children }) {

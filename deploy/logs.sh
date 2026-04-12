@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Log Viewer ──────────────────────────────────────
+# ─── Peqo Log Viewer ──────────────────────────────────────
 # Usage: bash deploy/logs.sh [service] [lines]
 #   bash deploy/logs.sh          # all services, last 100 lines
 #   bash deploy/logs.sh api      # API logs

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Rollback ────────────────────────────────────────
+# ─── Peqo Rollback ────────────────────────────────────────
 # Restores the previous Docker image versions
 # Usage: bash deploy/rollback.sh
 set -euo pipefail

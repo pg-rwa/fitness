@@ -16,7 +16,7 @@ if [ "${USAGE}" -ge "${THRESHOLD}" ]; then
   if [ -n "${ALERT_WEBHOOK_URL:-}" ]; then
     curl -sf -X POST "${ALERT_WEBHOOK_URL}" \
       -H "Content-Type: application/json" \
-      -d "{\"text\": \"⚠️ FitTracker: ${MESSAGE}\"}" \
+      -d "{\"text\": \"⚠️ Peqo: ${MESSAGE}\"}" \
       > /dev/null 2>&1 || true
   fi
 fi

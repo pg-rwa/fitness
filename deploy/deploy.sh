@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ─── FitTracker Deployment ──────────────────────────────────────
+# ─── Peqo Deployment ──────────────────────────────────────
 # Zero-downtime deployment with rolling restart
 # Usage: bash deploy/deploy.sh
 set -euo pipefail

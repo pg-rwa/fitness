@@ -124,7 +124,7 @@ export default function Nav() {
             </svg>
           </div>
           <div>
-            <p className="text-white font-bold text-sm">FitTracker</p>
+            <p className="text-white font-bold text-sm">Peqo</p>
             <p className="text-gray-500 text-[10px] capitalize">{user?.role || "user"}</p>
           </div>
         </div>

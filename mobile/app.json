@@ -1,13 +1,13 @@
 {
   "expo": {
-    "name": "FitTracker",
-    "slug": "fittracker",
+    "name": "Peqo",
+    "slug": "peqo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "scheme": "fittracker",
+    "scheme": "peqo",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fittracker.app"
+      "bundleIdentifier": "com.peqo.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#1E1E2E"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.fittracker.app"
+      "package": "com.peqo.app"
     },
     "web": {
       "favicon": "./assets/favicon.png",

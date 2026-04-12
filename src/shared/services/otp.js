@@ -48,11 +48,11 @@ async function sendOTP(email, type = "registration") {
   // Send the OTP email
   const emailResult = await sendEmail({
     to: email,
-    subject: `Your FitTracker verification code: ${code}`,
+    subject: `Your Peqo verification code: ${code}`,
     text: `Your verification code is: ${code}\n\nThis code expires in ${OTP_EXPIRY_MINUTES} minutes.\n\nIf you didn't request this code, please ignore this email.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h2 style="color: #6366f1;">FitTracker Verification</h2>
+        <h2 style="color: #6366f1;">Peqo Verification</h2>
         <p>Your verification code is:</p>
         <div style="background: #f3f4f6; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
           <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${code}</span>
