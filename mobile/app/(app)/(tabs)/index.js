@@ -8,6 +8,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { formatDate } from "../../../lib/format";
 import { registerForPushNotifications } from "../../../lib/push-notifications";
+import PeqoMascot from "../../../components/PeqoMascot";
+import VoiceCommand from "../../../components/VoiceCommand";
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -16,16 +18,21 @@ export default function HomeScreen() {
   const [insights, setInsights] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [notifications, setNotifications] = useState({ data: [], unreadCount: 0 });
+  const [peqoMood, setPeqoMood] = useState("idle");
+  const [peqoMessage, setPeqoMessage] = useState(null);
   const isTrainer = user?.role === "trainer" || user?.role === "admin";
 
   const loadData = useCallback(async () => {
     try {
-      const [notifData, insightData] = await Promise.all([
+      const [notifData, insightData, moodData] = await Promise.all([
         api("/notifications?limit=5"),
         api("/insights?limit=3"),
+        api("/voice/mood").catch(() => ({ mood: "idle", message: null })),
       ]);
       setNotifications(notifData);
       setInsights(insightData.data || []);
+      setPeqoMood(moodData.mood || "idle");
+      setPeqoMessage(moodData.message || null);
 
       if (!isTrainer) {
         const assignData = await api("/assigned-workouts/mine");
@@ -40,6 +47,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-dark">
+      <VoiceCommand visible={true} />
       <PullToRefresh onRefresh={loadData}>
         <View className="px-5 pb-8">
           {/* Header */}
@@ -58,6 +66,16 @@ export default function HomeScreen() {
                 </View>
               )}
             </TouchableOpacity>
+          </View>
+
+          {/* Peqo Mascot */}
+          <View className="items-center mb-4">
+            <PeqoMascot
+              mood={peqoMood}
+              size={100}
+              message={peqoMessage}
+              onPress={() => setPeqoMessage(peqoMessage ? null : "Tap the mic to talk to me!")}
+            />
           </View>
 
           {/* Quick Actions */}

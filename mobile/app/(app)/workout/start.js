@@ -5,6 +5,7 @@ import { api } from "../../../lib/api";
 import { Button, Input, Card, Badge, StatCard } from "../../../components/ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import VoiceCommand from "../../../components/VoiceCommand";
 
 export default function StartWorkoutScreen() {
   const router = useRouter();
@@ -86,12 +87,13 @@ export default function StartWorkoutScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-dark">
+      <VoiceCommand visible={true} sessionId={session.id} />
       <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="flex-row items-center justify-between mt-2 mb-4">
           <View>
             <Text className="text-white text-xl font-bold">{session.name}</Text>
-            <Text className="text-gray-400 text-sm">In progress</Text>
+            <Text className="text-gray-400 text-sm">In progress — talk to Peqo</Text>
           </View>
           <Button title="Finish" variant="secondary" onPress={completeWorkout} />
         </View>

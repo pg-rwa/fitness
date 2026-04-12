@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../components/AuthProvider";
 import { api } from "../../lib/api";
+import PeqoMascot from "../../components/PeqoMascot";
 
 function StatCard({ label, value, sub, color = "brand" }) {
   const colors = {
@@ -99,6 +100,8 @@ function ClientDashboard() {
   const [today, setToday] = useState({ sessions: [], meals: 0 });
   const [measurements, setMeasurements] = useState(null);
   const [trainerRequests, setTrainerRequests] = useState([]);
+  const [peqoMood, setPeqoMood] = useState("idle");
+  const [peqoMessage, setPeqoMessage] = useState(null);
 
   const loadRequests = () => {
     api("/users/client-requests").then((d) => setTrainerRequests(Array.isArray(d) ? d : [])).catch(() => {});
@@ -111,13 +114,16 @@ function ClientDashboard() {
       api(`/nutrition/meals?date=${todayStr}`).catch(() => ({ data: [] })),
       api("/progress/measurements/latest").catch(() => null),
       api("/workout-templates?limit=1&ownOnly=true").catch(() => ({ pagination: { total: 0 } })),
-    ]).then(([sessions, meals, meas, templates]) => {
+      api("/voice/mood").catch(() => ({ mood: "idle", message: null })),
+    ]).then(([sessions, meals, meas, templates, mood]) => {
       setToday({
         sessions: sessions.data || [],
         meals: (meals.data || meals.meals || []).length,
         templates: templates.pagination?.total || 0,
       });
       setMeasurements(meas);
+      setPeqoMood(mood.mood || "idle");
+      setPeqoMessage(mood.message || null);
     });
     loadRequests();
   }, []);
@@ -143,6 +149,17 @@ function ClientDashboard() {
           </svg>
           Sign Out
         </button>
+      </div>
+
+      {/* Peqo Companion */}
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-4 flex items-center gap-5">
+        <PeqoMascot mood={peqoMood} size={80} level={Math.min(Math.ceil((today.sessions?.length || 0) * 2), 10)} />
+        <div className="flex-1">
+          {peqoMessage && <p className="text-gray-300 text-sm">{peqoMessage}</p>}
+          <Link href="/dashboard/insights" className="text-brand-500 text-xs mt-2 inline-block hover:text-brand-400 transition">
+            View AI Insights &rarr;
+          </Link>
+        </div>
       </div>
 
       {/* My Trainer Card */}
